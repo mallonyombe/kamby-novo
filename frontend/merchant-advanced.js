@@ -117,8 +117,8 @@ export function setupMerchant(hooks) {
   byId('btnClearLocalData').addEventListener('click',clearLocalSession);
   byId('btnCancelLocalClear').addEventListener('click',()=>dialog.close());
   byId('btnConfirmLocalClear').addEventListener('click',()=>{
-    try { hooks.clearLocalData(); dialog.close(); renderProfile(); message('profileNotice','Carrinho e pesquisas recentes limpos.'); }
-    catch { dialog.close(); message('profileNotice','Não foi possível limpar os dados neste dispositivo.'); }
+    try { hooks.clearLocalData(); dialog.close(); renderProfile(); message('settingsScreenNotice','Carrinho e pesquisas recentes limpos.'); }
+    catch { dialog.close(); message('settingsScreenNotice','Não foi possível limpar os dados neste dispositivo.'); }
   });
   window.clearLocalSession=clearLocalSession;
 

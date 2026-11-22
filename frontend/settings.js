@@ -15,6 +15,7 @@ export function setupSettings({getAccount,loadAccount,openSubscreen,closeSubscre
  let pendingReads = new Set();
  let pendingWrites = new Set();
  let savedFrame = 0;
+ let afterSignIn = '';
  const privateScreens=['pessoais','actividade','guardados','seguranca','palavra-passe','sessoes','notificacoes','encerramento'];
  const titles={entrar:'Iniciar sessão',pessoais:'Dados pessoais',actividade:'Contactos',guardados:'Guardados',seguranca:'Segurança e acesso','palavra-passe':'Palavra-passe',sessoes:'Sessões',notificacoes:'Notificações',encerramento:'Encerramento da conta',aparencia:'Aparência',ajuda:'Ajuda e suporte',sobre:'Sobre o Kamby',recuperacao:'Recuperar acesso'};
  function notice(copy){$('settingsScreenNotice').textContent=copy;$('settingsScreenNotice').hidden=!copy;}
@@ -27,13 +28,30 @@ export function setupSettings({getAccount,loadAccount,openSubscreen,closeSubscre
   if (accountId !== id) resetSavedState();
   accountId=id;
   $('settingsGuestIntro').hidden=Boolean(a.user)||a.phase==='loading';$('settingsAccountCard').hidden=!a.user&&a.phase!=='loading';
-  $('settingsAccountMenu').hidden=!a.user;$('btnRetryAccount').hidden=!['error','offline'].includes(a.phase);
+  $('settingsAccountMenu').hidden=a.phase==='loading';$('btnRetryAccount').hidden=!['error','offline'].includes(a.phase);
   const menu=$('settingsAccountMenu');menu.replaceChildren();
-  if(a.user){menu.append(node('p','Conta','settings-section-label'));const g=node('div',undefined,'profile-menu-list');const disabled=!navigator.onLine||a.phase!=='ready';g.append(row('Dados pessoais','Nome, telefone e localização','user','pessoais',disabled),row('Guardados',null,'heart','guardados',disabled),row('Contactos',null,'bookmark','actividade',disabled),row('Segurança e acesso','Palavra-passe, sessões e recuperação','shield','seguranca',disabled),row('Notificações','Avisos e preferências','bell','notificacoes',disabled));menu.append(g);
-   if(canShowAdminEntry(a,navigator.onLine)){const link=node('a',a.access.adminMfaRequired?'Administração · confirmar segurança':'Abrir administração','profile-menu-item');link.href='admin.html';link.dataset.accountAdmin='true';menu.append(link);}
+  const activities = node('div', undefined, 'profile-menu-list');
+  const unavailable = Boolean(a.user) && (!navigator.onLine || a.phase !== 'ready');
+  $('btnProfilePersonal').hidden = !a.user || unavailable;
+  activities.append(row('Guardados', null, 'heart', 'guardados', unavailable));
+  if (a.user) activities.append(row('Contactos', null, 'bookmark', 'actividade', unavailable));
+  menu.append(activities);
+  const work = $('profileWorkMenu');
+  work.replaceChildren();
+  work.hidden = !canShowAdminEntry(a, navigator.onLine);
+  if (!work.hidden) {
+   const link=node('a',a.access.adminMfaRequired?'Administração · confirmar segurança':'Abrir administração','profile-menu-item');link.href='admin.html';link.dataset.accountAdmin='true';work.append(link);
   }
-  const publicMenu=$('settingsPublicMenu');publicMenu.replaceChildren(row('Aparência','Automático, claro ou escuro','sun','aparencia'),row('Ajuda e suporte',null,'help','ajuda'),row('Sobre o Kamby',null,'info','sobre'));
-  if(a.user&&!view.hidden&&screen==='entrar'){close(true);navigate('definicoes');}
+  const publicMenu = $('settingsPublicMenu');
+  publicMenu.replaceChildren(row('Definições', null, 'sun', 'preferencias'), row('Ajuda', null, 'help', 'ajuda'));
+  if (!a.user) publicMenu.prepend(row('Aparência', null, 'sun', 'aparencia'));
+  if (a.user && !view.hidden && screen === 'entrar') {
+   const destination = afterSignIn;
+   afterSignIn = '';
+   close(true);
+   navigate('perfil');
+   if (destination) open(destination);
+  }
   scheduleSavedRefresh();
  }
  function formError(form,copy){let p=form.querySelector('[role="alert"]');if(!p){p=node('p',undefined,'field-error');p.setAttribute('role','alert');form.append(p);}p.textContent=copy;p.hidden=!copy;}
@@ -43,6 +61,15 @@ export function setupSettings({getAccount,loadAccount,openSubscreen,closeSubscre
  async function ownedWrite(table,id,values){const update=()=>platform.from(table).update(values).eq(table==='kg_profiles'?'id':'user_id',id).select().maybeSingle();let r=await update();if(r.error)throw r.error;if(r.data)return r.data;r=await platform.from(table).insert({[table==='kg_profiles'?'id':'user_id']:id,...values}).select().single();if(r.error?.code==='23505')r=await update();if(r.error)throw r.error;return r.data;}
  function saveForm(form,copy,action){const submit=button(copy,'merchant-primary-button');submit.type='submit';form.append(submit);form.addEventListener('submit',async event=>{event.preventDefault();if(busy)return;busy=true;submit.disabled=true;setButtonBusy(submit,true);const request=generation;formError(form,'');try{await action();if(request!==generation)return;}catch(error){if(request===generation)formError(form,error.safeMessage||'Não foi possível guardar. Verifica a ligação e tenta novamente.');}finally{if(request===generation){busy=false;setButtonBusy(submit,false);submit.disabled=false;}}});return submit;}
  async function renderScreen(){const request=++generation;body.replaceChildren();notice('');$('settingsLoginPanel').hidden=screen!=='entrar';$('settingsSubscreenTitle').textContent=titles[screen];document.title=titles[screen]+' · Kamby';const a=getAccount();
+  $('settingsDeviceActions').hidden = screen !== 'preferencias';
+  if (screen === 'preferencias') {
+   const group = node('div', undefined, 'profile-menu-list');
+   const unavailable = !navigator.onLine || a.phase !== 'ready';
+   if (a.user) group.append(row('Segurança e acesso', null, 'shield', 'seguranca', unavailable), row('Notificações', null, 'bell', 'notificacoes', unavailable));
+   group.append(row('Aparência', null, 'sun', 'aparencia'), row('Sobre o Kamby', null, 'info', 'sobre'));
+   body.append(group);
+   return;
+  }
   if(privateScreens.includes(screen)&&!a.user){open('entrar',false);return;}
   if(screen==='entrar')return;
   if(screen==='aparencia'){lead('À tua maneira','Escolhe a aparência do Kamby.');const g=node('div',undefined,'settings-group');let theme='auto';try{theme=readTheme(localStorage);}catch{}for(const [value,label,sub] of [['auto','Automático','Acompanha o dispositivo'],['light','Claro','Superfícies claras'],['dark','Escuro','Superfícies escuras']]){const l=node('label',undefined,'settings-choice'),c=node('span',label),i=node('input');c.append(node('small',sub));i.type='radio';i.name='appearance';i.value=value;i.checked=value===theme;i.addEventListener('change',()=>{try{applyTheme(value);notice('Aparência actualizada.');}catch{notice('Não foi possível guardar a preferência neste dispositivo.');i.checked=false;g.querySelector('input[value="'+theme+'"]').checked=true;}});l.append(icon('sun'),c,i);g.append(l);}body.append(g);const historyLabel=node('label',undefined,'settings-choice'),copy=node('span','Guardar pesquisas recentes'),check=node('input');check.type='checkbox';try{check.checked=localStorage.getItem('kamby:search-history')!=='off';}catch{}check.addEventListener('change',()=>{try{localStorage.setItem('kamby:search-history',check.checked?'on':'off');if(!check.checked)localStorage.removeItem('kamby:recent-searches');window.dispatchEvent(new Event('kamby:search-history'));notice('Preferência guardada.');}catch{check.checked=!check.checked;notice('Não foi possível guardar a preferência.');}});historyLabel.append(copy,check);body.append(historyLabel);return;}
@@ -58,15 +85,25 @@ export function setupSettings({getAccount,loadAccount,openSubscreen,closeSubscre
   if(screen==='sobre'){lead('Kamby','Orbion Technology');body.append(node('p','Descobre produtos e lojas e contacta cada vendedor pelo WhatsApp.','settings-copy'),node('p','Os termos e a política de privacidade formais ainda não foram disponibilizados.','settings-copy'));}
  }
  async function open(target,updateHistory=true){if(!titles[target])return false;if(!view.hidden&&screen===target&&!dirty)return true;if(busy)return false;if(dirty){confirm('Descartar alterações?','Há dados que ainda não foram guardados.','Descartar',()=>{dirty=false;open(target,updateHistory);});return false;}
-  if(privateScreens.includes(target)&&!getAccount().user){await loadAccount();if(!getAccount().user)target='entrar';}
+  afterSignIn = '';
+  if(privateScreens.includes(target)&&!getAccount().user){await loadAccount();if(!getAccount().user){afterSignIn=target;target='entrar';}}
   if(view.hidden){returnScroll=window.scrollY;openSubscreen();}
   screen=target;view.hidden=false;view.classList.add('active');view.scrollTop=0;document.getElementById('viewProfile').inert=true;
   if(updateHistory)history.pushState({kambySettings:true},'','#definicoes/'+target);
   try{await renderScreen();}catch{if(screen===target){body.replaceChildren();empty('Não foi possível carregar','Verifica a ligação e tenta novamente.');body.append(button('Tentar novamente','settings-text-action',()=>renderScreen()));}}
   return true;
  }
- function close(force=false){if(view.hidden)return true;if(!force&&(busy||dirty)){if(dirty)confirm('Descartar alterações?','Há dados que ainda não foram guardados.','Descartar',()=>{dirty=false;close(true);history.replaceState(null,'','#definicoes');});return false;}generation++;dirty=false;body.replaceChildren();$('accountPassword').value='';view.hidden=true;view.classList.remove('active');closeSubscreen();window.scrollTo({top:returnScroll,behavior:'auto'});document.querySelector('[data-settings-target="'+returnFocus+'"]')?.focus({preventScroll:true});document.title='Definições · Kamby';return true;}
- $('btnBackSettings').addEventListener('click',()=>{if(['palavra-passe','sessoes','encerramento'].includes(screen)){open('seguranca');return;}if(close())history.replaceState(null,'','#definicoes');});
+ function close(force=false){if(view.hidden)return true;if(!force&&(busy||dirty)){if(dirty)confirm('Descartar alterações?','Há dados que ainda não foram guardados.','Descartar',()=>{dirty=false;close(true);history.replaceState(null,'','#perfil');});return false;}generation++;dirty=false;body.replaceChildren();$('accountPassword').value='';view.hidden=true;view.classList.remove('active');closeSubscreen();window.scrollTo({top:returnScroll,behavior:'auto'});document.querySelector('[data-settings-target="'+returnFocus+'"]')?.focus({preventScroll:true});document.title='Perfil · Kamby';return true;}
+ $('btnProfilePersonal').addEventListener('click', () => { returnFocus = 'pessoais'; open('pessoais'); });
+ $('btnBackSettings').addEventListener('click', async () => {
+  const parent = ['palavra-passe', 'sessoes', 'encerramento'].includes(screen) ? 'seguranca'
+   : ['seguranca', 'notificacoes', 'sobre'].includes(screen) || (screen === 'aparencia' && getAccount().user) ? 'preferencias' : '';
+  if (parent) {
+   if (await open(parent, false)) history.replaceState(null, '', '#definicoes/' + parent);
+   return;
+  }
+  if (close()) history.replaceState(null, '', '#perfil');
+ });
  $('btnOpenAccountSignIn').addEventListener('click',()=>open('entrar'));$('btnForgotPassword').addEventListener('click',()=>open('recuperacao'));$('btnRetryAccount').addEventListener('click',async()=>{const b=$('btnRetryAccount');if(b.disabled)return;b.disabled=true;setButtonBusy(b,true);try{await loadAccount();}finally{setButtonBusy(b,false);b.disabled=false;}});
  window.addEventListener('online',()=>{loadAccount();if(!view.hidden&&!dirty)renderScreen();});window.addEventListener('offline',()=>{sync();if(!view.hidden)notice('Sem ligação. A aparência continua disponível; as alterações da conta precisam de ligação.');});
  window.addEventListener('beforeunload',event=>{if(dirty){event.preventDefault();event.returnValue='';}});
