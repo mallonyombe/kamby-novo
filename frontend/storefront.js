@@ -136,19 +136,34 @@ export function setupStorefrontDiscovery({ renderCard, createEmpty }) {
     const artwork = resolveStoreArtwork(store);
     const cover = $('storefrontCover'), avatar = $('storefrontAvatar');
     cover.replaceChildren(); avatar.replaceChildren();
+    cover.disabled = avatar.disabled = true;
+    cover.onclick = avatar.onclick = null;
+    const storeName = store.name;
+    function openArtwork(url, label) {
+      const dialog = $('storeArtworkViewer');
+      const image = $('storeArtworkFull');
+      dialog.setAttribute('aria-label', label + ' · ' + storeName);
+      image.alt = label + ' de ' + storeName;
+      image.src = url;
+      dialog.showModal();
+    }
     const fallback = document.createElement('span');
     fallback.className = 'storefront-avatar-fallback'; fallback.textContent = store.initials;
     avatar.append(fallback);
     if (artwork.cover) {
       const image = document.createElement('img'); image.src = artwork.cover; image.alt = '';
       image.decoding = 'async'; image.fetchPriority = 'high'; image.style.objectPosition = artwork.coverPosition;
-      image.onerror = () => image.remove(); cover.append(image);
+      image.onload = () => { if (image.parentElement === cover) cover.disabled = false; };
+      image.onerror = () => { if (image.parentElement === cover) cover.disabled = true; image.remove(); };
+      cover.onclick = () => openArtwork(artwork.cover, 'Foto de capa');
+      cover.append(image);
     }
     if (artwork.avatar) {
       const image = document.createElement('img'); image.src = artwork.avatar; image.alt = '';
       image.decoding = 'async'; image.style.objectPosition = artwork.avatarPosition; image.style.objectFit = artwork.avatarFit;
-      image.onload = () => { fallback.hidden = true; };
-      image.onerror = () => { image.remove(); fallback.hidden = false; };
+      image.onload = () => { if (image.parentElement === avatar) { fallback.hidden = true; avatar.disabled = false; } };
+      image.onerror = () => { if (image.parentElement === avatar) avatar.disabled = true; image.remove(); fallback.hidden = false; };
+      avatar.onclick = () => openArtwork(artwork.avatar, 'Foto de perfil');
       avatar.append(image);
     }
   }

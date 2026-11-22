@@ -1737,9 +1737,9 @@
       </header>
 
       <div class="storefront-hero">
-        <div class="storefront-cover" id="storefrontCover" aria-hidden="true"></div>
+        <button type="button" class="storefront-cover" id="storefrontCover" aria-label="Ver foto de capa da loja" disabled></button>
         <div class="storefront-profile-card">
-          <div class="storefront-avatar" id="storefrontAvatar" aria-hidden="true"></div>
+          <button type="button" class="storefront-avatar" id="storefrontAvatar" aria-label="Ver foto de perfil da loja" disabled></button>
           <h1 class="storefront-name" id="storefrontName">Loja</h1>
           <div class="storefront-meta"><p class="storefront-geo" id="storefrontGeo"></p></div>
           <div class="storefront-secondary-actions">
@@ -4414,6 +4414,10 @@
 
 
   <dialog id="productActionSheet" class="commerce-action-sheet" aria-labelledby="productActionTitle"><header><h2 id="productActionTitle">Adicionar ao carrinho</h2><button type="button" id="btnCloseProductAction" aria-label="Fechar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="m6 6 12 12M6 18 18 6"/></svg></button></header><div class="commerce-action-body"><div class="action-product"><img id="actionProductImage" alt="" hidden><div><h3 id="actionProductName"></h3><p id="actionStoreName"></p></div></div><fieldset id="actionVariantLabel"><legend>Opção</legend><div id="actionVariant" role="radiogroup" aria-label="Opções do produto"></div></fieldset><div class="action-quantity-row"><span>Quantidade</span><div class="pdp-stepper"><button id="btnPdpDec" type="button" aria-label="Reduzir quantidade">−</button><output id="pdpQtyVal" aria-label="Quantidade seleccionada">1</output><button id="btnPdpInc" type="button" aria-label="Aumentar quantidade">+</button></div></div><div class="action-total-row"><span>Total</span><strong id="pdpSubtotalVal">—</strong></div><p id="productActionNotice" class="commerce-notice" role="status" hidden></p></div><footer><button type="button" id="actionConfirm">Guardar no carrinho</button></footer></dialog>
+  <dialog id="storeArtworkViewer" class="product-photo-viewer" aria-label="Fotografia da loja">
+    <form method="dialog"><button class="product-photo-close" aria-label="Fechar fotografia" autofocus>×</button></form>
+    <div class="pdp-slide"><img id="storeArtworkFull" alt=""></div>
+  </dialog>
   <div class="commerce-toast" id="commerceToast" role="status" aria-live="polite" hidden><span id="commerceToastText"></span><button type="button" id="commerceToastAction" hidden>Ver carrinho</button></div>
 
   <dialog id="modalNewProduct" class="merchant-editor" aria-labelledby="modalNewProdTitle"></dialog>
