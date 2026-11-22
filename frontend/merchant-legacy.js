@@ -72,7 +72,7 @@ export function setupMerchant(hooks) {
       renderProfile();
       const name=profileResult.data?.display_name || user.user_metadata?.display_name || user.user_metadata?.full_name || 'A tua conta';
       text('profileName',name); text('profileAvatar',initials(name));
-      text('profileContact',user.phone ? '+'+user.phone.replace(/^\+/, '') : user.email || '');
+      text('profileContact',user.phone ? '+'+user.phone.replace(/^\+/, '') : (/@kamby\.invalid$/i.test(user.email || '') ? '' : user.email || ''));
       text('profileLocation',profileResult.data?.location || ''); byId('profileLocation').hidden=!profileResult.data?.location;settings?.sync();
       message('profileNotice',profileResult.error ? 'Não foi possível carregar todos os dados da conta. Tenta novamente.' : '');
       if(state.store && !state.stores.some(store=>store.id===state.store.id) && !view.hidden) closeMerchant();
@@ -281,7 +281,7 @@ export function setupMerchant(hooks) {
     },
     onFeedback:copy=>message('merchantFeedback',copy)
   });
-  settings=setupSettings({getAccount:()=>state,loadAccount,openSubscreen:hooks.openSubscreen,closeSubscreen:hooks.closeSubscreen,navigate:hooks.navigate});
+  settings=setupSettings({savedProducts:hooks.savedProducts,renderProductCard:hooks.renderProductCard,getAccount:()=>state,loadAccount,openSubscreen:hooks.openSubscreen,closeSubscreen:hooks.closeSubscreen,navigate:hooks.navigate});
   platform.auth.onAuthStateChange((event,session)=>{++state.accountRequest;if(event==='SIGNED_OUT'||(state.user&&session?.user?.id!==state.user.id)){state.user=null;state.access=null;state.profile=null;state.phase='guest';state.stores=[];settings.clear();settings.close(true);closeMerchant(false);purgeMerchant();renderProfile();}setTimeout(async()=>{if(accountPending)await accountPending;await loadAccount();if(event==='PASSWORD_RECOVERY')settings.recovery();},0);});
   window.addEventListener('kamby:cart-updated',renderProfile);
   renderProfile(); loadAccount();

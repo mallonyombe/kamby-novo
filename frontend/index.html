@@ -2107,7 +2107,7 @@
         };
       }
 
-      async function fetchPublishedProducts(allPages = false) {
+      async function fetchPublishedProducts(allPages = false, ids = null) {
         const select = [
           'id',
           'title',
@@ -2130,6 +2130,7 @@
           order: 'created_at.desc,id.desc',
           limit: String(KAMBY_CATALOG.pageSize)
         });
+        if (ids) query.set('id', 'in.(' + ids.join(',') + ')');
         const loadPage = (offset, limit) => {
           const pageQuery = new URLSearchParams(query);
           pageQuery.set('offset', String(offset));
@@ -3700,6 +3701,7 @@
       }
 
       async function openPDP(productId, pushHistory, openCartSheet = false, preferredVariantId = null) {
+        if (merchantController?.settings.isOpen() && !merchantController.settings.close()) return;
         productAction.close(true);if(!viewStoreCart.hidden)closeStoreCart();
         if (!productId) return;
         const fromStorefront = !viewStorefront.hidden && storefrontState.store;
@@ -4345,6 +4347,8 @@
 
       merchantController = await setupMerchant({
         cartCount: () => readCart().reduce((sum,item) => sum + item.quantity, 0),
+        savedProducts: ids => fetchPublishedProducts(true, ids),
+        renderProductCard,
         navigate: switchView,
         openSubscreen: () => {
           switchView('perfil', false);
