@@ -1,0 +1,23 @@
+{
+  "task_id": "ORB-0001",
+  "project": "sandbox",
+  "objective": "Validar o fluxo de colaboração sem tocar em produção",
+  "repository": "local/sandbox",
+  "environment": "local",
+  "risk_level": "low",
+  "owner": "FE-01",
+  "reviewers": [
+    "ORB-17",
+    "BE-04"
+  ],
+  "acceptance_criteria": [
+    "Contrato validado",
+    "Verificações locais aprovadas"
+  ],
+  "permissions": {
+    "read": true,
+    "write": false,
+    "deploy": false,
+    "destructive": false
+  }
+}

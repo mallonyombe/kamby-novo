@@ -1,0 +1,19 @@
+<!doctype html><meta charset="utf-8"><title>Kamby · Verificação do cabeçalho</title><style>body{font:14px system-ui;background:#ddd;margin:16px}main{display:flex;gap:16px;align-items:flex-start}iframe{height:844px;border:0;background:white;flex:none}button{padding:12px;margin:0 8px 12px 0}pre{white-space:pre-wrap;max-width:350px}</style><button id="run">Verificar todos os estados</button><main><iframe title="Kamby móvel" src="/#inicio" width="390"></iframe><pre id="results">A preparar catálogo…</pre></main><script>
+const frame=document.querySelector('iframe'),results=document.querySelector('#results');
+const pause=ms=>new Promise(r=>setTimeout(r,ms));
+const report=[];function check(ok,label){report.push((ok?'PASSOU ':'FALHOU ')+label);results.textContent=report.join('\n');if(!ok)throw Error(label+' '+JSON.stringify(snapshot()));}
+async function settle(){await new Promise(r=>frame.contentWindow.requestAnimationFrame(()=>frame.contentWindow.requestAnimationFrame(r)));await pause(280);}
+async function scroll(y){frame.contentWindow.scrollTo({top:y,behavior:'instant'});await settle();}
+function snapshot(){const d=frame.contentDocument,h=d.querySelector('#kambyHeader'),b=d.querySelector('#btnSearchCompact'),s=d.querySelector('.search-container'),r=b.getBoundingClientRect();return{compact:h.classList.contains('is-compact'),height:h.getBoundingClientRect().height,buttonWidth:r.width,buttonHeight:r.height,searchInert:s.inert,buttonInert:b.inert,scrollY:frame.contentWindow.scrollY};}
+frame.onload=()=>{results.textContent='Pronto para verificar.';};
+document.querySelector('#run').onclick=async()=>{document.querySelector('#run').disabled=true;report.length=0;try{
+for(const width of [320,390,1040]){frame.width=width;await settle();await scroll(0);check(!snapshot().compact,width+': topo expandido');
+for(const y of [120,320,315,280,200,50,12]){await scroll(y);check(snapshot().compact,width+': compacto em '+Math.round(snapshot().scrollY)+' px');}
+let s=snapshot();check(Math.abs(s.height-56)<1&&s.searchInert&&!s.buttonInert,width+': altura, pesquisa oculta e ícone acessível');check(s.buttonWidth===44&&s.buttonHeight===44,width+': botão circular de 44 × 44');
+await scroll(0);check(!snapshot().compact,width+': expande apenas no topo');
+await scroll(160);const d=frame.contentDocument;d.querySelector('#btnSearchCompact').click();await pause(280);check(!snapshot().compact&&d.activeElement.id==='searchInput',width+': pesquisa abre e recebe foco');
+await scroll(150);check(!snapshot().compact,width+': pesquisa aberta mantém expansão');d.querySelector('#btnCancelSearch').click();await pause(280);check(snapshot().compact,width+': cancelar restaura compacto');
+d.querySelector('.nav-tab[href="#lojas"]').click();await pause(100);d.querySelector('.nav-tab[href="#inicio"]').click();check(snapshot().compact,width+': voltar ao início preserva compacto sem expansão');
+}
+results.textContent+='\nCONCLUÍDO: '+report.length+' verificações.';}catch(e){results.textContent+='\nERRO: '+e.message;}finally{document.querySelector('#run').disabled=false;}};
+</script>

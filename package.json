@@ -1,0 +1,20 @@
+{
+  "name": "kamby-backend",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "test": "npm test --prefix supabase/tests",
+    "build": "node scripts/build-frontend.mjs",
+    "test:search": "node --test tests/search-engine.test.mjs",
+    "test:frontend": "node --test tests/*.test.mjs"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "2.119.0"
+  },
+  "devDependencies": {
+    "esbuild": "0.28.2",
+    "@electric-sql/pglite": "0.3.14",
+    "supabase": "3.1.0"
+  }
+}

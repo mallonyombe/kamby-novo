@@ -1,0 +1,56 @@
+/* Buyer polish: accessible brand accents, quiet actions and a catalogue-first store.
+   Keep logo colours unchanged; use ink tokens for small text on neutral surfaces. */
+:root { --buyer-accent-ink:#A84900; --buyer-selection-ink:#BA0644; }
+:root[data-theme="dark"] { --buyer-accent-ink:#FFAC66; --buyer-selection-ink:#FF86AF; }
+@media (prefers-color-scheme:dark) {
+  :root:not([data-theme="light"]) { --buyer-accent-ink:#FFAC66; --buyer-selection-ink:#FF86AF; }
+}
+.floating-navbar .nav-tab.active { color:var(--buyer-accent-ink); }
+.floating-navbar .nav-tab { font-size:12px; }
+:focus-visible { outline-color:var(--buyer-selection-ink); }
+/* One action hierarchy across store, product and quantity sheet. */
+.storefront-secondary-actions>button {
+  min-height:44px; background:var(--bg-surface); color:var(--text-secondary);
+  border-color:var(--border-subtle); font-weight:500;
+}
+.storefront-secondary-actions>#btnStorefrontWhatsApp {
+  background:var(--text-main); color:var(--bg-surface); border-color:var(--text-main);
+}
+.storefront-secondary-actions>button:active:not(:disabled) { background:var(--bg-input); transform:none; }
+.storefront-secondary-actions>#btnStorefrontWhatsApp:active:not(:disabled) { background:var(--text-secondary); }
+#btnSearchStorefront { color:var(--text-main); }
+#storefrontAvailable[aria-pressed="true"] {
+  background:var(--text-main); border-color:var(--text-main); color:var(--bg-surface);
+}
+.storefront-search-field:focus-within { box-shadow:inset 0 0 0 1.5px var(--buyer-selection-ink); }
+.action-variant-option[aria-checked="true"] .action-variant-mark { border-color:var(--buyer-selection-ink); }
+/* Bring the first products closer while retaining a recognisable store identity. */
+.storefront-cover { height:clamp(104px,28vw,160px); }
+.storefront-avatar { width:68px;height:68px;min-width:68px;min-height:68px;margin-top:-26px; }
+.storefront-profile-card { padding-bottom:12px; }
+.storefront-name { font-size:22px;line-height:28px;margin-top:6px; }
+.storefront-meta { margin-top:4px; }
+.storefront-secondary-actions { margin-top:10px; }
+.storefront-catalog-title { margin-bottom:8px; }
+.storefront-catalog-tools { margin-bottom:12px; }
+.storefront-catalog-tools button { min-height:44px; }
+/* Never crop the product to fake uniform photography. Align information instead. */
+.product-img-wrap { border:1px solid var(--border-subtle); }
+.product-img-wrap img,.pdp-gallery-slide img { object-fit:contain; }
+.product-card-title { min-height:38px; }
+.product-store-badge { font-size:12px;line-height:17px; }
+.product-price-prefix { font-size:11px;line-height:16px; }
+.product-card-price { font-variant-numeric:tabular-nums; }
+.product-card:focus-visible { border-radius:12px;outline-offset:5px; }
+@media (hover:hover) {
+  .product-card:hover .product-card-title { text-decoration:underline;text-underline-offset:3px; }
+  .storefront-secondary-actions>button:not(#btnStorefrontWhatsApp):hover { background:var(--bg-input); }
+}
+@media (prefers-reduced-motion:reduce) {
+  /* Covers existing and future sheets, loading states and navigation consistently. */
+  *,*::before,*::after { animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;scroll-behavior:auto!important; }
+}
+@media (forced-colors:active) {
+  .action-variant-option[aria-checked="true"],#storefrontAvailable[aria-pressed="true"] { outline:2px solid Highlight; }
+  .floating-navbar .nav-tab.active { color:LinkText; }
+}

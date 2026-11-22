@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="912" height="900" viewBox="308 324 912 900">
+  <title>Ícone</title>
+  <defs>
+    <radialGradient id="top" gradientUnits="userSpaceOnUse" cx="0" cy="0" r="2.5" gradientTransform="matrix(700.0897 -709.9067 295.2133 291.1309 500.0001 1458.3875)">
+      <stop offset="0.00000" stop-color="#fe0001"/><stop offset="0.03226" stop-color="#fe0001"/><stop offset="0.06452" stop-color="#fe0001"/><stop offset="0.09677" stop-color="#fe0001"/><stop offset="0.12903" stop-color="#fe0001"/><stop offset="0.16129" stop-color="#fe0001"/><stop offset="0.19355" stop-color="#fe0001"/><stop offset="0.22581" stop-color="#fe0001"/><stop offset="0.25806" stop-color="#fe0d01"/><stop offset="0.29032" stop-color="#fe1c01"/><stop offset="0.32258" stop-color="#fe2901"/><stop offset="0.35484" stop-color="#fe3601"/><stop offset="0.38710" stop-color="#fe4201"/><stop offset="0.41935" stop-color="#fe4e01"/><stop offset="0.45161" stop-color="#fe5a01"/><stop offset="0.48387" stop-color="#fe6701"/><stop offset="0.51613" stop-color="#fe7401"/><stop offset="0.54839" stop-color="#fe8101"/><stop offset="0.58065" stop-color="#fe8f01"/><stop offset="0.61290" stop-color="#fe9f01"/><stop offset="0.64516" stop-color="#feaf01"/><stop offset="0.67742" stop-color="#fec101"/><stop offset="0.70968" stop-color="#fed401"/><stop offset="0.74194" stop-color="#fee801"/><stop offset="0.77419" stop-color="#fefe01"/><stop offset="0.80645" stop-color="#feff01"/><stop offset="0.83871" stop-color="#feff01"/><stop offset="0.87097" stop-color="#feff01"/><stop offset="0.90323" stop-color="#feff01"/><stop offset="0.93548" stop-color="#feff01"/><stop offset="0.96774" stop-color="#feff01"/><stop offset="1.00000" stop-color="#feff01"/>
+    </radialGradient>
+    <linearGradient id="base" gradientUnits="userSpaceOnUse" x1="370" y1="915" x2="970" y2="1415">
+      <stop stop-color="#80004c"/>
+      <stop offset=".28" stop-color="#c0004a"/>
+      <stop offset=".56" stop-color="#fc0059"/>
+      <stop offset="1" stop-color="#ff3775"/>
+    </linearGradient>
+    <linearGradient id="baseLight" gradientUnits="userSpaceOnUse" x1="750" y1="825" x2="750" y2="1220">
+      <stop stop-color="#ff005b" stop-opacity="0"/>
+      <stop offset="1" stop-color="#ff1a75" stop-opacity=".2"/>
+    </linearGradient>
+    <linearGradient id="fold" gradientUnits="userSpaceOnUse" x1="351" y1="850" x2="1030" y2="860">
+      <stop stop-color="#ffc052"/>
+      <stop offset=".4" stop-color="#ff9948"/>
+      <stop offset=".7" stop-color="#fc8064"/>
+      <stop offset="1" stop-color="#ffa0a6"/>
+    </linearGradient>
+    <linearGradient id="foldLight" gradientUnits="userSpaceOnUse" x1="690" y1="745" x2="690" y2="931">
+      <stop stop-color="#fff0c8" stop-opacity=".08"/>
+      <stop offset=".55" stop-color="#fff0c8" stop-opacity="0"/>
+      <stop offset="1" stop-color="#ff4b22" stop-opacity=".1"/>
+    </linearGradient>
+    <linearGradient id="edge" gradientUnits="userSpaceOnUse" x1="350" y1="1000" x2="1040" y2="690">
+      <stop stop-color="#ffdc8d" stop-opacity=".65"/>
+      <stop offset=".65" stop-color="#ffd8ba" stop-opacity=".3"/>
+      <stop offset="1" stop-color="#ffe7e4" stop-opacity=".7"/>
+    </linearGradient>
+  </defs>
+  <path fill="url(#base)" d="M 321,1036 C 388,964 501,917 647,910 C 735,904 813,889 886,844 C 945,808 989,757 1025,711 L 1143,711 C 1189,710 1218,738 1212,790 C 1201,895 1159,995 1093,1068 C 1001,1170 867,1216 733,1214 C 571,1212 437,1162 352,1083 C 334,1066 325,1052 321,1036 Z"/>
+  <path fill="url(#baseLight)" d="M 321,1036 C 388,964 501,917 647,910 C 735,904 813,889 886,844 C 945,808 989,757 1025,711 L 1143,711 C 1189,710 1218,738 1212,790 C 1201,895 1159,995 1093,1068 C 1001,1170 867,1216 733,1214 C 571,1212 437,1162 352,1083 C 334,1066 325,1052 321,1036 Z"/>
+  <path fill="url(#top)" d="M 321,1036 C 310,1002 317,940 325,887 C 347,723 387,590 477,486 C 575,374 709,331 856,332 L 1128,333 C 1173,333 1197,360 1191,414 C 1183,505 1129,615 1067,674 C 1041,699 1021,707 988,709 C 868,717 752,715 646,745 C 502,785 377,909 321,1036 Z"/>
+  <path fill="url(#fold)" d="M 321,1036 C 377,909 502,785 646,745 C 752,715 868,717 988,709 C 1021,707 1041,699 1067,674 C 999,747 952,804 886,844 C 813,889 735,904 647,910 C 501,917 388,964 321,1036 Z"/>
+  <path fill="url(#foldLight)" d="M 321,1036 C 377,909 502,785 646,745 C 752,715 868,717 988,709 C 1021,707 1041,699 1067,674 C 999,747 952,804 886,844 C 813,889 735,904 647,910 C 501,917 388,964 321,1036 Z"/>
+  <path d="M 321,1036 C 377,909 502,785 646,745 C 752,715 868,717 988,709 C 1021,707 1041,699 1067,674 C 999,747 952,804 886,844 C 813,889 735,904 647,910" fill="none" stroke="url(#edge)" stroke-width="1.8" stroke-linecap="round"/>
+</svg>

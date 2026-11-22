@@ -1,0 +1,1401 @@
+<!DOCTYPE html>
+<html lang="pt-MZ">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>Kamby — Produto</title>
+  <link rel="icon" href="icone.svg" type="image/svg+xml" />
+  <style>
+    /* ==========================================================================
+       1. TOKENS DE DESIGN & CORES OFICIAIS (FE-02)
+       ========================================================================== */
+    :root {
+      --kamby-brand-accent: #FF7A00;
+      --kamby-brand-primary: #F7095D;
+      --kamby-whatsapp: #25D366;
+      
+      --bg-page: #F6F7F9;
+      --bg-surface: #FFFFFF;
+      --bg-surface-subtle: #EFEFF2;
+      --bg-glass: rgba(255, 255, 255, 0.88);
+      
+      --text-main: #141619;
+      --text-secondary: #636A75;
+      --text-muted: #8E95A2;
+      
+      --border-subtle: rgba(0, 0, 0, 0.08);
+      --border-active: #FF7A00;
+      
+      --shadow-header: 0 2px 12px rgba(0, 0, 0, 0.04);
+      --shadow-bar: 0 -4px 20px rgba(0, 0, 0, 0.06);
+      
+      --safe-top: env(safe-area-inset-top, 0px);
+      --safe-bottom: env(safe-area-inset-bottom, 0px);
+      
+      --radius-sm: 8px;
+      --radius-md: 14px;
+      --radius-lg: 20px;
+      --radius-pill: 9999px;
+      
+      --spring: cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg-page: #0E1013;
+        --bg-surface: #15181D;
+        --bg-surface-subtle: #1C2026;
+        --bg-glass: rgba(21, 24, 29, 0.88);
+        
+        --text-main: #F3F4F6;
+        --text-secondary: #9BA3AF;
+        --text-muted: #5E6774;
+        
+        --border-subtle: rgba(255, 255, 255, 0.08);
+        --shadow-bar: 0 -4px 24px rgba(0, 0, 0, 0.4);
+      }
+    }
+
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+      background-color: var(--bg-page);
+      color: var(--text-main);
+      line-height: 1.45;
+      -webkit-font-smoothing: antialiased;
+      padding-bottom: calc(88px + var(--safe-bottom));
+    }
+
+    button {
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-family: inherit;
+      color: inherit;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* ==========================================================================
+       2. HEADER CONTEXTUAL DE SUBTELA (FE-03)
+       ========================================================================== */
+    .subscreen-header {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 1000;
+      background: var(--bg-glass);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--border-subtle);
+      padding-top: var(--safe-top);
+      box-shadow: var(--shadow-header);
+    }
+
+    .subscreen-bar {
+      max-width: 680px;
+      margin: 0 auto;
+      height: 52px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 12px;
+    }
+
+    .header-btn {
+      width: 40px;
+      height: 40px;
+      border-radius: var(--radius-pill);
+      background: var(--bg-surface-subtle);
+      color: var(--text-main);
+      transition: transform 160ms ease;
+    }
+
+    .header-btn:active {
+      transform: scale(0.92);
+    }
+
+    .subscreen-title {
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: var(--text-main);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 65%;
+      text-align: center;
+    }
+
+    /* ==========================================================================
+       3. GALERIA MOBILE SWIPE (FE-05 - SEM SETAS / TOUCH-SNAP PURO)
+       ========================================================================== */
+    .pdp-container {
+      max-width: 680px;
+      margin: calc(56px + var(--safe-top)) auto 0;
+    }
+
+    .gallery-viewport {
+      position: relative;
+      width: 100%;
+      background: var(--bg-surface);
+      overflow: hidden;
+    }
+
+    .gallery-track {
+      display: flex;
+      width: 100%;
+      overflow-x: auto;
+      scroll-snap-type: x mandatory;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
+    }
+
+    .gallery-track::-webkit-scrollbar {
+      display: none;
+    }
+
+    .gallery-slide {
+      flex: 0 0 100%;
+      scroll-snap-align: start;
+      aspect-ratio: 1 / 1;
+      position: relative;
+      background: var(--bg-surface-subtle);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .gallery-slide img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    /* Contador Flutuante Discreto */
+    .gallery-counter {
+      position: absolute;
+      bottom: 14px;
+      right: 14px;
+      background: rgba(0, 0, 0, 0.65);
+      backdrop-filter: blur(8px);
+      color: #FFF;
+      font-size: 0.75rem;
+      font-weight: 600;
+      padding: 4px 10px;
+      border-radius: var(--radius-pill);
+      letter-spacing: 0.04em;
+    }
+
+    /* ==========================================================================
+       4. CONTEÚDO PRINCIPAL & HIERARQUIA VISUAL (FE-03 & BAYMARD)
+       ========================================================================== */
+    .pdp-body {
+      padding: 20px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .meta-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .category-tag {
+      font-size: 0.8rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--kamby-brand-accent);
+    }
+
+    .stock-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: #10B981;
+    }
+
+    .stock-badge::before {
+      content: "";
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: currentColor;
+    }
+
+    .stock-badge.out-of-stock {
+      color: #EF4444;
+    }
+
+    .product-title {
+      font-size: 1.45rem;
+      font-weight: 800;
+      letter-spacing: -0.025em;
+      color: var(--text-main);
+      line-height: 1.25;
+    }
+
+    /* Bloco de Preço com Unidade de Referência */
+    .price-block {
+      display: flex;
+      align-items: baseline;
+      gap: 10px;
+    }
+
+    .price-main {
+      font-size: 1.75rem;
+      font-weight: 800;
+      color: var(--text-main);
+      letter-spacing: -0.03em;
+    }
+
+    .price-unit {
+      font-size: 0.88rem;
+      color: var(--text-secondary);
+      font-weight: 500;
+    }
+
+    /* Cartão da Loja Vendedora */
+    .store-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      padding: 12px 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .store-info {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .store-avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: var(--radius-pill);
+      background: var(--bg-surface-subtle);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      color: var(--kamby-brand-accent);
+      font-size: 1rem;
+    }
+
+    .store-name {
+      font-size: 0.92rem;
+      font-weight: 700;
+      color: var(--text-main);
+    }
+
+    .store-location {
+      font-size: 0.76rem;
+      color: var(--text-muted);
+    }
+
+    .btn-view-store {
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--kamby-brand-accent);
+    }
+
+    /* ==========================================================================
+       5. SELEÇÃO REATIVA DE VARIANTES (FE-01 & SHOPIFY MODEL)
+       ========================================================================== */
+    .section-label {
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      margin-bottom: 10px;
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .selected-opt-name {
+      color: var(--text-main);
+      font-weight: 600;
+      text-transform: none;
+    }
+
+    .variants-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .variant-chip {
+      background: var(--bg-surface);
+      border: 1.5px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      padding: 10px 16px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-width: 90px;
+      transition: all 160ms var(--spring);
+      position: relative;
+    }
+
+    .variant-chip:active:not(.disabled) {
+      transform: scale(0.97);
+    }
+
+    .variant-chip.active {
+      border-color: var(--kamby-brand-accent);
+      background: rgba(255, 122, 0, 0.05);
+    }
+
+    .variant-name {
+      font-size: 0.88rem;
+      font-weight: 700;
+      color: var(--text-main);
+    }
+
+    .variant-price {
+      font-size: 0.78rem;
+      color: var(--text-secondary);
+      margin-top: 2px;
+    }
+
+    /* Variante Esgotada */
+    .variant-chip.disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+      border-style: dashed;
+    }
+
+    .variant-chip.disabled::after {
+      content: "Esgotado";
+      position: absolute;
+      bottom: -6px;
+      background: #EF4444;
+      color: #FFF;
+      font-size: 0.6rem;
+      font-weight: 700;
+      padding: 1px 5px;
+      border-radius: var(--radius-pill);
+    }
+
+    /* Seletor de Quantidade & Subtotal */
+    .quantity-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      padding: 10px 16px;
+    }
+
+    .qty-stepper {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .btn-qty {
+      width: 34px;
+      height: 34px;
+      border-radius: var(--radius-pill);
+      background: var(--bg-surface-subtle);
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: var(--text-main);
+      transition: background 150ms;
+    }
+
+    .btn-qty:active {
+      background: var(--border-subtle);
+    }
+
+    .qty-val {
+      font-size: 1.05rem;
+      font-weight: 700;
+      width: 24px;
+      text-align: center;
+    }
+
+    .subtotal-calc {
+      text-align: right;
+    }
+
+    .subtotal-label {
+      font-size: 0.74rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      font-weight: 600;
+    }
+
+    .subtotal-val {
+      font-size: 1.1rem;
+      font-weight: 800;
+      color: var(--text-main);
+    }
+
+    /* Secção de Informações do Produto */
+    .info-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .info-title {
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: var(--text-main);
+    }
+
+    .info-desc {
+      font-size: 0.88rem;
+      color: var(--text-secondary);
+      line-height: 1.5;
+    }
+
+    /* ==========================================================================
+       6. RECOMENDAÇÕES "MAIS DESTA LOJA"
+       ========================================================================== */
+    .recommendations-section {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-top: 10px;
+    }
+
+    .rec-scroll {
+      display: flex;
+      gap: 12px;
+      overflow-x: auto;
+      scrollbar-width: none;
+      padding-bottom: 6px;
+    }
+
+    .rec-scroll::-webkit-scrollbar {
+      display: none;
+    }
+
+    .rec-item {
+      flex: 0 0 140px;
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      overflow: hidden;
+      text-decoration: none;
+      color: inherit;
+    }
+
+    .rec-img {
+      width: 100%;
+      aspect-ratio: 1/1;
+      background: var(--bg-surface-subtle);
+      object-fit: cover;
+    }
+
+    .rec-content {
+      padding: 8px 10px;
+    }
+
+    .rec-name {
+      font-size: 0.8rem;
+      font-weight: 600;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .rec-price {
+      font-size: 0.82rem;
+      font-weight: 700;
+      color: var(--kamby-brand-accent);
+      margin-top: 2px;
+    }
+
+    /* ==========================================================================
+       7. STICKY BOTTOM ACTIONS BAR (FE-03 - CARRINHO + WHATSAPP DIRECT)
+       ========================================================================== */
+    .sticky-actions-bar {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      z-index: 1000;
+      background: var(--bg-glass);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-top: 1px solid var(--border-subtle);
+      box-shadow: var(--shadow-bar);
+      padding: 10px 16px calc(10px + var(--safe-bottom));
+    }
+
+    .actions-inner {
+      max-width: 680px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .btn-add-cart {
+      flex: 1;
+      height: 48px;
+      border-radius: var(--radius-pill);
+      background: var(--bg-surface-subtle);
+      color: var(--text-main);
+      font-size: 0.9rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: background 160ms, transform 160ms;
+    }
+
+    .btn-add-cart:active {
+      transform: scale(0.97);
+      background: var(--border-subtle);
+    }
+
+    .btn-whatsapp-direct {
+      flex: 1.4;
+      height: 48px;
+      border-radius: var(--radius-pill);
+      background: var(--kamby-whatsapp);
+      color: #FFFFFF;
+      font-size: 0.92rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      box-shadow: 0 4px 16px rgba(37, 211, 102, 0.3);
+      transition: transform 160ms;
+    }
+
+    .btn-whatsapp-direct:active {
+      transform: scale(0.97);
+    }
+
+    /* Toast Discreto de Feedback */
+    .toast-msg {
+      position: fixed;
+      top: calc(64px + var(--safe-top));
+      left: 50%;
+      transform: translateX(-50%) translateY(-20px);
+      background: #141619;
+      color: #FFF;
+      font-size: 0.85rem;
+      font-weight: 600;
+      padding: 10px 18px;
+      border-radius: var(--radius-pill);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+      opacity: 0;
+      pointer-events: none;
+      transition: all 260ms var(--spring);
+      z-index: 2000;
+    }
+
+    .toast-msg.show {
+      transform: translateX(-50%) translateY(0);
+      opacity: 1;
+    }
+
+    .gallery-slide.is-placeholder::after {
+      content: "";
+      width: 44px;
+      height: 44px;
+      border: 3px solid var(--border-subtle);
+      border-top-color: var(--kamby-brand-accent);
+      border-radius: 50%;
+      animation: pdp-spin 760ms linear infinite;
+    }
+
+    .pdp-error {
+      max-width: 520px;
+      margin: calc(92px + var(--safe-top)) auto 0;
+      padding: 32px 20px;
+      text-align: center;
+    }
+
+    .pdp-error h1 {
+      font-size: 1.15rem;
+      margin-bottom: 8px;
+    }
+
+    .pdp-error p {
+      color: var(--text-secondary);
+      font-size: 0.9rem;
+      margin-bottom: 18px;
+    }
+
+    .pdp-error a {
+      display: inline-flex;
+      min-height: 44px;
+      padding: 0 18px;
+      align-items: center;
+      border-radius: var(--radius-pill);
+      background: var(--text-main);
+      color: var(--bg-surface);
+      text-decoration: none;
+      font-size: 0.88rem;
+      font-weight: 700;
+    }
+
+    button:disabled {
+      cursor: not-allowed;
+    }
+
+    .sticky-actions-bar.is-disabled {
+      opacity: 0.55;
+      pointer-events: none;
+    }
+
+    @keyframes pdp-spin {
+      to { transform: rotate(360deg); }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        scroll-behavior: auto !important;
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+      }
+    }
+    .header-btn { width: 44px; height: 44px; background: transparent; touch-action: manipulation; }
+    .subscreen-title { font-size: 17px; font-weight: 600; }
+    :focus-visible { outline: 2px solid var(--kamby-brand-primary); outline-offset: 4px; }
+  </style>
+  <link rel="stylesheet" href="navigation.css" />
+  <link rel="stylesheet" href="loading.css">
+  <link rel="stylesheet" href="chrome-fade.css" />
+</head>
+<body>
+
+  <!-- ==========================================================================
+       HEADER CONTEXTUAL DA SUBTELA
+       ========================================================================== -->
+  <header class="subscreen-header" role="banner">
+    <div class="subscreen-bar">
+      <button class="header-btn" onclick="history.back()" aria-label="Voltar">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3">
+          <polyline points="15 18 9 12 15 6"/>
+        </svg>
+      </button>
+
+      <span class="subscreen-title" id="subscreenTitle">Produto</span>
+
+      <button class="header-btn" id="btnShare" aria-label="Partilhar produto">
+        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3">
+          <circle cx="18" cy="5" r="3"/>
+          <circle cx="6" cy="12" r="3"/>
+          <circle cx="18" cy="19" r="3"/>
+          <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/>
+          <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
+        </svg>
+      </button>
+    </div>
+  </header>
+
+  <!-- ==========================================================================
+       CORPO PRINCIPAL DA PÁGINA DE PRODUTO
+       ========================================================================== -->
+  <main class="pdp-container">
+    
+    <!-- Galeria Touch Swipe (Sem Setas Clutter) -->
+    <section class="gallery-viewport" aria-label="Galeria de fotografias">
+      <div class="gallery-track" id="galleryTrack" aria-busy="true"></div>
+      <div class="gallery-counter" id="galleryCounter" aria-live="polite"><span class="app-skeleton app-skeleton--text" role="progressbar" aria-label="A carregar"></span></div>
+    </section>
+
+    <!-- Detalhes do Produto -->
+    <div class="pdp-body">
+      
+      <div class="meta-row">
+        <span class="category-tag" id="categoryTag"></span>
+        <span class="stock-badge" id="stockStatus"></span>
+      </div>
+
+      <h1 class="product-title" id="productTitle"><span class="app-skeleton app-skeleton--text" role="progressbar" aria-label="A carregar"></span></h1>
+
+      <!-- Preço e Unidade -->
+      <div class="price-block">
+        <span class="price-main" id="displayPrice">—</span>
+        <span class="price-unit" id="unitPrice"></span>
+      </div>
+
+      <!-- Loja Vendedora -->
+      <div class="store-card">
+        <div class="store-info">
+          <div class="store-avatar" id="storeAvatar">K</div>
+          <div>
+            <div class="store-name" id="storeName"><span class="app-skeleton app-skeleton--text" role="progressbar" aria-label="A carregar"></span></div>
+            <div class="store-location" id="storeLocation"></div>
+          </div>
+        </div>
+        <button class="btn-view-store" id="btnViewStore" type="button" hidden>Ver loja</button>
+      </div>
+
+      <!-- Seletor de Opções / Variantes (Shopify-Style) -->
+      <div>
+        <div class="section-label">
+          <span id="variantLabel">Escolher opção</span>
+          <span class="selected-opt-name" id="selectedVariantText"></span>
+        </div>
+        <div class="variants-grid" id="variantsGrid" role="radiogroup" aria-label="Opções do produto"></div>
+      </div>
+
+      <!-- Controlo de Quantidade e Subtotal Indicativo -->
+      <div class="quantity-row">
+        <div>
+          <span class="section-label" style="margin:0 0 4px 0;">Quantidade</span>
+          <div class="qty-stepper">
+            <button class="btn-qty" id="btnDec" aria-label="Reduzir quantidade">-</button>
+            <span class="qty-val" id="qtyVal">1</span>
+            <button class="btn-qty" id="btnInc" aria-label="Aumentar quantidade">+</button>
+          </div>
+        </div>
+        <div class="subtotal-calc">
+          <div class="subtotal-label">Subtotal Indicativo</div>
+          <div class="subtotal-val" id="subtotalVal">350 MT</div>
+        </div>
+      </div>
+
+      <!-- Descrição & Detalhes -->
+      <section class="info-card">
+        <h2 class="info-title">Sobre o Produto</h2>
+        <p class="info-desc" id="productDescription"><span class="app-skeleton app-skeleton--text" role="progressbar" aria-label="A carregar"></span></p>
+      </section>
+
+      <!-- Secção "Mais desta loja" (Cross-Sell Simples) -->
+      <section class="recommendations-section" id="recommendationsSection" hidden>
+        <div class="section-label">Mais desta loja</div>
+        <div class="rec-scroll" id="recommendationsTrack"></div>
+      </section>
+
+    </div>
+  </main>
+
+  <!-- ==========================================================================
+       BARRA INFERIOR FIXA DE AÇÃO (DUAL ACTION)
+       ========================================================================== -->
+  <aside class="sticky-actions-bar" role="complementary" aria-label="Ações de compra">
+    <div class="actions-inner">
+      
+      <!-- Botão Secundário: Adicionar ao Carrinho Multi-Loja -->
+      <button class="btn-add-cart" id="btnAddCart" disabled>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+          <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/>
+          <circle cx="9" cy="21" r="1"/>
+          <circle cx="20" cy="21" r="1"/>
+          <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/>
+        </svg>
+        <span>Carrinho</span>
+      </button>
+
+      <!-- Botão Primário: WhatsApp Direct -->
+      <button class="btn-whatsapp-direct" id="btnWhatsapp" disabled>
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91C2.13 13.66 2.59 15.36 3.45 16.86L2.05 22L7.3 20.62C8.75 21.41 10.38 21.83 12.04 21.83C17.5 21.83 21.95 17.38 21.95 11.92C21.95 9.27 20.92 6.78 19.05 4.91C17.18 3.03 14.69 2 12.04 2ZM12.05 20.15C10.57 20.15 9.12 19.75 7.85 19L7.55 18.82L4.43 19.64L5.26 16.6L5.06 16.29C4.24 14.99 3.81 13.47 3.81 11.91C3.81 7.37 7.5 3.68 12.04 3.68C14.25 3.68 16.31 4.54 17.87 6.1C19.42 7.66 20.28 9.72 20.28 11.92C20.28 16.46 16.58 20.15 12.05 20.15ZM16.57 14.36C16.32 14.24 15.1 13.64 14.88 13.56C14.65 13.47 14.49 13.43 14.32 13.68C14.16 13.92 13.69 14.48 13.55 14.64C13.41 14.8 13.26 14.82 13.01 14.7C12.77 14.57 11.98 14.31 11.05 13.48C10.32 12.83 9.83 12.03 9.69 11.78C9.55 11.54 9.67 11.41 9.79 11.29C9.9 11.18 10.04 11 10.16 10.86C10.28 10.72 10.32 10.62 10.4 10.46C10.48 10.3 10.44 10.15 10.38 10.03C10.32 9.91 9.83 8.71 9.63 8.21C9.43 7.73 9.23 7.79 9.08 7.78C8.94 7.78 8.78 7.78 8.62 7.78C8.45 7.78 8.19 7.84 7.96 8.09C7.74 8.33 7.12 8.91 7.12 10.09C7.12 11.27 7.98 12.41 8.1 12.57C8.22 12.73 9.8 15.17 12.22 16.22C12.8 16.47 13.25 16.62 13.6 16.73C14.18 16.92 14.71 16.89 15.13 16.83C15.6 16.76 16.57 16.24 16.78 15.67C16.98 15.1 16.98 14.61 16.92 14.51C16.86 14.41 16.82 14.48 16.57 14.36Z"/>
+        </svg>
+        <span>WhatsApp</span>
+      </button>
+
+    </div>
+  </aside>
+
+  <!-- Notificação Toast -->
+  <div class="toast-msg" id="toastMsg" role="status"></div>
+
+  <script type="module">
+    import {setButtonBusy,showSpinner,showSkeleton} from "./loading.js";
+    import { trackStoreEvent } from "./platform.js";
+    (function initConnectedKambyPDP() {
+      'use strict';
+
+      const CATALOG = Object.freeze({
+        supabaseUrl: 'https://wbjhhkjriqeloiinvbii.supabase.co',
+        publishableKey: 'sb_publishable_9n2oXQLqDuaQNLEHl_Vw6A_7exV-LPl',
+        imageBucket: 'kg-product-images'
+      });
+
+      const elements = {
+        main: document.querySelector('.pdp-container'),
+        actionBar: document.querySelector('.sticky-actions-bar'),
+        subscreenTitle: document.getElementById('subscreenTitle'),
+        galleryTrack: document.getElementById('galleryTrack'),
+        galleryCounter: document.getElementById('galleryCounter'),
+        categoryTag: document.getElementById('categoryTag'),
+        stockStatus: document.getElementById('stockStatus'),
+        productTitle: document.getElementById('productTitle'),
+        displayPrice: document.getElementById('displayPrice'),
+        unitPrice: document.getElementById('unitPrice'),
+        storeAvatar: document.getElementById('storeAvatar'),
+        storeName: document.getElementById('storeName'),
+        storeLocation: document.getElementById('storeLocation'),
+        variantsGrid: document.getElementById('variantsGrid'),
+        variantLabel: document.getElementById('variantLabel'),
+        selectedVariantText: document.getElementById('selectedVariantText'),
+        qtyVal: document.getElementById('qtyVal'),
+        subtotalVal: document.getElementById('subtotalVal'),
+        productDescription: document.getElementById('productDescription'),
+        recommendationsSection: document.getElementById('recommendationsSection'),
+        recommendationsTrack: document.getElementById('recommendationsTrack'),
+        btnDec: document.getElementById('btnDec'),
+        btnInc: document.getElementById('btnInc'),
+        btnAddCart: document.getElementById('btnAddCart'),
+        btnWhatsapp: document.getElementById('btnWhatsapp'),
+        btnShare: document.getElementById('btnShare'),
+        toast: document.getElementById('toastMsg')
+      };
+
+      const state = {
+        product: null,
+        selectedVariant: null,
+        quantity: 1,
+        imageUrls: []
+      };
+
+      const money = new Intl.NumberFormat('pt-MZ', {
+        maximumFractionDigits: 2
+      });
+
+      function formatPrice(priceMinor) {
+        return money.format(Number(priceMinor || 0) / 100) + ' MT';
+      }
+
+      function apiHeaders(extra) {
+        return Object.assign({
+          apikey: CATALOG.publishableKey,
+          Authorization: 'Bearer ' + CATALOG.publishableKey,
+          Accept: 'application/json'
+        }, extra || {});
+      }
+
+      async function catalogueRequest(path, options) {
+        const requestOptions = Object.assign({}, options || {});
+        requestOptions.headers = apiHeaders(requestOptions.headers);
+        const response = await fetch(CATALOG.supabaseUrl + path, requestOptions);
+        if (!response.ok) {
+          throw new Error('Falha no catálogo: ' + response.status);
+        }
+        return response.json();
+      }
+
+      function firstRelation(value) {
+        return Array.isArray(value) ? (value[0] || null) : (value || null);
+      }
+
+      function safeHttpUrl(value) {
+        if (!value) return '';
+        try {
+          const parsed = new URL(value, window.location.origin);
+          return parsed.protocol === 'https:' || parsed.protocol === 'http:'
+            ? parsed.href
+            : '';
+        } catch (_error) {
+          return '';
+        }
+      }
+
+      async function signImage(storagePath) {
+        if (!storagePath) return '';
+        const encodedPath = storagePath
+          .split('/')
+          .map(function encodeSegment(segment) {
+            return encodeURIComponent(segment);
+          })
+          .join('/');
+        const result = await catalogueRequest(
+          '/storage/v1/object/sign/' + CATALOG.imageBucket + '/' + encodedPath,
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ expiresIn: 3600 })
+          }
+        );
+        const relative = result.signedURL || result.signedUrl || '';
+        return relative ? CATALOG.supabaseUrl + '/storage/v1' + relative : '';
+      }
+
+      function showToast(message) {
+        elements.toast.textContent = message;
+        elements.toast.classList.add('show');
+        window.setTimeout(function hideToast() {
+          elements.toast.classList.remove('show');
+        }, 2200);
+      }
+
+      function initials(name) {
+        return String(name || 'K')
+          .trim()
+          .split(/\s+/)
+          .slice(0, 2)
+          .map(function firstLetter(part) { return part.charAt(0); })
+          .join('')
+          .toUpperCase() || 'K';
+      }
+
+      function renderLoadingGallery() {
+        const slide = document.createElement('div');
+        slide.className = 'gallery-slide is-placeholder';
+        showSkeleton(slide,'image');
+        elements.galleryTrack.replaceChildren(slide);
+      }
+
+      function renderError(title, copy) {
+        const section = document.createElement('section');
+        section.className = 'pdp-error';
+        const heading = document.createElement('h1');
+        heading.textContent = title;
+        const message = document.createElement('p');
+        message.textContent = copy;
+        const link = document.createElement('a');
+        link.href = 'index.html';
+        link.textContent = 'Voltar aos produtos';
+        section.append(heading, message, link);
+        elements.main.replaceChildren(section);
+        elements.actionBar.hidden = true;
+        elements.subscreenTitle.textContent = 'Produto indisponível';
+        document.title = 'Kamby — Produto indisponível';
+      }
+
+      async function fetchProduct(productId) {
+        const select = [
+          'id',
+          'store_id',
+          'title',
+          'description',
+          'price_minor',
+          'stock_status',
+          'image_url',
+          'unit_reference',
+          'store:kg_stores!inner(id,name,slug,whatsapp_e164,location,status,is_open)',
+          'category:kg_categories(id,name,slug)',
+          'images:kg_product_images(storage_path,sort_order)',
+          'variants:kg_product_variants(id,sku,option_name,price_minor,in_stock,stock_quantity)'
+        ].join(',');
+        const query = new URLSearchParams({
+          select: select,
+          id: 'eq.' + productId,
+          status: 'eq.published',
+          'kg_stores.status': 'eq.approved',
+          limit: '1'
+        });
+        const rows = await catalogueRequest('/rest/v1/kg_products?' + query.toString());
+        return rows[0] || null;
+      }
+
+      async function normaliseProduct(row) {
+        const store = firstRelation(row.store);
+        const category = firstRelation(row.category);
+        const images = Array.isArray(row.images)
+          ? row.images.slice().sort(function byOrder(a, b) {
+              return Number(a.sort_order) - Number(b.sort_order);
+            })
+          : [];
+        const imageUrls = [];
+        for (const image of images) {
+          try {
+            const signed = await signImage(image.storage_path);
+            if (signed) imageUrls.push(signed);
+          } catch (_error) {
+            // Uma fotografia inválida não bloqueia o restante produto.
+          }
+        }
+        const legacyImage = safeHttpUrl(row.image_url);
+        if (imageUrls.length === 0 && legacyImage) imageUrls.push(legacyImage);
+
+        const variants = (Array.isArray(row.variants) ? row.variants : [])
+          .map(function mapVariant(variant) {
+            return {
+              id: String(variant.id),
+              sku: String(variant.sku || ''),
+              name: String(variant.option_name || ''),
+              priceMinor: Number(variant.price_minor || 0),
+              inStock: Boolean(variant.in_stock)
+            };
+          })
+          .sort(function availableFirst(a, b) {
+            return Number(b.inStock) - Number(a.inStock);
+          });
+
+        if (variants.length === 0) {
+          variants.push({
+            id: '',
+            sku: String(row.id),
+            name: String(row.unit_reference || 'Unidade'),
+            priceMinor: Number(row.price_minor || 0),
+            inStock: row.stock_status !== 'out'
+          });
+        }
+
+        return {
+          id: String(row.id),
+          storeId: store ? String(store.id) : String(row.store_id || ''),
+          title: String(row.title || ''),
+          description: String(row.description || ''),
+          categoryName: category ? String(category.name || '') : '',
+          unitReference: String(row.unit_reference || 'un'),
+          stockStatus: String(row.stock_status || 'available'),
+          store: {
+            name: store ? String(store.name || '') : '',
+            phone: store ? String(store.whatsapp_e164 || '') : '',
+            isOpen: store ? store.is_open !== false : true,
+            location: store ? String(store.location || '') : ''
+          },
+          variants: variants,
+          imageUrls: imageUrls
+        };
+      }
+
+      function renderGallery(product) {
+        elements.galleryTrack.replaceChildren();
+        const urls = product.imageUrls;
+        if (urls.length === 0) {
+          const slide = document.createElement('div');
+          slide.className = 'gallery-slide';
+          const label = document.createElement('span');
+          label.className = 'store-location';
+          label.textContent = 'Sem fotografia';
+          slide.appendChild(label);
+          elements.galleryTrack.appendChild(slide);
+          elements.galleryCounter.hidden = true;
+        } else {
+          const fragment = document.createDocumentFragment();
+          urls.forEach(function addSlide(url, index) {
+            const slide = document.createElement('div');
+            slide.className = 'gallery-slide';
+            const image = document.createElement('img');
+            image.src = url;
+            image.alt = product.title + (urls.length > 1 ? ', fotografia ' + (index + 1) : '');
+            image.decoding = 'async';
+            if (index === 0) image.setAttribute('fetchpriority', 'high');
+            slide.appendChild(image);
+            fragment.appendChild(slide);
+          });
+          elements.galleryTrack.appendChild(fragment);
+          elements.galleryCounter.hidden = false;
+          elements.galleryCounter.textContent = '1 / ' + urls.length;
+        }
+        elements.galleryTrack.setAttribute('aria-busy', 'false');
+      }
+
+      function renderVariants(product) {
+        elements.variantsGrid.replaceChildren();
+        const hasConfiguredVariants = product.variants.some(function hasId(variant) {
+          return Boolean(variant.id);
+        });
+        elements.variantsGrid.parentElement.hidden = !hasConfiguredVariants;
+        if (!hasConfiguredVariants) return;
+
+        const fragment = document.createDocumentFragment();
+        product.variants.forEach(function addVariant(variant) {
+          const button = document.createElement('button');
+          button.type = 'button';
+          button.className = 'variant-chip' +
+            (variant.id === state.selectedVariant.id ? ' active' : '') +
+            (variant.inStock ? '' : ' disabled');
+          button.dataset.variantId = variant.id;
+          button.disabled = !variant.inStock;
+          button.setAttribute('role', 'radio');
+          button.setAttribute('aria-checked', String(variant.id === state.selectedVariant.id));
+          const name = document.createElement('span');
+          name.className = 'variant-name';
+          name.textContent = variant.name;
+          const price = document.createElement('span');
+          price.className = 'variant-price';
+          price.textContent = formatPrice(variant.priceMinor);
+          button.append(name, price);
+          fragment.appendChild(button);
+        });
+        elements.variantsGrid.appendChild(fragment);
+      }
+
+      function updateCalculations() {
+        if (!state.selectedVariant) return;
+        const subtotal = state.selectedVariant.priceMinor * state.quantity;
+        elements.displayPrice.textContent = formatPrice(state.selectedVariant.priceMinor);
+        elements.unitPrice.textContent =
+          formatPrice(state.selectedVariant.priceMinor) + '/' + state.product.unitReference;
+        elements.selectedVariantText.textContent = state.selectedVariant.name;
+        elements.qtyVal.textContent = String(state.quantity);
+        elements.subtotalVal.textContent = formatPrice(subtotal);
+        elements.btnDec.disabled = state.quantity <= 1;
+        elements.btnInc.disabled = state.quantity >= 99;
+        elements.btnAddCart.disabled = !state.selectedVariant.inStock;
+      }
+
+      function renderProduct(product) {
+        state.product = product;
+        state.selectedVariant =
+          product.variants.find(function available(variant) { return variant.inStock; }) ||
+          product.variants[0];
+        document.title = 'Kamby — ' + product.title;
+        elements.subscreenTitle.textContent = product.title;
+        elements.categoryTag.textContent = product.categoryName;
+        elements.productTitle.textContent = product.title;
+        elements.productDescription.textContent =
+          product.description || 'Sem descrição adicional.';
+        elements.storeName.textContent = product.store.name;
+        elements.storeLocation.textContent =
+          (product.store.location ? product.store.location + ' · ' : '') + 'Loja aprovada';
+        elements.storeAvatar.textContent = initials(product.store.name);
+
+        const anyInStock = product.variants.some(function available(variant) {
+          return variant.inStock;
+        });
+        elements.stockStatus.textContent = anyInStock ? 'Disponível' : 'Esgotado';
+        elements.stockStatus.classList.toggle('out-of-stock', !anyInStock);
+        elements.variantLabel.textContent = product.variants.length > 1
+          ? 'Escolher opção'
+          : 'Opção';
+        elements.btnWhatsapp.disabled = !product.store.phone || product.store.isOpen === false;
+        renderGallery(product);
+        renderVariants(product);
+        updateCalculations();
+      }
+
+      async function loadRecommendations(product) {
+        const select = [
+          'id',
+          'title',
+          'price_minor',
+          'image_url',
+          'images:kg_product_images(storage_path,sort_order)'
+        ].join(',');
+        const query = new URLSearchParams({
+          select: select,
+          store_id: 'eq.' + product.storeId,
+          id: 'neq.' + product.id,
+          status: 'eq.published',
+          order: 'created_at.desc',
+          limit: '8'
+        });
+        const rows = await catalogueRequest('/rest/v1/kg_products?' + query.toString());
+        if (!rows.length) return;
+
+        const fragment = document.createDocumentFragment();
+        for (const row of rows) {
+          const link = document.createElement('a');
+          link.className = 'rec-item';
+          link.href = 'product.html?id=' + encodeURIComponent(row.id);
+          const orderedImages = Array.isArray(row.images)
+            ? row.images.slice().sort(function byOrder(a, b) {
+                return Number(a.sort_order) - Number(b.sort_order);
+              })
+            : [];
+          let imageUrl = '';
+          if (orderedImages[0]) {
+            try {
+              imageUrl = await signImage(orderedImages[0].storage_path);
+            } catch (_error) {
+              imageUrl = '';
+            }
+          }
+          if (!imageUrl) imageUrl = safeHttpUrl(row.image_url);
+          if (imageUrl) {
+            const image = document.createElement('img');
+            image.className = 'rec-img';
+            image.src = imageUrl;
+            image.alt = String(row.title || '');
+            image.loading = 'lazy';
+            link.appendChild(image);
+          } else {
+            const placeholder = document.createElement('div');
+            placeholder.className = 'rec-img';
+            link.appendChild(placeholder);
+          }
+          const content = document.createElement('div');
+          content.className = 'rec-content';
+          const name = document.createElement('div');
+          name.className = 'rec-name';
+          name.textContent = String(row.title || '');
+          const price = document.createElement('div');
+          price.className = 'rec-price';
+          price.textContent = formatPrice(row.price_minor);
+          content.append(name, price);
+          link.appendChild(content);
+          fragment.appendChild(link);
+        }
+        elements.recommendationsTrack.replaceChildren(fragment);
+        elements.recommendationsSection.hidden = false;
+      }
+
+      function readCart() {
+        try {
+          const value = JSON.parse(localStorage.getItem('kamby_cart') || '[]');
+          return Array.isArray(value) ? value : [];
+        } catch (_error) {
+          return [];
+        }
+      }
+
+      elements.galleryTrack.addEventListener('scroll', function updateCounter() {
+        if (!state.product || state.product.imageUrls.length < 2) return;
+        const width = elements.galleryTrack.offsetWidth || 1;
+        const current = Math.round(elements.galleryTrack.scrollLeft / width) + 1;
+        elements.galleryCounter.textContent =
+          current + ' / ' + state.product.imageUrls.length;
+      }, { passive: true });
+
+      elements.variantsGrid.addEventListener('click', function selectVariant(event) {
+        const button = event.target.closest('.variant-chip');
+        if (!button || button.disabled || !state.product) return;
+        const selected = state.product.variants.find(function byId(variant) {
+          return variant.id === button.dataset.variantId;
+        });
+        if (!selected) return;
+        state.selectedVariant = selected;
+        renderVariants(state.product);
+        updateCalculations();
+      });
+
+      elements.btnDec.addEventListener('click', function decrement() {
+        if (state.quantity <= 1) return;
+        state.quantity -= 1;
+        updateCalculations();
+      });
+
+      elements.btnInc.addEventListener('click', function increment() {
+        if (state.quantity >= 99) return;
+        state.quantity += 1;
+        updateCalculations();
+      });
+
+      elements.btnAddCart.addEventListener('click', function addToCart() {
+        if (!state.product || !state.selectedVariant || !state.selectedVariant.inStock) return;
+        const cart = readCart();
+        const existing = cart.find(function sameLine(item) {
+          return item.productId === state.product.id &&
+            String(item.variantId || '') === state.selectedVariant.id;
+        });
+        if (existing) {
+          existing.quantity = Math.min(99, Number(existing.quantity || 0) + state.quantity);
+        } else {
+          cart.push({
+            productId: state.product.id,
+            variantId: state.selectedVariant.id || null,
+            storeId: state.product.storeId,
+            storeName: state.product.store.name,
+            storePhone: state.product.store.phone,
+            storeLocation: state.product.store.location,
+            productTitle: state.product.title,
+            variantName: state.selectedVariant.name,
+            sku: state.selectedVariant.sku,
+            priceMinor: state.selectedVariant.priceMinor,
+            imageUrl: state.product.imageUrls[0] || '',
+            quantity: state.quantity,
+            addedAt: new Date().toISOString()
+          });
+        }
+        localStorage.setItem('kamby_cart', JSON.stringify(cart));
+        window.dispatchEvent(new CustomEvent('kamby:cart-updated', {
+          detail: { productId: state.product.id }
+        }));
+        showToast('Produto adicionado ao carrinho');
+      });
+
+      elements.btnWhatsapp.addEventListener('click', function openWhatsapp() {
+        if (!state.product || !state.selectedVariant || !state.product.store.phone || state.product.store.isOpen === false) return;
+        trackStoreEvent(state.product.storeId, 'whatsapp_click');
+        const subtotal = state.selectedVariant.priceMinor * state.quantity;
+        const optionLine = state.selectedVariant.id
+          ? '\nOpção: ' + state.selectedVariant.name + ' (' + state.selectedVariant.sku + ')'
+          : '';
+        const message =
+          'Olá, encontrei este produto no Kamby:\n\n' +
+          '*' + state.product.title + '*' +
+          optionLine +
+          '\nQuantidade: ' + state.quantity +
+          '\nSubtotal estimado: ' + formatPrice(subtotal) +
+          '\n\nGostaria de confirmar a disponibilidade e combinar o pagamento e a entrega.';
+        const phone = state.product.store.phone.replace(/\D/g, '');
+        window.open(
+          'https://wa.me/' + phone + '?text=' + encodeURIComponent(message),
+          '_blank',
+          'noopener,noreferrer'
+        );
+      });
+
+      elements.btnShare.addEventListener('click', async function shareProduct() {
+        if (!state.product) return;
+        const data = {
+          title: state.product.title,
+          text: 'Vê este produto no Kamby: ' + state.product.title,
+          url: window.location.href
+        };
+        if (navigator.share) {
+          try {
+            await navigator.share(data);
+            return;
+          } catch (error) {
+            if (error && error.name === 'AbortError') return;
+          }
+        }
+        try {
+          await navigator.clipboard.writeText(window.location.href);
+          showToast('Ligação copiada');
+        } catch (_error) {
+          showToast('Não foi possível copiar a ligação');
+        }
+      });
+
+      async function loadProduct() {
+        renderLoadingGallery();
+        const productId = new URLSearchParams(window.location.search).get('id');
+        if (!productId) {
+          renderError(
+            'Produto não identificado',
+            'Abre o produto a partir do catálogo Kamby.'
+          );
+          return;
+        }
+        try {
+          const row = await fetchProduct(productId);
+          if (!row) {
+            renderError(
+              'Produto indisponível',
+              'Este produto não está publicado ou a loja já não está disponível.'
+            );
+            return;
+          }
+          const product = await normaliseProduct(row);
+          renderProduct(product);
+          loadRecommendations(product).catch(function ignoreRecommendationError() {
+            elements.recommendationsSection.hidden = true;
+          });
+        } catch (error) {
+          console.error('Falha ao carregar o produto Kamby.', error);
+          renderError(
+            'Não foi possível carregar o produto',
+            'Verifica a tua ligação e tenta novamente.'
+          );
+        }
+      }
+
+      loadProduct();
+    })();
+  </script>
+</body>
+</html>

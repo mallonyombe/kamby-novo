@@ -1,0 +1,1 @@
+{"name":"kamby-database-tests","private":true,"type":"module","scripts":{"test":"node verify-pglite.mjs && node verify-hosted-generator.mjs"},"devDependencies":{"@electric-sql/pglite":"0.3.14"}}

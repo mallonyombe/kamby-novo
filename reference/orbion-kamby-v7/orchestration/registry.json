@@ -1,0 +1,217 @@
+{
+  "version": "4.0",
+  "agents": [
+    {
+      "id": "FE-01",
+      "name": "Frontend Architecture",
+      "prompt": "agents/fe-01-frontend-architecture.md",
+      "domain": "frontend",
+      "write_access": false
+    },
+    {
+      "id": "FE-02",
+      "name": "Visual Engineering",
+      "prompt": "agents/fe-02-visual-engineering.md",
+      "domain": "frontend",
+      "write_access": false
+    },
+    {
+      "id": "FE-03",
+      "name": "Product UI",
+      "prompt": "agents/fe-03-product-ui.md",
+      "domain": "frontend",
+      "write_access": false
+    },
+    {
+      "id": "FE-04",
+      "name": "UX Research",
+      "prompt": "agents/fe-04-ux-research.md",
+      "domain": "frontend",
+      "write_access": false
+    },
+    {
+      "id": "FE-05",
+      "name": "Motion Engineering",
+      "prompt": "agents/fe-05-motion-engineering.md",
+      "domain": "frontend",
+      "write_access": false
+    },
+    {
+      "id": "FE-06",
+      "name": "Web Performance",
+      "prompt": "agents/fe-06-web-performance.md",
+      "domain": "frontend",
+      "write_access": false
+    },
+    {
+      "id": "BE-01",
+      "name": "Supabase Platform",
+      "prompt": "agents/be-01-supabase-platform.md",
+      "domain": "backend",
+      "write_access": false
+    },
+    {
+      "id": "BE-02",
+      "name": "PostgreSQL",
+      "prompt": "agents/be-02-postgresql.md",
+      "domain": "backend",
+      "write_access": false
+    },
+    {
+      "id": "BE-03",
+      "name": "Backend Systems",
+      "prompt": "agents/be-03-backend-systems.md",
+      "domain": "backend",
+      "write_access": false
+    },
+    {
+      "id": "BE-04",
+      "name": "Application Security",
+      "prompt": "agents/be-04-application-security.md",
+      "domain": "backend",
+      "write_access": false
+    },
+    {
+      "id": "BE-05",
+      "name": "Scalability",
+      "prompt": "agents/be-05-scalability.md",
+      "domain": "backend",
+      "write_access": false
+    },
+    {
+      "id": "BE-06",
+      "name": "SRE & Quality",
+      "prompt": "agents/be-06-sre-and-quality.md",
+      "domain": "backend",
+      "write_access": false
+    },
+    {
+      "id": "ORB-13",
+      "name": "Principal Software Architect",
+      "prompt": "agents/orb-13.md",
+      "domain": "cross-functional",
+      "write_access": false
+    },
+    {
+      "id": "ORB-14",
+      "name": "AI & Machine Learning",
+      "prompt": "agents/orb-14.md",
+      "domain": "cross-functional",
+      "write_access": false
+    },
+    {
+      "id": "ORB-15",
+      "name": "Data Engineering & Analytics",
+      "prompt": "agents/orb-15.md",
+      "domain": "cross-functional",
+      "write_access": false
+    },
+    {
+      "id": "ORB-16",
+      "name": "Platform & Developer Experience",
+      "prompt": "agents/orb-16.md",
+      "domain": "cross-functional",
+      "write_access": false
+    },
+    {
+      "id": "ORB-17",
+      "name": "Advanced Quality & Testing",
+      "prompt": "agents/orb-17.md",
+      "domain": "cross-functional",
+      "write_access": false
+    },
+    {
+      "id": "ORB-18",
+      "name": "Product Strategy & Discovery",
+      "prompt": "agents/orb-18.md",
+      "domain": "cross-functional",
+      "write_access": false
+    },
+    {
+      "id": "ORB-19",
+      "name": "Accessibility & Inclusive Design",
+      "prompt": "agents/orb-19.md",
+      "domain": "cross-functional",
+      "write_access": false
+    },
+    {
+      "id": "ORB-20",
+      "name": "Technical Documentation",
+      "prompt": "agents/orb-20.md",
+      "domain": "cross-functional",
+      "write_access": false
+    },
+    {
+      "id": "BR-21",
+      "name": "Brand Strategy Director",
+      "prompt": "agents/br-21.md",
+      "domain": "brand",
+      "write_access": false
+    },
+    {
+      "id": "BR-22",
+      "name": "Logo & Symbol Design Director",
+      "prompt": "agents/br-22.md",
+      "domain": "brand",
+      "write_access": false
+    },
+    {
+      "id": "BR-23",
+      "name": "Visual Identity & Art Director",
+      "prompt": "agents/br-23.md",
+      "domain": "brand",
+      "write_access": false
+    },
+    {
+      "id": "BR-24",
+      "name": "Typography & Colour Systems Director",
+      "prompt": "agents/br-24.md",
+      "domain": "brand",
+      "write_access": false
+    },
+    {
+      "id": "BR-25",
+      "name": "UX Writing & Microcopy Director",
+      "prompt": "agents/br-25.md",
+      "domain": "brand",
+      "write_access": false
+    },
+    {
+      "id": "BR-26",
+      "name": "Content Design & Language Systems Lead",
+      "prompt": "agents/br-26.md",
+      "domain": "brand",
+      "write_access": false
+    },
+    {
+      "id": "BR-27",
+      "name": "Brand Copywriting & Campaign Director",
+      "prompt": "agents/br-27.md",
+      "domain": "brand",
+      "write_access": false
+    },
+    {
+      "id": "BR-28",
+      "name": "Brand Experience & Creative Systems Director",
+      "prompt": "agents/br-28.md",
+      "domain": "brand",
+      "write_access": false
+    },
+    {
+      "id": "BR-29",
+      "name": "Brand Motion & Sonic Identity Lead",
+      "prompt": "agents/br-29.md",
+      "domain": "brand",
+      "write_access": false
+    },
+    {
+      "id": "BR-30",
+      "name": "Consumer Psychology & Brand Research Lead",
+      "prompt": "agents/br-30.md",
+      "domain": "brand",
+      "write_access": false
+    }
+  ],
+  "orchestrator": "coordination-only",
+  "default_permissions": "read-only"
+}

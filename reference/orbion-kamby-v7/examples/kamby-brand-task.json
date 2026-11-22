@@ -1,0 +1,22 @@
+{
+  "task_id": "ORB-4001",
+  "project": "kamby",
+  "owner": "BR-21",
+  "reviewers": [
+    "BR-25",
+    "FE-03",
+    "ORB-19"
+  ],
+  "objective": "Preparar brief de marca e linguagem do Kamby sem modificar produção",
+  "acceptance_criteria": [
+    "hipóteses separadas de evidências",
+    "escopo de ícones, cores, motion e microcopy definido",
+    "nenhum asset de terceiros copiado"
+  ],
+  "permissions": {
+    "read": true,
+    "write": false,
+    "deploy": false,
+    "destructive": false
+  }
+}

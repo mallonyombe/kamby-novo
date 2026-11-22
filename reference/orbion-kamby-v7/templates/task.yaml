@@ -1,0 +1,20 @@
+task_id: ORB-0001
+project: example
+owner: FE-01
+reviewers: [BE-04, BE-06]
+objective: ""
+repository: ""
+base_branch: main
+scope:
+  allowed_paths: []
+  prohibited_paths: []
+requirements: []
+acceptance_criteria: []
+dependencies: []
+environment: development
+risk_level: medium
+permissions:
+  read: true
+  write: false
+  deploy: false
+  destructive_operations: false

@@ -1,0 +1,5 @@
+-- Contract source: execute versioned migrations in filename order.
+-- 20261111070949_initial_greenfield.sql is immutable historical baseline.
+-- 20261111091750_managed_store_creation.sql enforces management-created stores.
+-- This file deliberately has no executable schema: keeping another full proposal
+-- beside applied migrations would allow stale self-service permissions to drift.
