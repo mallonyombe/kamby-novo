@@ -4,7 +4,7 @@ import {canShowAdminEntry} from './account-access.js';
 import {initials} from './merchant-domain.js';
 import {profileValues,passwordError,readTheme} from './settings-domain.js';
 import {applyTheme} from './theme.js';
-const paths={user:'M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2 M12 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8',heart:'M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1.1-1.1a5.5 5.5 0 0 0-7.8 7.8L12 21l8.8-8.6a5.5 5.5 0 0 0 0-7.8Z',bookmark:'M5 3h14v18l-7-5-7 5Z',shield:'m12 3 9 4v6c0 5-9 8-9 8s-9-3-9-8V7Z M8 12l3 3 5-6',bell:'M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9 M10 21h4',sun:'M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8 M12 2v2m0 16v2M2 12h2m16 0h2M5 5l2 2m10 10 2 2M5 19l2-2M17 7l2-2',help:'M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20 M9 9a3 3 0 0 1 6 0c0 2-3 2-3 5m0 3v1',info:'M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20 M12 10v7m0-11v1',key:'M9 15a6 6 0 1 0-6-6 6 6 0 0 0 6 6 M13 13l8 8m-3-3 3-3',device:'M4 3h16v13H4Z M8 21h8m-4-5v5',chevron:'m9 6 6 6-6 6'};
+const paths={gear:'M10 2h4l.5 3 2 .9 2.7-1.4 2 3.5-2.3 2v2.3l2.3 2-2 3.5-2.7-1.4-2 .9-.5 3h-4l-.5-3-2-.9-2.7 1.4-2-3.5 2.3-2V10L2.8 8l2-3.5 2.7 1.4 2-.9Z M12 8.5a2.8 2.8 0 1 0 0 5.6 2.8 2.8 0 0 0 0-5.6Z',user:'M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2 M12 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8',heart:'M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1.1-1.1a5.5 5.5 0 0 0-7.8 7.8L12 21l8.8-8.6a5.5 5.5 0 0 0 0-7.8Z',bookmark:'M5 3h14v18l-7-5-7 5Z',shield:'m12 3 9 4v6c0 5-9 8-9 8s-9-3-9-8V7Z M8 12l3 3 5-6',bell:'M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9 M10 21h4',sun:'M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8 M12 2v2m0 16v2M2 12h2m16 0h2M5 5l2 2m10 10 2 2M5 19l2-2M17 7l2-2',help:'M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20 M9 9a3 3 0 0 1 6 0c0 2-3 2-3 5m0 3v1',info:'M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20 M12 10v7m0-11v1',key:'M9 15a6 6 0 1 0-6-6 6 6 0 0 0 6 6 M13 13l8 8m-3-3 3-3',device:'M4 3h16v13H4Z M8 21h8m-4-5v5',chevron:'m9 6 6 6-6 6'};
 function icon(name){const n=document.createElementNS('http://www.w3.org/2000/svg','svg');n.setAttribute('viewBox','0 0 24 24');n.setAttribute('fill','none');n.setAttribute('stroke','currentColor');n.setAttribute('aria-hidden','true');n.classList.add('settings-menu-icon');const p=document.createElementNS(n.namespaceURI,'path');p.setAttribute('d',paths[name]||paths.info);n.append(p);return n;}
 const node=(tag,text,cls)=>{const n=document.createElement(tag);if(text!==undefined)n.textContent=text;if(cls)n.className=cls;return n;};
 function button(copy,cls,action){const b=node('button',copy,cls);b.type='button';if(action)b.addEventListener('click',action);return b;}
@@ -17,7 +17,7 @@ export function setupSettings({getAccount,loadAccount,openSubscreen,closeSubscre
  let savedFrame = 0;
  let afterSignIn = '';
  const privateScreens=['pessoais','actividade','guardados','seguranca','palavra-passe','sessoes','notificacoes','encerramento'];
- const titles={entrar:'Iniciar sessão',pessoais:'Dados pessoais',actividade:'Contactos',guardados:'Guardados',seguranca:'Segurança e acesso','palavra-passe':'Palavra-passe',sessoes:'Sessões',notificacoes:'Notificações',encerramento:'Encerramento da conta',aparencia:'Aparência',ajuda:'Ajuda e suporte',sobre:'Sobre o Kamby',recuperacao:'Recuperar acesso'};
+ const titles={preferencias:'Definições',entrar:'Iniciar sessão',pessoais:'Dados pessoais',actividade:'Contactos',guardados:'Guardados',seguranca:'Segurança e acesso','palavra-passe':'Palavra-passe',sessoes:'Sessões',notificacoes:'Notificações',encerramento:'Encerramento da conta',aparencia:'Aparência',ajuda:'Ajuda e suporte',sobre:'Sobre o Kamby',recuperacao:'Recuperar acesso'};
  function notice(copy){$('settingsScreenNotice').textContent=copy;$('settingsScreenNotice').hidden=!copy;}
  function row(name,sub,kind,target,disabled=false){const b=button('','profile-menu-item',()=>{returnFocus=target;open(target);});b.dataset.settingsTarget=target;b.append(icon(kind));const c=node('span',undefined,'profile-menu-copy');c.append(node('span',name,'profile-menu-label'));if(sub)c.append(node('span',sub,'profile-menu-sub'));b.append(c,icon('chevron'));b.disabled=disabled;return b;}
  function confirm(title,copy,accept,action){const dialog=$('settingsConfirmDialog');$('settingsConfirmTitle').textContent=title;$('settingsConfirmCopy').textContent=copy;$('settingsConfirmAccept').textContent=accept;$('settingsConfirmAccept').onclick=()=>{dialog.close();action();};dialog.showModal();}
@@ -43,7 +43,7 @@ export function setupSettings({getAccount,loadAccount,openSubscreen,closeSubscre
    const link=node('a',a.access.adminMfaRequired?'Administração · confirmar segurança':'Abrir administração','profile-menu-item');link.href='admin.html';link.dataset.accountAdmin='true';work.append(link);
   }
   const publicMenu = $('settingsPublicMenu');
-  publicMenu.replaceChildren(row('Definições', null, 'sun', 'preferencias'), row('Ajuda', null, 'help', 'ajuda'));
+  publicMenu.replaceChildren(row('Definições', null, 'gear', 'preferencias'), row('Ajuda', null, 'help', 'ajuda'));
   if (!a.user) publicMenu.prepend(row('Aparência', null, 'sun', 'aparencia'));
   if (a.user && !view.hidden && screen === 'entrar') {
    const destination = afterSignIn;
