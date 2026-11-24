@@ -228,7 +228,7 @@ html:has(.admin-shell[data-subpage="true"]) {overscroll-behavior-x:contain}
 .admin-detail-fields input:not([type="checkbox"]) {width:100%;min-height:44px;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--input);}
 .admin-detail-fields label {display:grid;gap:8px;}
 
-.admin-topbar {justify-content:flex-start;}
+.admin-topbar {justify-content:flex-end;}
 .admin-identity-form {display:grid;gap:18px;padding:20px;border-radius:16px;background:var(--surface);border:1px solid var(--line);}
 .admin-identity-form .field {margin:0;}
 .entity-profile {display:flex;flex-direction:column;align-items:center;gap:12px;margin:8px 0 24px;text-align:center;}

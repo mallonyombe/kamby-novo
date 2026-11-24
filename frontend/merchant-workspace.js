@@ -31,7 +31,7 @@ export function setupWorkspace({state,composer,onChanged,onStoreChanged,onTerms}
  }
  const exit=el('a','store-section-link','Voltar ao perfil');exit.href='#perfil';exit.onclick=()=>navigationDrawer.close();navigationDrawer.append(exit);
  document.body.append(navigationDrawer);
- const menu=el('button','pdp-back-btn');menu.type='button';menu.setAttribute('aria-label','Abrir menu da loja');menu.setAttribute('aria-controls',navigationDrawer.id);menu.setAttribute('aria-expanded','false');menu.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg>';
+ const menu=el('button','pdp-back-btn');menu.id='merchantMenuTrigger';menu.type='button';menu.setAttribute('aria-label','Abrir menu da loja');menu.setAttribute('aria-controls',navigationDrawer.id);menu.setAttribute('aria-expanded','false');menu.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg>';
  menu.onclick=()=>{navigationDrawer.showModal();menu.setAttribute('aria-expanded','true');};
  navigationDrawer.addEventListener('close',()=>{menu.setAttribute('aria-expanded','false');menu.focus({preventScroll:true});});
  const header=view.querySelector('.pdp-nav-content');header.prepend(menu);
