@@ -1,3 +1,6 @@
+import {sellerDraft} from './seller-draft.js';
+import {openSellerSetup as showSellerSetup} from './seller-setup.js';
+import {el,icon} from './merchant-ui.js';
 import {canPrepareStore} from './merchant-domain.js';
 import {setButtonBusy,showSpinner,showSkeleton} from "./loading.js";
 import { platform } from './platform.js';
@@ -29,12 +32,20 @@ export function setupMerchant(hooks) {
       text('profileLocation','');byId('profileLocation').hidden=true;
     }
     const container=byId('profileMerchantStores'); container.replaceChildren();
-    byId('profileMerchantAccess').hidden=!state.user || !state.stores.length || state.phase!=='ready' || !navigator.onLine;
+    byId('profileMerchantAccess').hidden=!state.user || !state.access?.merchant || state.phase!=='ready' || !navigator.onLine;
+    if(state.access?.sellerOnboarding){
+      const action=el('button','profile-menu-item');
+      action.type='button';
+      action.innerHTML=icon('store');
+      action.append(el('span','profile-menu-label','Criar a minha loja'));
+      action.onclick=()=>openSellerSetup();
+      container.append(action);
+    }
     state.stores.forEach(store => {
       const banner=document.createElement('div'); banner.className='merchant-access-banner';
       const meta=document.createElement('div');
       const name=document.createElement('h3'); name.textContent=store.name;
-      const location=document.createElement('p'); location.textContent=({draft:'Em preparação',pending:'Em análise',suspended:'Suspensa',closed:'Encerrada'}[store.status]||store.location||'A tua loja no Kamby');
+      const location=document.createElement('p'); location.textContent=({draft:'Em preparação',pending:'Em preparação',suspended:'Suspensa',closed:'Encerrada'}[store.status]||store.location||'A tua loja no Kamby');
       meta.append(name,location);
       const button=document.createElement('button'); button.type='button'; button.className='btn-enter-merchant';
       button.textContent=['draft','pending'].includes(store.status)?'Preparar':'Gerir'; button.setAttribute('aria-label',button.textContent+' '+store.name);
@@ -43,6 +54,16 @@ export function setupMerchant(hooks) {
     });
     if(state.phase==='loading'){showSkeleton(byId('profileName'));showSkeleton(byId('profileContact'));showSkeleton(byId('profileAvatar'),'image');}
     settings?.sync();
+  }
+
+  function openSellerSetup(store=null,updateHistory=true){
+    if(!state.user||(!store&&!state.access?.sellerOnboarding)||!navigator.onLine)return;
+    const userId=state.user.id;
+    showSellerSetup({
+      platform,store,userId,isCurrent:()=>state.user?.id===userId,
+      onClose:()=>{if(!updateHistory&&view.hidden&&location.hash.startsWith('#lojista/'))hooks.navigate('perfil');},
+      onReady:id=>void openMerchant(id,updateHistory,true,userId)
+    });
   }
 
   function loadAccount() {
@@ -108,7 +129,7 @@ export function setupMerchant(hooks) {
     byId('btnAccountSignOut').disabled=true;setButtonBusy(byId('btnAccountSignOut'),true);
     let error;try{({error}=await platform.auth.signOut({scope:'local'}));}catch{error=true;}finally{setButtonBusy(byId('btnAccountSignOut'),false);byId('btnAccountSignOut').disabled=false;}
     if(error) { message('profileNotice','Não foi possível terminar a sessão. Tenta novamente.'); return; }
-    ++state.accountRequest; state.user=null;state.access=null;state.profile=null;state.phase='guest'; state.stores=[];settings?.clear();settings?.close(true); closeMerchant(false);purgeMerchant(); renderProfile();
+    ++state.accountRequest; byId('sellerSetup')?.close();state.user=null;state.access=null;state.profile=null;state.phase='guest'; state.stores=[];settings?.clear();settings?.close(true); closeMerchant(false);purgeMerchant(); renderProfile();
     message('profileNotice','Sessão terminada.');
   });
 
@@ -117,25 +138,31 @@ export function setupMerchant(hooks) {
   byId('btnClearLocalData').addEventListener('click',clearLocalSession);
   byId('btnCancelLocalClear').addEventListener('click',()=>dialog.close());
   byId('btnConfirmLocalClear').addEventListener('click',()=>{
-    try { hooks.clearLocalData(); dialog.close(); renderProfile(); message('settingsScreenNotice','Carrinho e pesquisas recentes limpos.'); }
+    try { hooks.clearLocalData(); dialog.close(); renderProfile(); message('settingsScreenNotice','Dados locais limpos.'); }
     catch { dialog.close(); message('settingsScreenNotice','Não foi possível limpar os dados neste dispositivo.'); }
   });
   window.clearLocalSession=clearLocalSession;
 
   function storeState() {
     const store=state.store;if(!store)return;byId('merchantHeaderTitle').textContent=store.name;
-    text('merchantStoreName',store.name);text('merchantStoreAvatar',initials(store.name));text('merchantStoreLocation',store.location||'');text('merchantStoreContact',store.whatsapp_e164||'');
+    text('merchantStoreName',store.name);text('merchantStoreLocation',store.location||'');text('merchantStoreContact',store.whatsapp_e164||'');
     const button=byId('btnToggleStoreStatus');button.textContent=store.status==='approved'?(store.is_open?'Aberta':'Fechada'):'Indisponível';button.classList.toggle('closed',!store.is_open||store.status!=='approved');button.setAttribute('aria-pressed',String(store.is_open));button.setAttribute('aria-label',store.is_open?'Fechar loja':'Abrir loja');button.disabled=state.busy||store.status!=='approved';setButtonBusy(button,state.busy);workspace.syncStoreStatus();
   }
   const composer=setupProductComposer({getStore:()=>view.hidden?null:state.store,onPublished:async(id,storeId)=>{await hooks.catalogueChanged(id);if(!view.hidden&&state.store?.id===storeId)await workspace.load();},onFeedback:copy=>message('merchantFeedback',copy)});
-  const workspace=setupWorkspace({state,composer,onChanged:hooks.catalogueChanged,onStoreChanged:store=>{state.stores=state.stores.map(s=>s.id===store.id?store:s);storeState();renderProfile();}});
+  const workspace=setupWorkspace({state,composer,onTerms:store=>openSellerSetup(store),onChanged:hooks.catalogueChanged,onStoreChanged:store=>{state.stores=state.stores.map(s=>s.id===store.id?store:s);storeState();renderProfile();}});
   const loadMerchantData=()=>workspace.load();
 
-  async function openMerchant(storeId,updateHistory=true) {
+  async function openMerchant(storeId,updateHistory=true,termsVerified=false,expectedUser=null) {
+    const entry=location.hash;
     await loadAccount();
+    if(location.hash!==entry||(expectedUser&&expectedUser!==state.user?.id))return false;
     const store=state.stores.find(item=>item.id===storeId);
     if(!state.user || !store) { hooks.navigate('perfil');await loadAccount();message('profileNotice',state.user?'Esta conta não tem acesso a esta loja.':'Inicia sessão para aceder à tua loja.');return false; }
     if(!view.hidden&&state.store?.id===store.id){return true;}
+    if(!termsVerified&&['draft','pending'].includes(store.status)){
+      openSellerSetup(store,updateHistory);
+      return false;
+    }
     workspace.reset();hooks.openSubscreen();state.store=store;view.hidden=false;view.classList.add('active');view.scrollTop=0;
     document.title=store.name+' · Gestão · Kamby';storeState();message('merchantFeedback','');
     if(!canPrepareStore(store)) message('merchantFeedback','A gestão desta loja está indisponível. Contacta a administração.');
@@ -149,7 +176,7 @@ export function setupMerchant(hooks) {
     document.title='Definições · Kamby';
     if(updateHistory) history.replaceState(null,'','#definicoes');
   }
-  function purgeMerchant(){workspace.reset();state.store=null;state.products=[];byId('merchantProductsList').replaceChildren();for(const id of ['merchantStoreName','merchantStoreLocation','merchantStoreContact','merchantStoreAvatar','kpiStoreViews','kpiWhatsAppClicks','kpiProductsCount','merchantMetricsTime','merchantCatalogCount','merchantFeedback'])byId(id).textContent='';byId('accountIdentity').value='';composer.clear();}
+  function purgeMerchant(){workspace.reset();state.store=null;state.products=[];byId('merchantProductsList').replaceChildren();for(const id of ['merchantStoreName','merchantStoreLocation','merchantStoreContact','merchantCatalogCount','merchantFeedback'])byId(id).textContent='';byId('accountIdentity').value='';composer.clear();}
   byId('btnBackFromMerchant').addEventListener('click',async()=>{
     if(!await workspace.canLeave())return;
     if(history.state?.kambyMerchant) history.back();else closeMerchant();
@@ -178,9 +205,12 @@ export function setupMerchant(hooks) {
     } catch { message('merchantFeedback','Não foi possível alterar a abertura. Actualiza o catálogo e tenta novamente.'); }
     finally { state.busy=false;storeState(); }
   });
-  settings=setupSettings({savedProducts:hooks.savedProducts,renderProductCard:hooks.renderProductCard,getAccount:()=>state,loadAccount,openSubscreen:hooks.openSubscreen,closeSubscreen:hooks.closeSubscreen,navigate:hooks.navigate});
-  platform.auth.onAuthStateChange((event,session)=>{++state.accountRequest;if(event==='SIGNED_OUT'||(state.user&&session?.user?.id!==state.user.id)){state.user=null;state.access=null;state.profile=null;state.phase='guest';state.stores=[];settings.clear();settings.close(true);closeMerchant(false);purgeMerchant();renderProfile();}setTimeout(async()=>{if(accountPending)await accountPending;await loadAccount();if(event==='PASSWORD_RECOVERY')settings.recovery();},0);});
+  settings=setupSettings({openSellerSetup,savedProducts:hooks.savedProducts,renderProductCard:hooks.renderProductCard,getAccount:()=>state,loadAccount,openSubscreen:hooks.openSubscreen,closeSubscreen:hooks.closeSubscreen,navigate:hooks.navigate});
+  platform.auth.onAuthStateChange((event,session)=>{++state.accountRequest;if(event==='SIGNED_OUT'||(state.user&&session?.user?.id!==state.user.id)){if(state.user)sellerDraft(state.user.id).clear();byId('sellerSetup')?.close();state.user=null;state.access=null;state.profile=null;state.phase='guest';state.stores=[];settings.clear();settings.close(true);closeMerchant(false);purgeMerchant();renderProfile();}setTimeout(async()=>{if(accountPending)await accountPending;await loadAccount();if(event==='PASSWORD_RECOVERY')settings.recovery();},0);});
   window.addEventListener('kamby:cart-updated',renderProfile);
+  document.addEventListener('visibilitychange',()=>{
+    if(!document.hidden&&state.user&&state.phase==='ready')void loadAccount();
+  });
   renderProfile(); loadAccount();
   return { renderProfile, loadAccount, open:openMerchant, close:closeMerchant, isOpen:()=>!view.hidden, canLeave:workspace.canLeave, settings };
 }

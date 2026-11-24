@@ -37,7 +37,7 @@ body[data-view="lojas"] .feed-container,body[data-view="carrinho"] .feed-contain
   isolation:isolate;bottom:0;width:100%;max-width:none;padding:7px max(16px,calc((100% - 450px)/2)) calc(12px + var(--safe-bottom));background:transparent;border:0;border-radius:0;box-shadow:none;overflow:visible;
  }
  .merchant-own-nav::before{content:"";position:absolute;inset:calc(-1 * var(--chrome-fade)) 0 0;z-index:-1;pointer-events:none;background:linear-gradient(0deg,rgba(var(--chrome-edge-rgb),.98) 0%,rgba(var(--chrome-edge-rgb),.90) calc(100% - 40px),rgba(var(--chrome-edge-rgb),.40) calc(100% - 16px),rgba(var(--chrome-edge-rgb),0) 100%);}
- #adminMain{padding-top:calc(24px + var(--chrome-fade));}
+ #adminMain{padding-top:18px;}
 }
 /* An opaque fallback follows the device's explicit accessibility preference. */
 @media(prefers-reduced-transparency:reduce),(prefers-contrast:more),(forced-colors:active){

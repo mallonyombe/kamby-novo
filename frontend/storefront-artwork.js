@@ -11,8 +11,8 @@ const referenceArtwork = {
 export function resolveStoreArtwork(store) {
   const reference = store.isTest ? referenceArtwork[store.id] : null;
   return {
-    cover: store.bannerUrl || (reference ? new URL('./' + reference.cover, import.meta.url).href : ''),
-    avatar: store.logoUrl || (reference ? new URL('./' + reference.avatar, import.meta.url).href : ''),
+    cover: store.bannerUrl || (reference ? '/' + reference.cover : ''),
+    avatar: store.logoUrl || (reference ? '/' + reference.avatar : ''),
     coverPosition: store.bannerUrl ? '50% 50%' : reference?.coverPosition || '50% 50%',
     avatarPosition: store.logoUrl ? '50% 50%' : reference?.avatarPosition || '50% 50%',
     avatarFit: store.logoUrl ? 'contain' : 'cover'

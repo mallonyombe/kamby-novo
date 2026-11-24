@@ -1,7 +1,7 @@
-name: Verificação do backend Kamby
+name: Verificação do Kamby
 on: [push, pull_request]
 jobs:
-  database:
+  validar:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -9,8 +9,12 @@ jobs:
         with:
           node-version: 22
           cache: npm
-          cache-dependency-path: supabase/tests/package-lock.json
+          cache-dependency-path: |
+            package-lock.json
+            supabase/tests/package-lock.json
+      - run: npm ci
       - run: npm ci --prefix supabase/tests
+      - run: npm run test:frontend
       - run: npm test
       - run: npm run build
       - run: python3 reference/orbion-kamby-v7/tests/validate.py

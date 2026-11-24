@@ -9,7 +9,7 @@ if(/delete\s+from\s+storage\.objects|insert\s+into\s+auth\.users/i.test(generate
 const db=new PGlite();
 try{
  await db.exec(read('./mock-platform.sql'));
- for(const f of readdirSync(new URL('../migrations/',import.meta.url)).filter(x=>x.endsWith('.sql')).sort())await db.exec(read('../migrations/'+f));
+ for(const f of readdirSync(new URL('../migrations/',import.meta.url)).filter(x=>x.endsWith('.sql')&&x<'20261123150717_seller_onboarding.sql').sort())await db.exec(read('../migrations/'+f));
  for(const [key,id] of Object.entries(ids))await db.query('insert into auth.users(id,email) values($1,$2)',[id,`${key}@example.invalid`]);
  await db.query('insert into kg_private.admins(user_id) values($1)',[ids.admin]);
  // Disposable mock emulates the native statement-level refusal, without editing

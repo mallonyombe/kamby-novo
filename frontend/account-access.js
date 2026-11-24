@@ -32,7 +32,7 @@ export async function loadAccountAccess(client, userId) {
   : context.merchant_store_ids.includes(store.id)));
  const adminEntry=context.admin_access||context.admin_mfa_required;
  return {stores:assigned,access:{userId,adminEntry,adminMfaRequired:context.admin_mfa_required,
-  merchant:assigned.length>0,source:fallback?'protected-legacy-rpcs':'account-context'}};
+  merchant:assigned.length>0||context.seller_onboarding===true,sellerOnboarding:context.seller_onboarding===true,source:fallback?'protected-legacy-rpcs':'account-context'}};
 }
 
 export function canShowAdminEntry(account, online=true) {

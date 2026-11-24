@@ -1,0 +1,33 @@
+:root {--kamby-bar-height:56px}
+.kamby-list-icon {
+ display:inline-grid;
+ place-items:center;
+ flex:none;
+ width:44px;
+ height:44px;
+ padding:0;
+ border:0;
+ border-radius:12px;
+ background:transparent;
+ color:inherit;
+ position:relative;
+ cursor:pointer;
+}
+.kamby-list-icon svg {width:22px;height:22px;pointer-events:none}
+.kamby-list-icon:active,.kamby-list-icon[aria-expanded="true"] {background:var(--bg-input,var(--input))}
+@media (hover:hover) and (pointer:fine) {
+ .kamby-list-icon:hover {background:var(--bg-input,var(--input))}
+}
+.kamby-list-icon:focus-visible {outline:2px solid var(--kamby-brand-accent,var(--brand));outline-offset:2px}
+.kamby-filter-active::after {
+ content:"";
+ position:absolute;
+ top:7px;
+ right:7px;
+ width:6px;
+ height:6px;
+ border-radius:50%;
+ background:var(--kamby-brand-accent,var(--brand));
+}
+.kamby-list-actions {display:flex;align-items:center;gap:4px;flex-wrap:wrap}
+.kamby-search-panel[hidden] {display:none!important}

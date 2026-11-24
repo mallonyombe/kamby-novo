@@ -1,0 +1,83 @@
+<!doctype html><html lang="pt-MZ"><meta charset="utf-8"><title>Ensaio Kamby · compra no telemóvel</title>
+<style>body{font:16px system-ui;max-width:950px;margin:20px auto}iframe{width:390px;height:760px;border:1px solid #777}li{margin-block:.5em}main{display:flex;gap:1rem;align-items:flex-start;flex-wrap:wrap}</style>
+<h1>Compra sem conta</h1><p>Ensaio isolado, 61 produtos, janela de 390 px.</p><button id="start">Executar percurso</button><main><iframe title="Kamby a 390 px"></iframe><section><output aria-live="polite"></output><ol></ol></section></main>
+<script type="module">
+const frame = document.querySelector('iframe'), output = document.querySelector('output');
+const uid = n => '00000000-0000-4000-8000-'+String(n).padStart(12,'0'), rice=uid(61);
+const scope=crypto.randomUUID(), results=document.querySelector('ol');
+const doc=()=>frame.contentDocument, q=s=>doc().querySelector(s), app=()=>frame.contentWindow;
+const wait=ms=>new Promise(ok=>setTimeout(ok,ms));
+async function until(test, reason) {
+  const end=performance.now()+4500;
+  while (performance.now()<end) {if(test()) return; await wait(40);}
+  throw Error(reason);
+}
+async function load(hash, extra='') {
+  const next=new URL('app.html',location.href); next.search='scope='+scope+extra; next.hash=hash;
+  await new Promise(ok=>{frame.onload=ok;frame.src=next.href;});
+  frame.onload=null;
+}
+function check(ok,message) {if(!ok) throw Error(message);}
+let passed=0,failed=0;
+async function scenario(name,test) {
+  const row=document.createElement('li'); row.textContent=name+'…'; results.append(row);
+  try {await test(); row.textContent='PASSOU · '+name; passed++;}
+  catch (e) {row.textContent='FALHOU · '+name+' — '+e.message; failed++;}
+}
+document.querySelector('#start').onclick=async e=>{
+ e.currentTarget.disabled=true;
+ await scenario('Link de produto com o feed bloqueado',async()=>{
+   await load('produto/'+rice,'&blockFeed=1');
+   await until(()=>q('#pdpTitle')?.textContent==='Arroz do ensaio','produto não abriu');
+ });
+ await scenario('Categoria exclusiva da segunda página',async()=>{
+   await load('inicio');
+   await until(()=>[...doc().querySelectorAll('#categoryTrack button')].some(b=>b.textContent==='Cereais'),'categoria ausente');
+   const category=[...doc().querySelectorAll('#categoryTrack button')].find(b=>b.textContent==='Cereais');
+   category.click();
+   await until(()=>q('#productsGrid .product-card-title')?.textContent==='Arroz do ensaio','produto não encontrado por categoria');
+   check(doc().querySelectorAll('#productsGrid .product-card').length===1,'resultado contém outra categoria');
+   check(q('#productsGrid .product-discount')?.textContent==='Opções em promoção','promoção parcial não identificada');
+ });
+ await scenario('Rolagem até ao produto 61',async()=>{
+   await load('inicio','&run=scroll');
+   await until(()=>doc().querySelectorAll('#productsGrid .product-card').length===60,'primeira página incorrecta');
+   app().scrollTo(0,doc().documentElement.scrollHeight);
+   await until(()=>!!q('#productsGrid [data-id="'+rice+'"]'),'segunda página não chegou');
+ });
+ await scenario('Pesquisa de produtos enquanto as lojas falham',async()=>{
+   await load('pesquisa?q=Arroz&aba=products','&failStores=1');
+   await until(()=>q('#searchProductsGrid .product-card-title')?.textContent==='Arroz do ensaio','pesquisa não encontrou arroz');
+ });
+ await scenario('Coração do convidado persiste após recarregar',async()=>{
+   await load('produto/'+rice,'&run=guardados');
+   await until(()=>q('#btnPdpSaveProduct')?.disabled===false,'favorito indisponível');
+   q('#btnPdpSaveProduct').click();
+   await until(()=>q('#btnPdpSaveProduct').getAttribute('aria-pressed')==='true','exigiu conta ou não guardou');
+   await load('produto/'+rice,'&run=recarregar');
+   await until(()=>q('#btnPdpSaveProduct')?.getAttribute('aria-pressed')==='true','favorito perdeu-se ao recarregar');
+ });
+ await scenario('Variante, stock esgotado, quantidade e carrinho',async()=>{
+   await load('produto/'+rice,'&run=carrinho');
+   await until(()=>q('#btnPdpAddToCart')?.disabled===false,'produto indisponível');
+   q('#btnPdpAddToCart').click();
+   check(q('#productActionSheet').open,'modal não abriu');
+   const variant=id=>q('#actionVariant [data-variant-id="'+uid(id)+'"]');
+   check(variant(702).disabled,'opção esgotada seleccionável');
+   variant(701).click();q('#btnPdpInc').click();
+   check(q('#btnPdpInc').disabled && q('#pdpSubtotalVal').textContent.includes('780'),'limite ou subtotal incorrectos');
+   app().catalogueQA.stockChanged=true;q('#actionConfirm').click();
+   await until(()=>q('#productActionNotice').textContent.includes('disponível'),'mudança de stock aceite');
+   check(q('#productActionSheet').open,'modal fechou no erro');
+   app().catalogueQA.stockChanged=false;q('#actionConfirm').click();
+   await until(()=>!q('#productActionSheet').open,'confirmação não fechou modal');
+   q('#btnPdpStoreCart').click();
+   await until(()=>q('#storeCartTotal').textContent.includes('780'),'total do carrinho incorrecto');
+   check(q('#storeCartItems').textContent.includes('5 kg'),'variante perdeu-se');
+   check(doc().documentElement.scrollWidth===doc().documentElement.clientWidth,'transbordo horizontal');
+   q('#btnBackStoreCart').click();
+   await until(()=>!q('#viewPDP').hidden && q('#pdpTitle').textContent==='Arroz do ensaio','voltar abriu outro destino');
+ });
+ output.textContent=passed+' passaram · '+failed+' falharam';
+};
+</script></html>

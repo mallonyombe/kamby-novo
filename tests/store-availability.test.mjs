@@ -26,7 +26,9 @@ test('buyer paths guard before opening; cart branch remains before opening gate'
  const html=readFileSync(new URL('../frontend/index.html',import.meta.url),'utf8');
  assert.ok(html.includes('await requireStoreOpen(catalogueRequest,group.storeId)'));
  assert.ok(html.includes('await requireStoreOpen(catalogueRequest,fresh.storeId)'));
- assert.ok(html.includes('link.onclick=()=>dispatchStoreWhatsApp(group)'));
+ assert.ok(html.includes('link.href = url;'));
+ assert.doesNotMatch(html, /window\.open\(url/);
+ assert.ok(html.includes('window.location.assign(url)'));
  assert.ok(html.indexOf("if(mode==='cart'){kambyCart=addCartLine")<html.indexOf('await requireStoreOpen(catalogueRequest,fresh.storeId)'));
 });
 

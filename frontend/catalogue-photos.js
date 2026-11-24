@@ -13,5 +13,5 @@ const photographs = {
 export function cataloguePhoto(path='') {
  const match=String(path).match(/^(?:5fbe93ee-5913-460f-bf14-4ede0fb4868c\/(?:82040807-07b8-4d39-a188-6f36259da1e1|d84c175d-39b9-4d65-bea2-16a86ab7e3d1)\/([a-f0-9-]+)\/gallery-[01]\.png|5f74ec40-a59b-479f-960b-dad196188b5e\/82040807-07b8-4d39-a188-6f36259da1e1\/(b3805ff9-89e9-4a94-afea-43ba52e869d7)\/photo\.png)$/);
  const name=match&&photographs[match[1]||match[2]];
- return name?new URL('./catalogue-'+name+'.jpg',import.meta.url).href:'';
+ return name?'/catalogue-'+name+'.jpg':'';
 }

@@ -25,6 +25,13 @@ export function setupProductActionSheet({ getSelection, setVariant, setQuantity,
       const name = document.createElement('span'), price = document.createElement('span'), mark = document.createElement('span');
       name.className = 'action-variant-name'; name.textContent = option.name;
       price.className = 'action-variant-price'; price.textContent = option.inStock ? formatPrice(option.priceMinor) : 'Esgotado';
+      if (option.inStock && option.previousPriceMinor > option.priceMinor) {
+        const previous = document.createElement('del');
+        previous.textContent = formatPrice(option.previousPriceMinor);
+        price.append(' ', previous);
+        button.setAttribute('aria-label', option.name + ', ' + formatPrice(option.priceMinor) +
+          ', antes ' + formatPrice(option.previousPriceMinor));
+      }
       mark.className = 'action-variant-mark'; mark.setAttribute('aria-hidden', 'true');
       button.append(name, price, mark);
       button.onclick = () => choose(option.id);
@@ -37,7 +44,7 @@ export function setupProductActionSheet({ getSelection, setVariant, setQuantity,
     $('pdpSubtotalVal').textContent = formatPrice(variant.priceMinor * quantity);
     $('btnPdpDec').disabled = busy || quantity <= 1;
     $('btnPdpInc').disabled = busy || quantity >= limit;
-    $('actionConfirm').textContent = mode === 'cart' ? 'Guardar no carrinho' : 'Continuar no WhatsApp';
+    $('actionConfirm').textContent = mode === 'cart' ? 'Adicionar ao carrinho' : 'Continuar no WhatsApp';
     $('actionConfirm').disabled = busy || limit < 1 || !variant.inStock;
     setButtonBusy($('actionConfirm'),busy);
     if (!keepNotice) {

@@ -1258,7 +1258,7 @@
     }
 
     /* ==========================================================================
-       DIRETÓRIO DE LOJAS E MONTRA PÚBLICA
+       DIRETÓRIO DE LOJAS E PÁGINA PÚBLICA
        ========================================================================== */
     #viewStores { max-width: 680px; margin-inline: auto; }
     #viewStores .page-header::before { inset: 0; background: var(--bg-page); }
@@ -1487,7 +1487,7 @@
     body.has-scrolled .page-title { font-size: 17px; letter-spacing: -.02em; font-weight: 600; }
     body.has-scrolled .page-header .cart-count-badge { display: none; }
     body.is-subscreen .kamby-header, body.is-subscreen .page-header { visibility: hidden; }
-    .pdp-top-bar { height: calc(56px + var(--safe-top)); display: grid; grid-template-columns: 44px minmax(0, 1fr) 44px; gap: 8px; border: 0; }
+    .pdp-top-bar { height: calc(var(--kamby-bar-height, 56px) + var(--safe-top)); display: grid; grid-template-columns: 44px minmax(0, 1fr) 44px; gap: 8px; border: 0; }
     .pdp-top-title { max-width: 100%; text-align: center; font-size: 17px; font-weight: 600; }
     .pdp-back-btn, .pdp-share-btn, .btn-search-compact { width: 44px; height: 44px; }
     .pdp-back-btn, .pdp-share-btn { background: transparent; }
@@ -1561,6 +1561,8 @@
   <link rel="stylesheet" href="chrome-fade.css" />
   <link rel="stylesheet" href="buyer-polish.css" />
   <link rel="stylesheet" href="product-card.css" />
+  <link rel="stylesheet" href="./list-controls.css">
+  <link rel="stylesheet" href="./seller-setup.css">
 </head>
 <body>
 
@@ -1699,7 +1701,7 @@
           <h1 class="page-title" tabindex="-1">Lojas</h1>
           <div class="stores-directory-filter" id="storeLocationFilterWrap" hidden>
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true">
-              <path d="M4 7h16M7 12h10m-7 5h4"/>
+              <path d="M4 7h10m4 0h2M4 17h2m4 0h10"/><circle cx="16" cy="7" r="2"/><circle cx="8" cy="17" r="2"/>
             </svg>
             <select id="storeLocationFilterTrack" aria-label="Filtrar lojas por bairro"></select>
           </div>
@@ -1717,7 +1719,7 @@
       </template>
     </section>
 
-    <section id="viewStorefront" class="kamby-view pdp-subscreen storefront-shell" hidden aria-label="Montra da loja">
+    <section id="viewStorefront" class="kamby-view pdp-subscreen storefront-shell" hidden aria-label="Página da loja">
       <header class="pdp-top-bar">
         <div class="pdp-nav-content">
         <button class="pdp-back-btn" id="btnBackFromStorefront" type="button" aria-label="Voltar às lojas">
@@ -1736,6 +1738,7 @@
       </form>
       </header>
 
+      <div id="storefrontLoadState" class="storefront-body" role="status" hidden></div>
       <div class="storefront-hero">
         <button type="button" class="storefront-cover" id="storefrontCover" aria-label="Ver foto de capa da loja" disabled></button>
         <div class="storefront-profile-card">
@@ -1793,17 +1796,17 @@
     </section>
     <section id="viewProfile" class="kamby-view" hidden aria-label="Perfil">
       <header class="page-header" aria-label="Navegação do perfil"><div class="page-header-content"><h1 class="page-title" tabindex="-1">Perfil</h1></div></header>
-      <div id="settingsGuestIntro" class="settings-guest" hidden><h2>A tua conta</h2><p>Explora livremente. Inicia sessão para guardar os teus favoritos.</p><button type="button" class="merchant-primary-button" id="btnOpenAccountSignIn">Iniciar sessão</button></div>
+      <div id="settingsGuestIntro" class="settings-guest" hidden><h2>A tua conta</h2><p>Explora livremente. Inicia sessão para aceder aos teus guardados noutros dispositivos.</p><button type="button" class="merchant-primary-button" id="btnOpenAccountSignIn">Iniciar sessão</button></div>
       <div class="profile-user-card" id="settingsAccountCard"><div class="profile-avatar" id="profileAvatar" aria-hidden="true">K</div><div class="profile-user-info"><h2 class="profile-name" id="profileName"><span class="app-skeleton app-skeleton--text" role="progressbar" aria-label="A carregar"></span></h2><p class="profile-phone" id="profileContact"></p><p class="profile-loc" id="profileLocation" hidden></p></div><button type="button" class="profile-edit-link" id="btnProfilePersonal" data-settings-target="pessoais" hidden>Editar</button></div>
       <div class="profile-notice" id="profileNotice" role="status" hidden></div>
       <button type="button" class="settings-text-action" id="btnRetryAccount" hidden>Tentar novamente</button>
       <div id="profileMerchantAccess" class="merchant-access-list" hidden><h2 class="profile-section-heading">A minha loja</h2><div id="profileMerchantStores"></div></div>
       <div id="settingsAccountMenu" hidden></div>
-      <div id="profileWorkMenu" hidden></div><div class="profile-menu-list" id="settingsPublicMenu"></div>
+      <div id="profileWorkMenu" class="profile-menu-list" hidden></div><div class="profile-menu-list" id="settingsPublicMenu"></div>
       <div class="profile-menu-list settings-local-actions"><button type="button" class="profile-menu-item profile-sign-out" id="btnAccountSignOut" hidden><span class="profile-menu-label">Terminar sessão</span></button></div>
       <span id="profileCartCountSub" hidden></span><p class="settings-version">Kamby · Orbion Technology</p>
     </section>
-    <section id="viewSettingsSubscreen" class="kamby-view pdp-subscreen" hidden aria-label="Definições da conta"><header class="pdp-top-bar"><div class="pdp-nav-content"><button type="button" class="pdp-back-btn" id="btnBackSettings" aria-label="Voltar ao Perfil"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg></button><h1 class="pdp-top-title" id="settingsSubscreenTitle">Perfil</h1></div></header><div class="settings-subscreen-body"><div id="settingsSubscreenContent"></div><div class="profile-menu-list settings-local-actions" id="settingsDeviceActions" hidden><button type="button" class="profile-menu-item" id="btnClearLocalData"><span class="profile-menu-copy"><span class="profile-menu-label">Limpar dados locais</span><span class="profile-menu-sub">Carrinho e pesquisas recentes</span></span><span aria-hidden="true">›</span></button></div><div id="settingsLoginPanel" hidden>
+    <section id="viewSettingsSubscreen" class="kamby-view pdp-subscreen" hidden aria-label="Definições da conta"><header class="pdp-top-bar"><div class="pdp-nav-content"><button type="button" class="pdp-back-btn" id="btnBackSettings" aria-label="Voltar ao Perfil"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg></button><h1 class="pdp-top-title" id="settingsSubscreenTitle">Perfil</h1></div></header><div class="settings-subscreen-body"><div id="settingsSubscreenContent"></div><div class="profile-menu-list settings-local-actions" id="settingsDeviceActions" hidden><button type="button" class="profile-menu-item" id="btnClearLocalData"><span class="profile-menu-copy"><span class="profile-menu-label">Limpar dados locais</span><span class="profile-menu-sub">Carrinho, guardados de visitante e pesquisas recentes</span></span><span aria-hidden="true">›</span></button></div><div id="settingsLoginPanel" hidden>
       <form class="profile-login" id="profileLoginForm"><h2>A tua conta</h2><label for="accountIdentity">Telefone ou email</label><input id="accountIdentity" type="text" autocomplete="username" required maxlength="254" placeholder="Telefone ou email" /><label for="accountPassword">Palavra-passe</label><div class="account-password-wrap"><input id="accountPassword" type="password" autocomplete="current-password" required /><button type="button" id="btnShowAccountPassword" aria-label="Mostrar palavra-passe" aria-pressed="false"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg></button></div><p id="accountLoginError" class="field-error" role="alert" hidden></p><button class="merchant-primary-button" id="btnAccountSignIn" type="submit">Entrar</button><button type="button" class="settings-text-action" id="btnForgotPassword">Esqueci a palavra-passe</button></form>
     </div><p id="settingsScreenNotice" class="profile-notice" role="status" aria-live="polite" hidden></p></div></section>
     <dialog id="settingsConfirmDialog" class="local-data-dialog" aria-labelledby="settingsConfirmTitle"><h2 id="settingsConfirmTitle"></h2><p id="settingsConfirmCopy"></p><div class="local-dialog-actions"><button type="button" id="settingsConfirmCancel" autofocus>Cancelar</button><button type="button" id="settingsConfirmAccept">Confirmar</button></div></dialog>
@@ -1825,7 +1828,7 @@
         <section class="merchant-catalog-section" aria-label="Catálogo da loja"><div class="merchant-section-heading"><h2>Catálogo</h2><div class="merchant-catalog-actions"><span id="merchantCatalogCount"></span><button type="button" class="btn-add-prod-merchant" id="btnOpenNewProductModal" disabled><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>Novo artigo</button></div></div><div id="merchantProductsList" class="merchant-products-list" aria-live="polite"></div></section>
       </div>
     </section>
-    <dialog id="clearLocalDataDialog" class="local-data-dialog" aria-labelledby="clearLocalDataTitle"><h2 id="clearLocalDataTitle">Limpar dados locais?</h2><p>O carrinho e as pesquisas recentes serão removidos deste dispositivo. A tua conta mantém a sessão iniciada.</p><div class="local-dialog-actions"><button type="button" id="btnCancelLocalClear" autofocus>Cancelar</button><button type="button" id="btnConfirmLocalClear">Limpar dados</button></div></dialog>
+    <dialog id="clearLocalDataDialog" class="local-data-dialog" aria-labelledby="clearLocalDataTitle"><h2 id="clearLocalDataTitle">Limpar dados locais?</h2><p>O carrinho, os guardados de visitante e as pesquisas recentes serão removidos deste dispositivo. A tua conta mantém a sessão iniciada.</p><div class="local-dialog-actions"><button type="button" id="btnCancelLocalClear" autofocus>Cancelar</button><button type="button" id="btnConfirmLocalClear">Limpar dados</button></div></dialog>
   </main>
 
   <!-- ==========================================================================
@@ -1869,13 +1872,16 @@
        ========================================================================== -->
   <script type="module">
     import {setButtonBusy,showSpinner,showSkeleton} from "./loading.js";
-    import {requireStoreOpen,checkedStoreHandoff,STORE_CLOSED_COPY} from './store-availability.js';
+    import {readSavedEntries, removeFromDevice} from './guardados-locais.js';
+    import {isTestContact, whatsappURL} from './whatsapp.js';
+    import {requireStoreOpen,STORE_CLOSED_COPY} from './store-availability.js';
     import {setupStorefrontDiscovery} from './storefront.js';
     import {resolveStoreArtwork} from './storefront-artwork.js';
     import {setupScrollHeader} from './header-scroll.js';
     import {cataloguePhoto} from './catalogue-photos.js';
     import {setupProductActionSheet} from "./product-action-sheet.js";
     import {variantLimit,quantityLimit,addCartLine,storeCartGroup,storagePathFromSignedUrl,sortVariantsForDisplay,readCartFromStorage} from "./commerce-domain.js";
+    import { cardOffer } from "./commerce-domain.js";
     import { normaliseSearch, matchCatalogue, fetchAllPages, normalisePriceFilter } from "./search-engine.js";
     import {editorContractReady,baselineCataloguePath} from "./catalogue-contract.js";
     import { setupMerchant } from "./merchant.js";
@@ -2009,7 +2015,7 @@
         try {
           await requireStoreOpen(catalogueRequest,storeId);
           if(availabilityChecks.get(button)!==check)return;
-          button.disabled=button.classList.contains('is-pending');label.textContent='WhatsApp';button.setAttribute('aria-label','Continuar no WhatsApp');
+          button.disabled=button.classList.contains('is-pending');label.textContent=button.id==='btnStoreCartWhatsApp'?'Enviar pedido pelo WhatsApp':'WhatsApp';button.setAttribute('aria-label',label.textContent);
         } catch(error) {
           if(availabilityChecks.get(button)!==check)return;
           // Remain clickable so reopening/offline recovery does not need a page reload.
@@ -2066,15 +2072,6 @@
         const images = Array.isArray(row.images)
           ? row.images.slice().sort((a, b) => Number(a.sort_order) - Number(b.sort_order))
           : [];
-        const variantPrices = variants
-          .map(variant => Number(variant.price_minor))
-          .filter(Number.isFinite);
-        const productPrice = Number(row.price_minor);
-        const candidatePrices = variantPrices.length
-          ? variantPrices
-          : [productPrice];
-        const priceMinor = Math.min.apply(null, candidatePrices);
-        const uniquePrices = new Set(candidatePrices);
         const inStock = variants.length
           ? variants.some(variant => Boolean(variant.in_stock) && variantLimit(variant) > 0)
           : row.stock_status !== 'out' && row.stock_quantity !== 0;
@@ -2092,22 +2089,20 @@
         return {
           id: String(row.id),
           storeId: store ? String(store.id) : '',
+          createdAt: String(row.created_at || ''),
           title: String(row.title || ''),
           categoryId: category ? String(category.id) : '',
           categoryLabel: category ? String(category.name) : '',
-          priceMinor: Number.isFinite(priceMinor) ? priceMinor : 0,
-          previousPriceMinor:variants.length===1?Number(variants[0].previous_price_minor||0):variants.length?0:Number(row.previous_price_minor||0),
-          priceMode: uniquePrices.size > 1 ? 'from' : 'fixed',
+          ...cardOffer(row),
           storeName: store ? displayStoreName(store) : '',
           storeOpen: store ? store.is_open !== false : true,
           isTest:store?.is_test===true,
           imageUrl,
-          imageCount: images.length || Number(Boolean(imageUrl)),
           inStock
         };
       }
 
-      async function fetchPublishedProducts(allPages = false, ids = null) {
+      async function fetchPublishedProducts(allPages = false, ids = null, offset = 0, category = 'all', storeId = null) {
         const select = [
           'id',
           'title',
@@ -2126,11 +2121,14 @@
           select,
           status: 'eq.published',
           moderation_status:'eq.allowed',
-          'kg_stores.status': 'eq.approved',
+          'store.status': 'eq.approved',
           order: 'created_at.desc,id.desc',
           limit: String(KAMBY_CATALOG.pageSize)
         });
+        if (ids && !ids.length) return [];
         if (ids) query.set('id', 'in.(' + ids.join(',') + ')');
+        if (category !== 'all') query.set('category_id','eq.' + category);
+        if (storeId) query.set('store_id','eq.'+storeId);
         const loadPage = (offset, limit) => {
           const pageQuery = new URLSearchParams(query);
           pageQuery.set('offset', String(offset));
@@ -2139,7 +2137,7 @@
         };
         const rows = allPages
           ? await fetchAllPages(loadPage, KAMBY_CATALOG.pageSize)
-          : await loadPage(0, KAMBY_CATALOG.pageSize);
+          : await loadPage(offset, KAMBY_CATALOG.pageSize);
         return Promise.all(rows.map(normaliseProduct));
       }
 
@@ -2185,6 +2183,13 @@
         return placeholder;
       }
 
+      let homeRequested = false;
+      function ensureHomeFeed() {
+        if (homeRequested) return;
+        homeRequested = true;
+        void loadFeed();
+      }
+
       function renderSkeletonFeed() {
         productsGrid.replaceChildren();
         productsGrid.setAttribute('aria-busy', 'true');
@@ -2220,10 +2225,11 @@
           button.setAttribute('aria-pressed', String(active));
           button.textContent = category.label;
           button.addEventListener('click', () => {
+            if (feedState.activeCategory === category.id) return;
             feedState.activeCategory = category.id;
             renderCategories();
-            renderFeedProducts();
-            button.scrollIntoView({
+            loadFeed(true, true);
+            categoryTrack.querySelector('[aria-pressed="true"]').scrollIntoView({
               behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches
                 ? 'auto'
                 : 'smooth',
@@ -2313,13 +2319,6 @@
         const visual = document.createElement('div');
         visual.className = 'product-card-visual';
         visual.append(imageWrap, reveal);
-        if (product.imageCount > 1) {
-          const photos = document.createElement('span');
-          const extra = product.imageCount - 1;
-          photos.className = 'product-card-photo-count';
-          photos.textContent = '+' + extra + (extra === 1 ? ' foto' : ' fotos');
-          visual.append(photos);
-        }
 
         const store = document.createElement('span');
         store.className = 'product-store-badge';
@@ -2353,11 +2352,17 @@
           discount.textContent = percentage ? '−' + percentage + '%' : 'Promoção';
           visual.append(discount);
           priceWrap.append(previous);
+        } else if (product.otherOffer) {
+          const badge = document.createElement('span');
+          badge.className = 'product-discount';
+          badge.textContent = 'Opções em promoção';
+          visual.append(badge);
         }
 
         const save = document.createElement('button');
         save.type = 'button';
         save.className = 'product-card-action product-card-save';
+        save.kambyPreview = product;
         save.dataset.saveProduct = product.id;
         save.dataset.productTitle = product.title;
         save.setAttribute('aria-label', 'Guardar ' + product.title);
@@ -2410,7 +2415,7 @@
               () => {
                 feedState.activeCategory = 'all';
                 renderCategories();
-                renderFeedProducts();
+                loadFeed(true, true);
               }
             ));
           } else {
@@ -2457,37 +2462,104 @@
       }
 
       let feedPending = null;
-      async function loadFeed(forceReload = false) {
-        if (feedPending) {
-          await feedPending;
-          if (forceReload) return loadFeed(false);
-          return;
-        }
-        feedPending = (async () => {
+      let feedRevision = 0;
+      let feedOffset = 0;
+      const feedEnd = document.createElement('div');
+      productsGrid.after(feedEnd);
+
+      const feedObserver = new IntersectionObserver(entries => {
+        if (entries.some(entry => entry.isIntersecting)) loadMoreFeed();
+      }, { rootMargin: '240px' });
+
+      function observeNextFeedPage(more) {
+        feedObserver.disconnect();
+        feedEnd.replaceChildren();
+        if (more) feedObserver.observe(feedEnd);
+      }
+
+      async function loadMoreFeed() {
+        if (feedState.loading || !feedOffset) return;
+        const revision = feedRevision;
         feedState.loading = true;
-        renderSkeletonFeed();
+        feedObserver.disconnect();
         try {
-          feedState.products = await fetchPublishedProducts();
-          feedState.categories = categoriesFromProducts(feedState.products);
-          if (!feedState.categories.some(category =>
-            category.id === feedState.activeCategory
-          )) {
-            feedState.activeCategory = 'all';
+          const page = await fetchPublishedProducts(false, null, feedOffset, feedState.activeCategory);
+          if (revision !== feedRevision) return;
+          const known = new Set(feedState.products.map(item => item.id));
+          for (const item of page) {
+            if (known.has(item.id)) continue;
+            known.add(item.id);
+            productsGrid.append(renderProductCard(item, feedState.products.length));
+            feedState.products.push(item);
           }
-          renderCategories();
-          renderSearchCategories();
-          renderFeedProducts();
-        } catch (error) {
-          console.error('Falha ao carregar o feed Kamby.', error);
-          renderFeedError();
+          feedOffset += page.length;
+          observeNextFeedPage(page.length === KAMBY_CATALOG.pageSize);
+        } catch {
+          if (revision !== feedRevision) return;
+          const retry = document.createElement('button');
+          retry.className = 'feed-action';
+          retry.textContent = 'Tentar carregar mais produtos';
+          retry.onclick = loadMoreFeed;
+          feedEnd.replaceChildren(retry);
         } finally {
-          feedState.loading = false;
+          if (revision === feedRevision) feedState.loading = false;
         }
-        })().finally(() => { feedPending = null; });
+      }
+
+      let categoryRequest;
+      function loadCategoryIndex() {
+        if (!categoryRequest) categoryRequest = catalogueRequest('/rest/v1/rpc/kg_feed_categories')
+          .then(rows => {
+            feedState.categories = rows;
+            renderCategories();
+            renderSearchCategories();
+          }).finally(() => {categoryRequest = null;});
+        return categoryRequest;
+      }
+
+      function loadFeed(forceReload = false, categoryChanged = false) {
+        if (feedPending && !forceReload) return feedPending;
+        const revision = ++feedRevision;
+        feedState.loading = true;
+        observeNextFeedPage(false);
+        feedOffset = 0;
+        const keepContent = !categoryChanged && feedState.products.length > 0;
+        if (categoryChanged) productsGrid.replaceChildren();
+        productsGrid.setAttribute('aria-busy','true');
+        const timer = setTimeout(() => {
+          if (!keepContent && revision === feedRevision) renderSkeletonFeed();
+        }, 180);
+        if (!categoryChanged) loadCategoryIndex().catch(() => {});
+        feedPending = (async () => {
+          try {
+            const products = await fetchPublishedProducts(false, null, 0, feedState.activeCategory);
+            if (revision !== feedRevision) return;
+            feedState.products = products;
+            feedOffset = products.length;
+            if (!feedState.categories.length && products.length) {
+              feedState.categories = categoriesFromProducts(products);
+              renderCategories();
+              renderSearchCategories();
+            }
+            renderFeedProducts();
+            observeNextFeedPage(products.length === KAMBY_CATALOG.pageSize);
+          } catch {
+            if (revision !== feedRevision) return;
+            if (!keepContent) renderFeedError();
+            else feedEnd.replaceChildren(createFeedState('Não foi possível actualizar os produtos','','Tentar novamente',() => loadFeed(true)));
+          } finally {
+            clearTimeout(timer);
+            if (revision === feedRevision) {
+              feedState.loading = false;
+              feedPending = null;
+              productsGrid.setAttribute('aria-busy','false');
+            }
+          }
+        })();
         return feedPending;
       }
 
-      // 6. Diretório e montra ligados ao mesmo catálogo público aprovado.
+      // 6. Diretório e página da loja ligados ao mesmo catálogo público aprovado.
       const viewStores = document.getElementById('viewStores');
       const viewStorefront = document.getElementById('viewStorefront');
       const storesListContainer = document.getElementById('storesListContainer');
@@ -2543,12 +2615,6 @@
               return Number(a.sort_order) - Number(b.sort_order);
             })
           : [];
-        const variantPrices = variants
-          .map(function getPrice(variant) { return Number(variant.price_minor); })
-          .filter(Number.isFinite);
-        const productPrice = Number(row.price_minor);
-        const candidatePrices = variantPrices.length ? variantPrices : [productPrice];
-        const priceMinor = Math.min.apply(null, candidatePrices);
         const inStock = variants.length
           ? variants.some(function available(variant) { return Boolean(variant.in_stock) && variantLimit(variant) > 0; })
           : row.stock_status !== 'out' && row.stock_quantity !== 0;
@@ -2567,14 +2633,11 @@
           title: String(row.title || ''),
           categoryId: '',
           categoryLabel: '',
-          priceMinor: Number.isFinite(priceMinor) ? priceMinor : 0,
-          previousPriceMinor:variants.length===1?Number(variants[0].previous_price_minor||0):variants.length?0:Number(row.previous_price_minor||0),
-          priceMode: new Set(candidatePrices).size > 1 ? 'from' : 'fixed',
+          ...cardOffer(row),
           storeName: store.name,
           storeOpen: store.isOpen !== false,
           isTest:store.isTest===true,
           imageUrl,
-          imageCount: images.length || Number(Boolean(imageUrl)),
           inStock,
           createdAt: String(row.created_at || '')
         };
@@ -2608,34 +2671,23 @@
         return base;
       }
 
-      async function fetchApprovedStores() {
-        const select = [
-          'id',
-          'name',
-          'slug',
-          'description',
-          'whatsapp_e164',
-          'location',
-          'status',
-          'is_open',
-          'is_test','logo_path','banner_path','address','service_area','opening_hours',
-          'products:kg_products(id,title,price_minor,previous_price_minor,stock_quantity,moderation_status,stock_status,status,image_url,created_at,images:kg_product_images(storage_path,sort_order),variants:kg_product_variants(price_minor,previous_price_minor,in_stock,stock_quantity,track_quantity,active))'
-        ].join(',');
-        const query = new URLSearchParams({
-          select,
-          status: 'eq.approved',
-          'products.status': 'eq.published',
-          'products.moderation_status':'eq.allowed',
-          order: 'name.asc,id.asc',
-          limit: '100'
-        });
+      async function fetchApprovedStores(ids = null) {
+        if (ids && !ids.length) return [];
+        const select = ids ? 'id,name,slug,description,whatsapp_e164,location,status,is_open,is_test,logo_path,banner_path,address,service_area,opening_hours'
+          : 'id,name,slug,location,status,is_open,is_test,logo_path';
+        const query = new URLSearchParams({select,status:'eq.approved',order:'name.asc,id.asc'});
+        if (ids) query.set('id','in.('+ids.join(',')+')');
         const rows = await fetchAllPages((offset, limit) => {
-          const pageQuery = new URLSearchParams(query);
-          pageQuery.set('offset', String(offset));
-          pageQuery.set('limit', String(limit));
-          return catalogueRequest('/rest/v1/kg_stores?' + pageQuery.toString());
-        }, 100);
-        return Promise.all(rows.map(normaliseStore));
+          const page = new URLSearchParams(query);
+          page.set('offset',String(offset));
+          page.set('limit',String(limit));
+          return catalogueRequest('/rest/v1/kg_stores?'+page);
+        },100);
+        return Promise.all(rows.map(async row => {
+          const store = await normaliseStore(row);
+          if (ids) store.products = await fetchPublishedProducts(true,null,0,'all',store.id);
+          return store;
+        }));
       }
 
       function renderStoreFilters() {
@@ -2720,7 +2772,7 @@
             storesState.stores.length ? 'Nenhuma loja nesta localização' : 'Ainda não há lojas publicadas',
             storesState.stores.length
               ? 'Escolhe outra localização para continuar.'
-              : 'As lojas aparecem aqui depois de serem aprovadas pela gestão Kamby.',
+              : 'As lojas aparecem aqui quando os vendedores as publicam.',
             storesState.stores.length ? 'Ver todas as lojas' : '',
             storesState.stores.length ? function showAllStores() {
               storesState.activeLocation = 'all';
@@ -2791,19 +2843,22 @@
         storefrontDiscovery.render(store);
       }
 
+      let storefrontRequest = 0;
       async function openStorefront(storeId, pushHistory, fromCart = false) {
-        if (!storesState.loaded) await loadStores();
-        const store = storesState.stores.find(function byId(candidate) {
-          return candidate.id === storeId;
-        });
-        if (!store) return false;
+        const hash = '#loja/' + encodeURIComponent(storeId);
+        const revision = ++storefrontRequest;
         storefrontState.originView = fromCart ? 'carrinho' : activeMainView === 'pesquisa' ? 'pesquisa' : 'lojas';
         storefrontState.originHash = fromCart ? window.location.hash : storefrontState.originView === 'pesquisa' ? searchHash() : '#lojas';
         if (fromCart && !viewStoreCart.hidden) closeStoreCart();
-        storefrontState.store = store;updateScopedCartBadges();
+        storefrontState.store = null;
         storefrontState.originScroll = window.scrollY;
-        renderStorefront(store);
-        trackStoreEvent(store.id, 'store_view');
+        const status = document.getElementById('storefrontLoadState');
+        const contents = viewStorefront.querySelectorAll('.storefront-hero, .storefront-catalog-title, .storefront-catalog-tools, #storefrontProductsGrid, .storefront-header-actions');
+        for (const part of contents) part.hidden = true;
+        status.hidden = false;
+        status.replaceChildren();
+        document.title = 'Loja · Kamby';
+        viewStorefront.setAttribute('aria-busy','true');
         storefrontElements.back.setAttribute('aria-label', fromCart ? 'Voltar ao carrinho' : storefrontState.originView === 'pesquisa' ? 'Voltar à pesquisa' : 'Voltar às lojas');
         viewStorefront.hidden = false;
         viewStorefront.classList.add('active');
@@ -2813,16 +2868,43 @@
         viewStorefront.scrollTo({ top: 0, behavior: 'auto' });
         if (pushHistory !== false) {
           history.pushState(
-            { kambyStorefront: true, storeId: store.id },
+            { kambyStorefront: true, storeId },
             '',
-            '#loja/' + encodeURIComponent(store.id)
+            hash
           );
         }
-        return true;
+        const timer = setTimeout(() => {
+          if (revision === storefrontRequest) showSkeleton(status, 'rows', 3);
+        }, 180);
+        try {
+          const stores = await fetchApprovedStores([storeId]);
+          if (revision !== storefrontRequest || location.hash !== hash) return false;
+          const store = stores.find(candidate => candidate.id === storeId);
+          if (!store) {
+            status.replaceChildren(createFeedState('Loja indisponível','Esta loja já não está visível no catálogo.'));
+            return false;
+          }
+          storefrontState.store = store;
+          for (const part of contents) part.hidden = false;
+          status.hidden = true;
+          renderStorefront(store);
+          updateScopedCartBadges();
+          trackStoreEvent(store.id, 'store_view');
+          return true;
+        } catch {
+          if (revision === storefrontRequest && location.hash === hash) {
+            status.replaceChildren(createFeedState('Não foi possível carregar a loja','','Tentar novamente',()=>openStorefront(storeId,false,fromCart)));
+          }
+          return false;
+        } finally {
+          clearTimeout(timer);
+          if (revision === storefrontRequest) viewStorefront.setAttribute('aria-busy','false');
+        }
       }
 
       function closeStorefront(updateHash) {
         if (viewStorefront.hidden) return;
+        ++storefrontRequest;
         storefrontDiscovery.leave();
         viewStorefront.hidden = true;
         viewStorefront.classList.remove('active');
@@ -2830,7 +2912,10 @@
         setMainNavigationInert(false);
         floatingNavbar.classList.remove('is-hidden');
         document.title = storefrontState.originView === 'pesquisa' ? searchState.query + ' · Pesquisa · Kamby' : 'Lojas · Kamby';
-        if (updateHash !== false) history.replaceState(null, '', storefrontState.originHash);
+        if (updateHash !== false) {
+          history.replaceState(null, '', storefrontState.originHash);
+          void routeFromHash();
+        }
         window.requestAnimationFrame(function restoreStoreDirectory() {
           window.scrollTo({ top: storefrontState.originScroll, behavior: 'auto' });
         });
@@ -2845,16 +2930,15 @@
         const store = storefrontState.store;
         if (!store || !store.whatsapp) return;
         if (storefrontState.store?.id !== store.id || viewStorefront.hidden) return;
-        trackStoreEvent(store.id, 'whatsapp_click');
         const message = 'Olá, encontrei a loja *' + store.name +
           '* no Kamby e gostaria de mais informações sobre os vossos produtos.';
         if(openTestContact(store.isTest,store.whatsapp,store.name,message))return;
-        window.open(
-          'https://wa.me/' + store.whatsapp.replace(/\D/g, '') +
-            '?text=' + encodeURIComponent(message),
-          '_blank',
-          'noopener,noreferrer'
-        );
+        trackStoreEvent(store.id, 'whatsapp_intent');
+        try {
+          const url = whatsappURL(store.whatsapp, message);
+          trackStoreEvent(store.id, 'whatsapp_click');
+          window.location.assign(url);
+        } catch { showCommerceToast('Não foi possível abrir o contacto desta loja.'); }
       });
 
       storefrontElements.share.addEventListener('click', async function shareStorefront() {
@@ -2890,6 +2974,7 @@
       const cartBadge = document.getElementById('cartBadge');
       const cartHeaderBadge = document.getElementById('cartHeaderBadge');
       let homeScrollPosition = 0;
+      const otherScrollPositions = {carrinho: 0, perfil: 0};
       let activeMainView = 'inicio';
 
       function normaliseCartItem(item) {
@@ -3141,7 +3226,7 @@
       }
 
       function openTestContact(isTest,phone,storeName,message){
-        if(!isTest&&!['12025550101','12025550102'].includes(String(phone).replace(/\D/g,'')))return false;
+        if(!isTestContact(isTest, phone))return false;
         const dialog=document.getElementById('testContactDialog');
         document.getElementById('testContactStore').textContent=storeName;
         document.getElementById('testContactMessage').value=message;
@@ -3169,8 +3254,12 @@
           feedback.hidden=true;
         }catch(error){feedback.hidden=false;feedback.textContent=error.message&& !error.message.includes('fetch')?error.message:'Não foi possível confirmar o catálogo. Verifica a ligação e tenta novamente.';return;}
 
-        if (!group.storePhone || group.items.length === 0) return;
-        trackStoreEvent(group.storeId, 'whatsapp_click');
+        if (viewStoreCart.hidden || scopedCart.storeId !== group.storeId) return;
+        if (!group.storePhone || !group.items.length) {
+          feedback.hidden = false;
+          feedback.textContent = 'A loja ainda não tem contacto pelo WhatsApp.';
+          return;
+        }
         const itemLines = group.items.map(function formatLine(entry) {
           const item = entry.item;
           const variant = item.variantName ? ' (' + item.variantName + ')' : '';
@@ -3184,10 +3273,23 @@
           '*Subtotal estimado:* ' + formatPrice(group.subtotalMinor) + '\n\n' +
           'Gostaria de confirmar a disponibilidade e combinar o pagamento e a entrega.';
         if(openTestContact(group.isTest,group.storePhone,group.storeName,text))return;
-        const phone = group.storePhone.replace(/\D/g, '');
-        const url='https://wa.me/'+phone+'?text='+encodeURIComponent(text);
-        window.open(url,'_blank','noopener,noreferrer');
-        feedback.hidden=false;feedback.replaceChildren();const link=document.createElement('button');link.type='button';link.textContent='Continuar no WhatsApp';link.onclick=()=>dispatchStoreWhatsApp(group);feedback.append(link);
+        let url;
+        try { url = whatsappURL(group.storePhone, text); }
+        catch (error) { feedback.hidden = false; feedback.textContent = error.message; return; }
+        const link = document.createElement('a');
+        link.href = url;
+        link.textContent = 'Continuar no WhatsApp';
+        const validatedAt = Date.now();
+        const snapshot = JSON.stringify(readCart());
+        link.addEventListener('click', event => {
+          if (Date.now() - validatedAt < 15000 && snapshot === JSON.stringify(readCart())) return;
+          event.preventDefault();
+          document.getElementById('btnStoreCartWhatsApp').click();
+        });
+        feedback.hidden = false;
+        feedback.replaceChildren(link);
+        trackStoreEvent(group.storeId, 'whatsapp_click');
+        window.location.assign(url);
       }
 
       function createCartProductLink(item) {
@@ -3339,7 +3441,12 @@
         productAction.close(true);const opening=viewStoreCart.hidden;
         if(opening){scopedCart.originHash=pushHistory?window.location.hash:history.state?.originHash||'#carrinho';scopedCart.originScroll=!viewPDP.hidden?viewPDP.scrollTop:!viewStorefront.hidden?viewStorefront.scrollTop:window.scrollY;}
         scopedCart.storeId=storeId;scopedCart.name=name||storesState.stores.find(s=>s.id===storeId)?.name||readCart().find(i=>i.storeId===storeId)?.storeName||'';
-        if(!scopedCart.name){if(!storesState.loaded)await loadStores();scopedCart.name=storesState.stores.find(s=>s.id===storeId)?.name||'Loja';}
+        if (!scopedCart.name) {
+          const origin = location.hash;
+          if (!storesState.loaded) await loadStores();
+          if (location.hash !== origin) return;
+          scopedCart.name = storesState.stores.find(s=>s.id===storeId)?.name || 'Loja';
+        }
         viewPDP.hidden=true;viewPDP.classList.remove('active');viewStorefront.hidden=true;viewStorefront.classList.remove('active');viewStoreCart.hidden=false;viewStoreCart.classList.add('active');document.body.classList.add('is-subscreen');setMainNavigationInert(true);floatingNavbar.classList.add('is-hidden');document.getElementById('storeCartNotice').hidden=true;renderStoreCart();document.title='Carrinho · '+scopedCart.name+' · Kamby';if(opening)viewStoreCart.scrollTop=0;
         if(pushHistory)history.pushState({kambyStoreCart:true,originHash:scopedCart.originHash},'','#carrinho/loja/'+encodeURIComponent(storeId));
       }
@@ -3353,6 +3460,7 @@
         button.disabled = true;
         setButtonBusy(button, true);
         try {
+          if (!isTestContact(group.isTest, group.storePhone)) trackStoreEvent(group.storeId, 'whatsapp_intent');
           await dispatchStoreWhatsApp(group);
         } finally {
           setButtonBusy(button, false);
@@ -3363,7 +3471,7 @@
       window.addEventListener('kamby:cart-updated',()=>{updateScopedCartBadges();if(!viewStoreCart.hidden)renderStoreCart();});
       async function loadPDPRelated(product){
         const request=currentPDP.requestId,wrap=document.getElementById('pdpRelated'),grid=document.getElementById('pdpRelatedProducts');wrap.hidden=true;grid.replaceChildren();
-        try{const query=new URLSearchParams({select:'id,title,price_minor,previous_price_minor,stock_status,stock_quantity,image_url,created_at,store:kg_stores!inner(id,name,status,is_open,is_test),images:kg_product_images(storage_path,sort_order),variants:kg_product_variants(price_minor,in_stock,stock_quantity,track_quantity,active)',store_id:'eq.'+product.storeId,id:'neq.'+product.id,status:'eq.published',moderation_status:'eq.allowed',order:'created_at.desc,id.desc',limit:'4'});const rows=await catalogueRequest('/rest/v1/kg_products?'+query);const products=await Promise.all(rows.map(normaliseProduct));if(request!==currentPDP.requestId||currentPDP.product?.id!==product.id)return;products.forEach((p,index)=>grid.append(renderProductCard(p,index)));wrap.hidden=!products.length;}catch{if(request===currentPDP.requestId)wrap.hidden=true;}
+        try{const query=new URLSearchParams({select:'id,title,price_minor,previous_price_minor,stock_status,stock_quantity,image_url,created_at,store:kg_stores!inner(id,name,status,is_open,is_test),images:kg_product_images(storage_path,sort_order),variants:kg_product_variants(price_minor,previous_price_minor,in_stock,stock_quantity,track_quantity,active)',store_id:'eq.'+product.storeId,id:'neq.'+product.id,status:'eq.published',moderation_status:'eq.allowed',order:'created_at.desc,id.desc',limit:'4'});const rows=await catalogueRequest('/rest/v1/kg_products?'+query);const products=await Promise.all(rows.map(normaliseProduct));if(request!==currentPDP.requestId||currentPDP.product?.id!==product.id)return;products.forEach((p,index)=>grid.append(renderProductCard(p,index)));wrap.hidden=!products.length;}catch{if(request===currentPDP.requestId)wrap.hidden=true;}
       }
       pdpElements.galleryTrack.addEventListener('keydown',e=>{if(!['ArrowLeft','ArrowRight'].includes(e.key))return;e.preventDefault();const width=pdpElements.galleryTrack.clientWidth,index=Math.round(pdpElements.galleryTrack.scrollLeft/width)+(e.key==='ArrowRight'?1:-1);pdpElements.galleryTrack.scrollTo({left:Math.max(0,Math.min((currentPDP.product?.images.length||1)-1,index))*width,behavior:'auto'});});
 
@@ -3387,7 +3495,7 @@
           id: 'eq.' + productId,
           status: 'eq.published',
           moderation_status:'eq.allowed',
-          'kg_stores.status': 'eq.approved',
+          'store.status': 'eq.approved',
           limit: '1'
         });
         const rows = await catalogueRequest('/rest/v1/kg_products?' + query.toString());
@@ -3502,19 +3610,19 @@
         pdpElements.whatsapp.disabled = true;
       }
 
-      function renderPDPError() {
+      function renderPDPError(unavailable = true) {
         viewPDP.setAttribute("aria-busy","false");
         const slide = document.createElement('div');
         slide.className = 'pdp-slide';
         const label = document.createElement('span');
         label.className = 'pdp-loading-state';
-        label.textContent = 'Produto indisponível';
+        label.textContent = unavailable ? 'Produto indisponível' : 'Ligação indisponível';
         slide.appendChild(label);
         pdpElements.galleryTrack.replaceChildren(slide);
         pdpElements.galleryCounter.hidden = true;
         document.title = 'Produto indisponível · Kamby';
         pdpElements.headerTitle.textContent = 'Produto';
-        pdpElements.title.textContent = 'Este produto já não está disponível';
+        pdpElements.title.textContent = unavailable ? 'Este produto já não está disponível' : 'Não foi possível carregar o produto';
         pdpElements.storeName.textContent = '';
         pdpElements.stockTag.textContent = '';
         pdpElements.price.textContent = '—';
@@ -3522,7 +3630,15 @@
         pdpElements.variantsWrap.hidden = true;
         pdpElements.subtotal.textContent = '—';
         pdpElements.description.textContent =
-          'Regressa ao catálogo para continuar a explorar produtos publicados.';
+          unavailable ? 'Regressa ao catálogo para continuar a explorar produtos publicados.' : '';
+        if (!unavailable) {
+          const retry = document.createElement('button');
+          retry.type = 'button';
+          retry.className = 'settings-text-action';
+          retry.textContent = 'Tentar novamente';
+          retry.onclick = () => routeFromHash();
+          slide.append(retry);
+        }
         pdpElements.share.disabled = true;
         pdpElements.addCart.disabled = true;
         pdpElements.whatsapp.disabled = true;
@@ -3654,10 +3770,21 @@
         pdpElements.variantsGrid.appendChild(fragment);
       }
 
+      function rememberProductSelection() {
+        const id = currentPDP.product?.id;
+        if (!id || location.hash !== '#produto/' + encodeURIComponent(id)) return;
+        const previous = history.state || {};
+        const variant = currentPDP.activeVariant?.id || '';
+        const quantity = currentPDP.quantity;
+        if (previous.productId === id && previous.preferredVariantId === variant && previous.quantity === quantity) return;
+        history.replaceState({...previous, productId: id, preferredVariantId: variant, quantity}, '');
+      }
+
       function updatePDPCalculations() {
         const product = currentPDP.product;
         const variant = currentPDP.activeVariant;
         if (!product || !variant) return;
+        rememberProductSelection();
         const subtotalMinor = variant.priceMinor * currentPDP.quantity;
         pdpElements.price.textContent = formatPrice(variant.priceMinor);
         const previous = document.getElementById('pdpPreviousPrice');
@@ -3674,19 +3801,31 @@
         pdpElements.addCart.disabled = !variant.inStock;
       }
 
-      function renderPDP(product, preferredVariantId) {
+      function renderPDP(product, preferredVariantId, quantity = 1) {
         viewPDP.setAttribute("aria-busy","false");
         currentPDP.product = product;
         currentPDP.activeVariant = product.variants.find(variant => variant.id === preferredVariantId) ||
           product.variants.filter(variant=>variant.inStock).sort((a,b)=>a.priceMinor-b.priceMinor)[0] ||
           product.variants[0];
+        const selection = currentPDP.activeVariant;
+        currentPDP.quantity = selection?.id === preferredVariantId
+          ? Math.max(1, Math.min(99, selection.maxQuantity ?? 99, Number(quantity) || 1))
+          : 1;
         const anyInStock = product.variants.some(function available(variant) {
           return variant.inStock;
         });
         document.title = product.title + ' · Kamby';
         pdpElements.headerTitle.textContent = 'Produto';
         pdpElements.title.textContent = product.title;
-        window.dispatchEvent(new CustomEvent('kamby:product-ready',{detail:{id:product.id}}));
+        const preview = {
+          id: product.id, title: product.title, storeId: product.storeId, storeName: product.storeName,
+          ...cardOffer({variants: product.variants.map(option => ({
+            price_minor: option.priceMinor, previous_price_minor: option.previousPriceMinor,
+            in_stock: option.inStock, stock_quantity: option.maxQuantity, track_quantity: true
+          }))}),
+          imageUrl: product.images[0] || '', inStock: anyInStock
+        };
+        window.dispatchEvent(new CustomEvent('kamby:product-ready',{detail:{id:product.id, preview}}));
         pdpElements.storeName.textContent = product.storeName;
         pdpElements.stockTag.textContent = '';document.getElementById('btnPdpVisitStore').disabled=false;document.getElementById('btnPdpStoreCart').disabled=false;
         pdpElements.stockTag.classList.toggle('out', !anyInStock);
@@ -3734,12 +3873,13 @@
           }
           const product = await normalisePDPProduct(row);
           if (requestId !== currentPDP.requestId) return;
-          renderPDP(product, preferredVariantId);
+          const entry = history.state;
+          renderPDP(product, preferredVariantId, entry?.productId === product.id ? entry.quantity : 1);
           if (openCartSheet && !pdpElements.addCart.disabled) productAction.open('cart');
         } catch (error) {
           if (requestId !== currentPDP.requestId) return;
           console.error('Falha ao abrir a PDP Kamby.', error);
-          renderPDPError();
+          renderPDPError(false);
         }
       }
 
@@ -3772,19 +3912,16 @@
               : currentPDP.originView === 'lojas'
                 ? '#lojas'
                 : currentPDP.originView === 'pesquisa' ? currentPDP.originHash
-                  : currentPDP.originView === 'perfil' ? '#definicoes' : '#inicio';
-          history.replaceState(
-            null,
-            '',
-            destination
-          );
+                  : currentPDP.originView === 'perfil' ? '#perfil' : '#inicio';
+          history.replaceState(null, '', destination);
+          if (destination === '#inicio') ensureHomeFeed();
         }
         window.requestAnimationFrame(function restoreOriginScroll() {
           if (returnToStorefront) {
             viewStorefront.scrollTo({ top: currentPDP.originScroll, behavior: 'auto' });
           } else {
             window.scrollTo({
-              top: currentPDP.originView === 'carrinho' ? 0 : currentPDP.originScroll,
+              top: currentPDP.originScroll,
               behavior: 'auto'
             });
             headerScroll.sync({ immediate: true });
@@ -3815,9 +3952,12 @@
       const productAction=setupProductActionSheet({
         formatPrice,
         getSelection:mode=>{const product=currentPDP.product,variant=currentPDP.activeVariant;if(!product||!variant)return null;return{product,variant,quantity:currentPDP.quantity,limit:quantityLimit(product,variant,mode,readCart())};},
-        setQuantity:quantity=>{currentPDP.quantity=quantity;},
+        setQuantity:quantity=>{currentPDP.quantity=quantity;updatePDPCalculations();},
         setVariant:id=>{const variant=currentPDP.product?.variants.find(v=>v.id===id);if(variant){currentPDP.activeVariant=variant;renderPDPVariants();updatePDPCalculations();}},
         onConfirm:async(mode,{product,variant,quantity})=>{
+          if (mode === 'whatsapp' && !isTestContact(product.isTest, product.storePhone)) {
+            trackStoreEvent(product.storeId, 'whatsapp_intent', product.id);
+          }
           if(!variant.inStock)return false;if(!navigator.onLine)throw Error('Sem ligação. Tenta novamente quando estiveres ligado.');
           const latest=await fetchPDPProduct(product.id);if(!latest)throw Error('O produto já não está disponível.');
           const fresh=await normalisePDPProduct(latest);const option=fresh.variants.find(v=>v.id===variant.id);
@@ -3827,11 +3967,16 @@
           if(mode==='cart'){kambyCart=addCartLine(readCart(),fresh,option,quantity);saveCart();showCommerceToast('Adicionado ao carrinho da loja.',()=>openStoreCart(fresh.storeId,true,fresh.storeName));return true;}
           await requireStoreOpen(catalogueRequest,fresh.storeId);
           if (currentPDP.product?.id !== fresh.id || viewPDP.hidden) return false;
-          trackStoreEvent(fresh.storeId,'whatsapp_click',fresh.id);
           const message='Olá, encontrei este produto no Kamby:\n\n'+fresh.title+(option.id?'\nOpção: '+option.name:'')+'\nQuantidade: '+quantity+'\nTotal estimado: '+formatPrice(option.priceMinor*quantity)+'\n\nGostaria de confirmar o pedido e combinar a entrega.';
-          productAction.close(true);
-          if(openTestContact(fresh.isTest,fresh.storePhone,fresh.storeName,message))return true;
-          const url='https://wa.me/'+fresh.storePhone.replace(/\D/g,'')+'?text='+encodeURIComponent(message);window.open(url,'_blank','noopener,noreferrer');showCommerceToast('Pedido preparado.',()=>checkedStoreHandoff(catalogueRequest,fresh.storeId,()=>window.open(url,'_blank','noopener,noreferrer')).catch(error=>showCommerceToast(error.message)),'Abrir WhatsApp');return true;
+          if (isTestContact(fresh.isTest, fresh.storePhone)) {
+            productAction.close(true);
+            openTestContact(true, fresh.storePhone, fresh.storeName, message);
+            return true;
+          }
+          const url = whatsappURL(fresh.storePhone, message);
+          trackStoreEvent(fresh.storeId,'whatsapp_click',fresh.id);
+          window.location.assign(url);
+          return true;
         }
       });
       pdpElements.addCart.addEventListener('click',()=>productAction.open('cart'));
@@ -3858,7 +4003,7 @@
         }
         try {
           await navigator.clipboard.writeText(window.location.href);
-          showCommerceToast('Ligação da loja copiada.');
+          showCommerceToast('Ligação do produto copiada.');
         } catch (_error) {
           showCommerceToast('Não foi possível copiar a ligação. Tenta novamente.');
           // A partilha nativa continua disponível quando a cópia não é permitida.
@@ -3896,7 +4041,7 @@
       };
       const searchState = {
         query: '', tab: 'products', availableOnly: false, withProductsOnly: false,category:'all',minPrice:'',maxPrice:'',openOnly:false,productSort:'relevance',storeSort:'relevance',
-        catalogue: null, cachedAt: 0, pending: null, loading: false, error: false,
+        catalogue: null, cachedAt: 0, loading: false, error: false,
         requestId: 0, scrollPosition: 0, userSelectedTab: false
       };
 
@@ -3949,20 +4094,34 @@
         }
       }
 
-      async function loadSearchCatalogue(force) {
-        if (searchState.pending) return searchState.pending;
-        if (!force && searchState.catalogue && Date.now() - searchState.cachedAt < 60000) return searchState.catalogue;
-        searchState.pending = Promise.all([fetchPublishedProducts(true), fetchApprovedStores()])
-          .then(([products, stores]) => {
-            const catalogue = { products, stores };
-            searchState.catalogue = catalogue;
-            searchState.cachedAt = Date.now();
-            // Store results use the same renderer and detail view as the directory.
-            storesState.stores = stores;
-            storesState.loaded = true;
-            return catalogue;
-          }).finally(() => { searchState.pending = null; });
-        return searchState.pending;
+      function searchParameters(kind, offset) {
+        const state = searchState;
+        const minor = value => normalisePriceFilter(value) ? Math.round(Number(value) * 100) : null;
+        return {
+          p_kind:kind, p_query:state.query, p_offset:offset, p_limit:24,
+          p_category:kind==='products' && state.category!=='all' ? state.category : null,
+          p_min:minor(state.minPrice), p_max:minor(state.maxPrice),
+          p_available:state.availableOnly, p_open:state.openOnly, p_with_products:state.withProductsOnly,
+          p_sort:kind==='products' ? state.productSort : state.storeSort
+        };
+      }
+
+      async function fetchSearchPage(parameters) {
+        const page = await catalogueRequest('/rest/v1/rpc/kg_search_catalogue',{
+          method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(parameters)
+        });
+        const ids = page.ids;
+        if (!ids.length) return {items:[],consumed:0,total:page.total};
+        let items;
+        if (parameters.p_kind==='products') items = await fetchPublishedProducts(false, ids);
+        else {
+          const query = new URLSearchParams({id:'in.('+ids.join(',')+')',status:'eq.approved',
+            select:'id,name,slug,location,is_test,is_open,status,logo_path'});
+          const stores = await catalogueRequest('/rest/v1/kg_stores?'+query);
+          items = await Promise.all(stores.map(normaliseStore));
+        }
+        const byId = new Map(items.map(item => [item.id,item]));
+        return {items:ids.map(id => byId.get(id)).filter(Boolean),consumed:ids.length,total:page.total};
       }
 
       function showSearchStatus(title, copy, retry) {
@@ -3999,34 +4158,66 @@
         searchElements.withProducts.setAttribute('aria-pressed', String(searchState.withProductsOnly));
       }
 
+      const searchEnd = document.createElement('div');
+      searchElements.storesWrap.after(searchEnd);
+      const searchObserver = new IntersectionObserver(entries => {
+        if (entries.some(entry => entry.isIntersecting)) loadMoreSearch();
+      }, {rootMargin:'240px'});
+
       function renderSearchResults() {
         syncSearchTabs();
-        if (searchState.loading || searchState.error || !searchState.catalogue) return;
-        const result = matchCatalogue(searchState.catalogue, searchState.query, searchState);
         updateSearchFilterSummary();
-        const count = result.products.length + result.stores.length;
-        searchElements.productsCount.textContent = result.products.length;
-        searchElements.storesCount.textContent = result.stores.length;
-        searchElements.total.textContent = count + (count === 1 ? ' resultado encontrado' : ' resultados encontrados');
-        searchElements.products.replaceChildren();
-        searchElements.stores.replaceChildren();
+        searchObserver.disconnect();
+        searchEnd.replaceChildren();
+        const page = searchState.catalogue;
+        if (!page) return;
+        const products = searchState.tab === 'products';
+        searchElements.productsCount.textContent = products ? page.total : '';
+        searchElements.storesCount.textContent = products ? '' : page.total;
+        searchElements.total.textContent = page.total + (page.total === 1 ? ' resultado encontrado' : ' resultados encontrados');
         searchElements.status.hidden = true;
-        searchElements.zero.hidden = count !== 0;
-        searchElements.productsWrap.hidden = count === 0 || searchState.tab !== 'products';
-        searchElements.storesWrap.hidden = count === 0 || searchState.tab !== 'stores';
-        searchElements.zero.querySelector('h3').textContent = activeSearchFilterCount()>0
-          ? 'Nenhum resultado com estes filtros' : 'Nenhum resultado encontrado';
-        searchElements.zero.querySelector('p').textContent=activeSearchFilterCount()>0?'Altera os filtros para ver mais opções.':'Verifica a ortografia ou experimenta outro termo.';
-        function emptyPanel(container, text) {
-          const message = document.createElement('p');
-          message.className = 'search-panel-empty';
-          message.textContent = text;
-          container.appendChild(message);
-        }
-        result.products.forEach((product, index) => searchElements.products.appendChild(renderProductCard(product, index)));
-        result.stores.forEach(store => searchElements.stores.appendChild(createStoreCard(store)));
-        if (!result.products.length) emptyPanel(searchElements.products, searchState.availableOnly ? 'Nenhum produto disponível com este termo. Podes desactivar o filtro ou explorar Lojas.' : 'Nenhum produto com este termo. Experimenta o separador Lojas.');
-        if (!result.stores.length) emptyPanel(searchElements.stores, searchState.withProductsOnly ? 'Nenhuma loja com produtos corresponde ao termo. Podes desactivar o filtro.' : 'Nenhuma loja com este termo. Experimenta o separador Produtos.');
+        searchElements.zero.hidden = page.total !== 0;
+        searchElements.productsWrap.hidden = !products || !page.total;
+        searchElements.storesWrap.hidden = products || !page.total;
+        searchElements.zero.querySelector('h3').textContent = products ? 'Nenhum produto encontrado' : 'Nenhuma loja encontrada';
+        searchElements.zero.querySelector('p').textContent = activeSearchFilterCount() ?
+          'Altera os filtros para ver mais opções.' : 'Experimenta outro termo ou muda de separador.';
+        const list = products ? searchElements.products : searchElements.stores;
+        list.replaceChildren(...page.items.map((item,index) => products ? renderProductCard(item,index) : createStoreCard(item)));
+        if (page.consumed < page.total) searchObserver.observe(searchEnd);
+      }
+
+      async function loadMoreSearch() {
+        const page = searchState.catalogue;
+        if (activeMainView !== 'pesquisa' || !page || page.loading || page.consumed >= page.total) return;
+        const request = searchState.requestId;
+        const kind = searchState.tab;
+        page.loading = true;
+        searchObserver.disconnect();
+        try {
+          const next = await fetchSearchPage(searchParameters(kind,page.consumed));
+          if (request !== searchState.requestId || page !== searchState.catalogue) return;
+          const list = kind === 'products' ? searchElements.products : searchElements.stores;
+          const known = new Set(page.items.map(item => item.id));
+          for (const item of next.items) {
+            if (known.has(item.id)) continue;
+            known.add(item.id);
+            list.append(kind==='products' ? renderProductCard(item,page.items.length) : createStoreCard(item));
+            page.items.push(item);
+          }
+          page.consumed += next.consumed;
+          page.total = next.total;
+          searchEnd.replaceChildren();
+          if (next.consumed && page.consumed < page.total) searchObserver.observe(searchEnd);
+        } catch {
+          if (request !== searchState.requestId) return;
+          const retry = document.createElement('button');
+          retry.type = 'button';
+          retry.className = 'feed-action';
+          retry.textContent = 'Tentar carregar mais resultados';
+          retry.onclick = loadMoreSearch;
+          searchEnd.replaceChildren(retry);
+        } finally {page.loading = false;}
       }
 
       async function executeSearch(query, options = {}) {
@@ -4035,11 +4226,10 @@
           (viewSearchResults.hidden ? searchInput : searchResultsInput).focus();
           return;
         }
-        const sameQuery = searchState.query === clean;
         if (!options.restore) searchState.scrollPosition = 0;
         searchState.query = clean;
         if (!options.restore && !options.keepFilters) {
-          searchState.tab = 'products';
+          searchState.tab = options.tab === 'stores' ? 'stores' : 'products';
           searchState.userSelectedTab = false;
         }
         if (options.restore) {
@@ -4066,10 +4256,16 @@
         document.getElementById('searchResultsSuggestions').hidden=true;
         document.getElementById('searchLiveSuggestions').hidden=true;
         rememberSearch(clean);
-        if (options.restore && sameQuery && searchState.catalogue && !searchState.error && !searchState.loading) {
+        if (!feedState.categories.length) loadCategoryIndex().catch(() => {});
+        const parameters = searchParameters(searchState.tab,0);
+        const key = JSON.stringify(parameters);
+        if (!options.retry && searchState.catalogue?.key === key && Date.now()-searchState.cachedAt<60000) {
           renderSearchResults();
           return;
         }
+        searchObserver.disconnect();
+        searchEnd.replaceChildren();
+        searchState.catalogue = null;
         searchState.loading = true;
         searchState.error = false;
         viewSearchResults.setAttribute('aria-busy', 'true');
@@ -4081,15 +4277,15 @@
         showSearchStatus('', '');
         searchElements.status.replaceChildren();
         syncSearchTabs();
-        const skeleton=document.createElement('div');skeleton.className='products-grid search-loading-grid';skeleton.setAttribute('aria-hidden','true');for(let i=0;i<4;i++){const card=document.createElement('div');const image=document.createElement('div');image.className='product-img-wrap';card.append(image);for(let n=0;n<2;n++){const line=document.createElement('div');line.className='search-loading-line';card.append(line);}skeleton.append(card);}searchElements.status.append(skeleton);
+        const timer = setTimeout(() => {
+          if (requestId === searchState.requestId) showSkeleton(searchElements.status,'rows',3);
+        },180);
         try {
-          const catalogue = await loadSearchCatalogue(options.retry);
+          const page = await fetchSearchPage(parameters);
           if (requestId !== searchState.requestId || activeMainView !== 'pesquisa') return;
+          searchState.catalogue = {...page,key};
+          searchState.cachedAt = Date.now();
           searchState.loading = false;
-          if (!options.restore && !options.keepFilters && !searchState.userSelectedTab) {
-            const result = matchCatalogue(catalogue, clean);
-            searchState.tab = result.stores.length > result.products.length ? 'stores' : 'products';
-          }
           renderSearchResults();
           replaceSearchHash();
         } catch (_error) {
@@ -4101,15 +4297,20 @@
           searchElements.storesCount.textContent = '—';
           showSearchStatus(navigator.onLine?'Não foi possível pesquisar':'Sem ligação à internet', navigator.onLine?'A pesquisa foi preservada. Tenta novamente.':'Volta a ligar-te para procurar produtos e lojas.', true);
         } finally {
+          clearTimeout(timer);
           if (requestId === searchState.requestId) viewSearchResults.setAttribute('aria-busy', 'false');
         }
       }
       window.executeSearch = executeSearch;
 
+      function refreshFilteredSearch() {
+        executeSearch(searchState.query,{keepFilters:true,updateHistory:false});
+      }
+
       function switchSearchTab(type, focus) {
         searchState.userSelectedTab = true;
         searchState.tab = type === 'stores' ? 'stores' : 'products';
-        renderSearchResults();
+        refreshFilteredSearch();
         replaceSearchHash();
         if (focus) (type === 'stores' ? searchElements.storesTab : searchElements.productsTab).focus();
       }
@@ -4123,11 +4324,11 @@
       });
       searchElements.available.addEventListener('click', () => {
         searchState.availableOnly = !searchState.availableOnly;
-        renderSearchResults(); replaceSearchHash();
+        refreshFilteredSearch(); replaceSearchHash();
       });
       searchElements.withProducts.addEventListener('click', () => {
         searchState.withProductsOnly = !searchState.withProductsOnly;
-        renderSearchResults(); replaceSearchHash();
+        refreshFilteredSearch(); replaceSearchHash();
       });
       searchInput.addEventListener('keydown', event => {
         if (event.key === 'Enter') { event.preventDefault(); executeSearch(searchInput.value); }
@@ -4152,17 +4353,17 @@
       function activeSearchFilterCount(){return searchState.tab==='products'?[searchState.category!=='all',searchState.minPrice!=='',searchState.maxPrice!=='',searchState.availableOnly,searchState.productSort!=='relevance'].filter(Boolean).length:[searchState.withProductsOnly,searchState.openOnly,searchState.storeSort!=='relevance'].filter(Boolean).length;}
       function updateSearchFilterSummary(){const count=activeSearchFilterCount();document.getElementById('searchZeroClearFilters').hidden=!count;document.getElementById('searchFilterCount').hidden=!count;document.getElementById('searchFilterCount').textContent=count;document.getElementById('searchAppliedFilters').hidden=!count;document.getElementById('searchFilterSummary').textContent=count+(count===1?' filtro activo':' filtros activos');document.getElementById('searchSortLabel').textContent=searchState.tab==='products'?(searchState.productSort==='price-up'?'Preço: menor primeiro':searchState.productSort==='price-down'?'Preço: maior primeiro':'Por relevância'):(searchState.storeSort==='name'?'Nome da loja':'Por relevância');}
       const filterDialog=document.getElementById('searchFiltersDialog');
-      function fillSearchFilterDraft(reset=false){const product=searchState.tab==='products';document.getElementById('searchProductFilterFields').hidden=!product;document.getElementById('searchStoreFilterFields').hidden=product;const category=document.getElementById('searchFilterCategory');category.replaceChildren(new Option('Todas','all'));const seen=new Map();for(const p of searchState.catalogue?.products||[])if(p.categoryId)seen.set(p.categoryId,p.categoryLabel);for(const [id,label]of seen)category.append(new Option(label,id));category.value=!reset&&seen.has(searchState.category)?searchState.category:'all';document.getElementById('searchFilterMin').value=reset?'':searchState.minPrice;document.getElementById('searchFilterMax').value=reset?'':searchState.maxPrice;document.getElementById('searchFilterAvailable').checked=!reset&&searchState.availableOnly;document.getElementById('searchFilterWithProducts').checked=!reset&&searchState.withProductsOnly;document.getElementById('searchFilterOpen').checked=!reset&&searchState.openOnly;const sort=document.getElementById('searchFilterSort');sort.replaceChildren();for(const [value,label]of product?[['relevance','Relevância'],['price-up','Preço: menor primeiro'],['price-down','Preço: maior primeiro']]:[['relevance','Relevância'],['name','Nome da loja']])sort.append(new Option(label,value));sort.value=reset?'relevance':product?searchState.productSort:searchState.storeSort;document.getElementById('searchFiltersError').hidden=true;}
+      function fillSearchFilterDraft(reset=false){const product=searchState.tab==='products';document.getElementById('searchProductFilterFields').hidden=!product;document.getElementById('searchStoreFilterFields').hidden=product;const category=document.getElementById('searchFilterCategory');category.replaceChildren(new Option('Todas','all'));const seen=new Map(feedState.categories.map(c=>[c.id,c.label]));for(const [id,label]of seen)category.append(new Option(label,id));category.value=!reset&&seen.has(searchState.category)?searchState.category:'all';document.getElementById('searchFilterMin').value=reset?'':searchState.minPrice;document.getElementById('searchFilterMax').value=reset?'':searchState.maxPrice;document.getElementById('searchFilterAvailable').checked=!reset&&searchState.availableOnly;document.getElementById('searchFilterWithProducts').checked=!reset&&searchState.withProductsOnly;document.getElementById('searchFilterOpen').checked=!reset&&searchState.openOnly;const sort=document.getElementById('searchFilterSort');sort.replaceChildren();for(const [value,label]of product?[['relevance','Relevância'],['price-up','Preço: menor primeiro'],['price-down','Preço: maior primeiro']]:[['relevance','Relevância'],['name','Nome da loja']])sort.append(new Option(label,value));sort.value=reset?'relevance':product?searchState.productSort:searchState.storeSort;document.getElementById('searchFiltersError').hidden=true;}
       document.getElementById('btnOpenSearchFilters').addEventListener('click',()=>{fillSearchFilterDraft();filterDialog.showModal();});
       document.getElementById('btnCloseSearchFilters').addEventListener('click',()=>filterDialog.close());
       document.getElementById('btnResetSearchDraft').addEventListener('click',()=>fillSearchFilterDraft(true));
       filterDialog.addEventListener('click',event=>{if(event.target!==filterDialog)return;const r=filterDialog.getBoundingClientRect();if(event.clientX<r.left||event.clientX>r.right||event.clientY<r.top||event.clientY>r.bottom)filterDialog.close();});
-      document.getElementById('searchFiltersForm').addEventListener('submit',event=>{event.preventDefault();if(searchState.tab==='products'){const min=document.getElementById('searchFilterMin').value,max=document.getElementById('searchFilterMax').value;if(min!==''&&max!==''&&Number(min)>Number(max)){const error=document.getElementById('searchFiltersError');error.textContent='O preço máximo deve ser igual ou superior ao mínimo.';error.hidden=false;document.getElementById('searchFilterMax').focus();return;}searchState.category=document.getElementById('searchFilterCategory').value;searchState.minPrice=normalisePriceFilter(min);searchState.maxPrice=normalisePriceFilter(max);searchState.availableOnly=document.getElementById('searchFilterAvailable').checked;searchState.productSort=document.getElementById('searchFilterSort').value;}else{searchState.withProductsOnly=document.getElementById('searchFilterWithProducts').checked;searchState.openOnly=document.getElementById('searchFilterOpen').checked;searchState.storeSort=document.getElementById('searchFilterSort').value;}filterDialog.close();renderSearchResults();replaceSearchHash();});
-      function clearCurrentSearchFilters(){if(searchState.tab==='products')Object.assign(searchState,{category:'all',minPrice:'',maxPrice:'',availableOnly:false,productSort:'relevance'});else Object.assign(searchState,{withProductsOnly:false,openOnly:false,storeSort:'relevance'});renderSearchResults();replaceSearchHash();}
+      document.getElementById('searchFiltersForm').addEventListener('submit',event=>{event.preventDefault();if(searchState.tab==='products'){const min=document.getElementById('searchFilterMin').value,max=document.getElementById('searchFilterMax').value;if(min!==''&&max!==''&&Number(min)>Number(max)){const error=document.getElementById('searchFiltersError');error.textContent='O preço máximo deve ser igual ou superior ao mínimo.';error.hidden=false;document.getElementById('searchFilterMax').focus();return;}searchState.category=document.getElementById('searchFilterCategory').value;searchState.minPrice=normalisePriceFilter(min);searchState.maxPrice=normalisePriceFilter(max);searchState.availableOnly=document.getElementById('searchFilterAvailable').checked;searchState.productSort=document.getElementById('searchFilterSort').value;}else{searchState.withProductsOnly=document.getElementById('searchFilterWithProducts').checked;searchState.openOnly=document.getElementById('searchFilterOpen').checked;searchState.storeSort=document.getElementById('searchFilterSort').value;}filterDialog.close();refreshFilteredSearch();replaceSearchHash();});
+      function clearCurrentSearchFilters(){if(searchState.tab==='products')Object.assign(searchState,{category:'all',minPrice:'',maxPrice:'',availableOnly:false,productSort:'relevance'});else Object.assign(searchState,{withProductsOnly:false,openOnly:false,storeSort:'relevance'});refreshFilteredSearch();replaceSearchHash();}
       document.getElementById('btnClearAppliedFilters').addEventListener('click',clearCurrentSearchFilters);
       const clearZero=document.createElement('button');clearZero.type='button';clearZero.id='searchZeroClearFilters';clearZero.hidden=true;clearZero.className='settings-text-action';clearZero.textContent='Limpar filtros';clearZero.addEventListener('click',clearCurrentSearchFilters);searchElements.zero.append(clearZero);
       let suggestionTimer=0,suggestionRequest=0;
-      async function suggest(input){const query=input.value.trim();const request=++suggestionRequest;const results=input===searchResultsInput;const wrapper=document.getElementById(results?'searchResultsSuggestions':'searchLiveSuggestions');const list=document.getElementById(results?'searchResultsSuggestions':'searchLiveSuggestionsList');if(!query){wrapper.hidden=true;return;}let catalogue={products:[],stores:[]};try{catalogue=await loadSearchCatalogue(false);}catch{}if(request!==suggestionRequest||input.value.trim()!==query||document.activeElement!==input)return;list.replaceChildren();wrapper.hidden=false;const matches=matchCatalogue(catalogue,query);const options=[{text:'Pesquisar “'+query+'”',sub:'Produtos e lojas',query},...matches.products.slice(0,3).map(p=>({text:p.title,sub:'Produto · '+p.storeName,query:p.title})),...matches.stores.slice(0,2).map(s=>({text:s.name,sub:'Loja · '+s.location,query:s.name}))];options.forEach((item,index)=>{const b=document.createElement('button');b.type='button';b.className='search-suggestion-button';const label=document.createElement('span');label.textContent=item.text;const sub=document.createElement('small');sub.textContent=item.sub;label.append(sub);b.append(label);b.addEventListener('click',()=>{suggestionRequest++;executeSearch(item.query);});b.addEventListener('keydown',event=>{if(!['ArrowDown','ArrowUp','Escape'].includes(event.key))return;event.preventDefault();if(event.key==='Escape'){wrapper.hidden=true;input.focus();return;}const buttons=Array.from(list.querySelectorAll('button'));const next=index+(event.key==='ArrowDown'?1:-1);if(next<0)input.focus();else buttons[Math.min(next,buttons.length-1)].focus();});list.append(b);});}
+      async function suggest(input){const query=input.value.trim();const request=++suggestionRequest;const results=input===searchResultsInput;const wrapper=document.getElementById(results?'searchResultsSuggestions':'searchLiveSuggestions');const list=document.getElementById(results?'searchResultsSuggestions':'searchLiveSuggestionsList');if(!query){wrapper.hidden=true;return;}const catalogue={products:feedState.products,stores:storesState.stores};if(request!==suggestionRequest||input.value.trim()!==query||document.activeElement!==input)return;list.replaceChildren();wrapper.hidden=false;const matches=matchCatalogue(catalogue,query);const options=[{text:'Pesquisar “'+query+'”',sub:'Produtos e lojas',query},...matches.products.slice(0,3).map(p=>({text:p.title,sub:'Produto · '+p.storeName,query:p.title})),...matches.stores.slice(0,2).map(s=>({text:s.name,sub:'Loja · '+s.location,query:s.name,kind:'stores'}))];options.forEach((item,index)=>{const b=document.createElement('button');b.type='button';b.className='search-suggestion-button';const label=document.createElement('span');label.textContent=item.text;const sub=document.createElement('small');sub.textContent=item.sub;label.append(sub);b.append(label);b.addEventListener('click',()=>{suggestionRequest++;executeSearch(item.query,{tab:item.kind});});b.addEventListener('keydown',event=>{if(!['ArrowDown','ArrowUp','Escape'].includes(event.key))return;event.preventDefault();if(event.key==='Escape'){wrapper.hidden=true;input.focus();return;}const buttons=Array.from(list.querySelectorAll('button'));const next=index+(event.key==='ArrowDown'?1:-1);if(next<0)input.focus();else buttons[Math.min(next,buttons.length-1)].focus();});list.append(b);});}
       for(const input of [searchInput,searchResultsInput]){input.addEventListener('input',()=>{clearTimeout(suggestionTimer);suggestionTimer=setTimeout(()=>suggest(input),150);});input.addEventListener('keydown',event=>{if(event.key==='ArrowDown'){const list=document.getElementById(input===searchResultsInput?'searchResultsSuggestions':'searchLiveSuggestionsList');const first=list.querySelector('button');if(first&&!list.hidden){event.preventDefault();first.focus();}}if(event.key==='Escape'){suggestionRequest++;document.getElementById('searchResultsSuggestions').hidden=true;document.getElementById('searchLiveSuggestions').hidden=true;if(input===searchResultsInput)input.blur();}});}
       window.addEventListener('kamby:search-history',renderRecentSearches);
 
@@ -4196,6 +4397,7 @@
         }
         if (activeMainView === 'inicio') homeScrollPosition = window.scrollY;
         if (activeMainView === 'lojas') storesState.scrollPosition = window.scrollY;
+        if (Object.hasOwn(otherScrollPositions, activeMainView)) otherScrollPositions[activeMainView] = window.scrollY;
         activeMainView = destination;
         document.body.dataset.view = destination;
         document.getElementById('mainContainer').inert = false;
@@ -4217,6 +4419,7 @@
             : destination === 'perfil' ? viewProfile : destination === 'pesquisa' ? viewSearchResults : viewHome;
         activeView.hidden = false;
         activeView.classList.add('active');
+        if (destination === 'inicio') ensureHomeFeed();
         if (destination === 'carrinho') renderCartView();
         if (destination === 'lojas') loadStores();
         if (destination === 'perfil') { merchantController?.renderProfile(); merchantController?.loadAccount(); }
@@ -4233,7 +4436,7 @@
             ? homeScrollPosition
             : destination === 'lojas'
               ? storesState.scrollPosition
-              : destination === 'pesquisa' ? searchState.scrollPosition : 0,
+              : destination === 'pesquisa' ? searchState.scrollPosition : otherScrollPositions[destination] || 0,
           behavior: 'auto'
         });
         headerScroll.sync({ immediate: true });
@@ -4267,7 +4470,13 @@
         }
         if(!viewStoreCart.hidden)closeStoreCart();
         if (merchantController?.isOpen() && !hash.startsWith('#lojista/') && !await merchantController.canLeave()) { history.pushState(null,'','#lojista/'+document.getElementById('merchantPublicPreview').hash.replace('#loja/','')); return; }
+        if ((hash.startsWith('#definicoes/') || hash.startsWith('#lojista/')) && !merchantController) {
+          await merchantReady;
+          if (window.location.hash !== hash) return;
+        }
         if(hash.startsWith('#definicoes/')){
+          if (!viewPDP.hidden) closePDP(false);
+          if (!viewStorefront.hidden) closeStorefront(false);
           if(merchantController?.isOpen())merchantController.close(false);
           await merchantController.settings.route(hash);return;
         }
@@ -4300,10 +4509,9 @@
         if (hash.startsWith('#loja/')) {
           const storeId = decodeURIComponent(hash.slice('#loja/'.length));
           if (!viewPDP.hidden) closePDP(false);
-          if (!['lojas', 'pesquisa'].includes(activeMainView)) switchView('lojas', false);
           if (viewStorefront.hidden || !storefrontState.store || storefrontState.store.id !== storeId) {
-            const opened = await openStorefront(storeId, false);if(scopedCart.originHash===hash)viewStorefront.scrollTop=scopedCart.originScroll;
-            if (!opened) history.replaceState(null, '', '#lojas');
+            await openStorefront(storeId, false);
+            if (scopedCart.originHash === hash) viewStorefront.scrollTop = scopedCart.originScroll;
           }
           return;
         }
@@ -4316,13 +4524,8 @@
         );
       }
 
-      window.addEventListener('popstate', function handleHistoryNavigation() {
-        routeFromHash();
-      });
-
-      window.addEventListener('hashchange', function handleManualHashNavigation() {
-        routeFromHash();
-      });
+      // All routes have distinct hashes. A history traversal also raises hashchange.
+      window.addEventListener('hashchange', routeFromHash);
 
       const brandLink = document.querySelector('.brand-link');
       if (brandLink) {
@@ -4345,7 +4548,7 @@
         if (!viewCart.hidden) renderCartView();updateScopedCartBadges();if(!viewStoreCart.hidden)renderStoreCart();
       });
 
-      merchantController = await setupMerchant({
+      const merchantReady = setupMerchant({
         cartCount: () => readCart().reduce((sum,item) => sum + item.quantity, 0),
         savedProducts: ids => fetchPublishedProducts(true, ids),
         renderProductCard,
@@ -4362,6 +4565,8 @@
           floatingNavbar.classList.remove('is-hidden');
         },
         clearLocalData: () => {
+          for (const {product} of readSavedEntries(localStorage)) removeFromDevice(localStorage, '', product.id);
+          window.dispatchEvent(new Event('kamby:catalogue-card'));
           localStorage.removeItem('kamby_cart');
           localStorage.removeItem('kamby:recent-searches');
           sessionStorage.removeItem('kamby:home-scroll');
@@ -4372,38 +4577,32 @@
         catalogueChanged: async () => {
           searchState.catalogue = null; searchState.cachedAt = 0;
           storesState.loaded = false;
-          const pendingSearch = searchState.pending;
-          if (pendingSearch) await pendingSearch.catch(() => {});
+          ++searchState.requestId;
           await Promise.all([loadFeed(true), loadStores(true)]);
           searchState.catalogue = null; searchState.cachedAt = 0;
           if (activeMainView === 'pesquisa' && !document.body.classList.contains('is-subscreen')) {
             await executeSearch(searchState.query, { restore: true, updateHistory: false, tab: searchState.tab, availableOnly: searchState.availableOnly, withProductsOnly: searchState.withProductsOnly,category:searchState.category,minPrice:searchState.minPrice,maxPrice:searchState.maxPrice,openOnly:searchState.openOnly,productSort:searchState.productSort,storeSort:searchState.storeSort });
           }
           if (storefrontState.store) {
-            const freshStore = storesState.stores.find(store => store.id === storefrontState.store.id);
-            if (freshStore) {
+            const storeId = storefrontState.store.id;
+            const [freshStore] = await fetchApprovedStores([storeId]);
+            if (freshStore && storefrontState.store?.id === storeId) {
               storefrontState.store = freshStore;
               if (!viewStorefront.hidden) renderStorefront(freshStore);
             }
           }
           if (!viewPDP.hidden && currentPDP.product) {
             const row = await fetchPDPProduct(currentPDP.product.id);
-            if (row) renderPDP(await normalisePDPProduct(row));
+            if (row && currentPDP.product?.id === row.id && !viewPDP.hidden) {
+              const product = await normalisePDPProduct(row);
+              if (currentPDP.product?.id === row.id && !viewPDP.hidden) renderPDP(product, currentPDP.activeVariant?.id, currentPDP.quantity);
+            }
           }
         }
-      });
+      }).then(controller => { merchantController = controller; return controller; });
       saveCart();
-      const initialHash = window.location.hash;
-      const initialMainView = initialHash.startsWith('#carrinho/loja/')?'carrinho':initialHash === '#perfil' || initialHash.startsWith('#definicoes') || initialHash.startsWith('#lojista/') ? 'perfil' : initialHash === '#carrinho'
-        ? 'carrinho'
-        : initialHash === '#lojas' || initialHash.startsWith('#loja/')
-          ? 'lojas'
-          : 'inicio';
-      switchView(initialMainView, false);
-      Promise.all([
-        loadFeed(),
-        initialMainView === 'lojas' ? loadStores() : Promise.resolve()
-      ]).then(routeFromHash);
+      if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
+      void routeFromHash();
 
     })();
   </script>
@@ -4413,10 +4612,13 @@
   <dialog id="searchFiltersDialog" class="search-filter-sheet" aria-labelledby="searchFiltersTitle"><form id="searchFiltersForm"><header class="subscreen-bar"><span></span><h2 class="subscreen-title" id="searchFiltersTitle">Filtros</h2><button type="button" class="header-btn" id="btnCloseSearchFilters" aria-label="Fechar filtros"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m6 6 12 12M6 18 18 6"/></svg></button></header><div class="search-filter-fields"><div id="searchProductFilterFields"><label>Categoria<select id="searchFilterCategory"><option value="all">Todas</option></select></label><div class="search-price-fields"><label>Preço mínimo (MT)<input type="number" id="searchFilterMin" min="0" step="0.01" inputmode="decimal" placeholder="0" /></label><label>Preço máximo (MT)<input type="number" id="searchFilterMax" min="0" step="0.01" inputmode="decimal" placeholder="Sem limite" /></label></div><label class="search-filter-check"><input type="checkbox" id="searchFilterAvailable" />Só produtos disponíveis</label></div><div id="searchStoreFilterFields" hidden><label class="search-filter-check"><input type="checkbox" id="searchFilterWithProducts" />Só lojas com produtos</label><label class="search-filter-check"><input type="checkbox" id="searchFilterOpen" />Só lojas abertas</label></div><label>Ordenar<select id="searchFilterSort"></select></label><p class="field-error" id="searchFiltersError" role="alert" hidden></p></div><footer class="search-filter-footer"><button type="button" class="settings-text-action" id="btnResetSearchDraft">Repor</button><button type="submit" class="merchant-primary-button">Aplicar filtros</button></footer></form></dialog>
 
 
-  <dialog id="productActionSheet" class="commerce-action-sheet" aria-labelledby="productActionTitle"><header><h2 id="productActionTitle">Adicionar ao carrinho</h2><button type="button" id="btnCloseProductAction" aria-label="Fechar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="m6 6 12 12M6 18 18 6"/></svg></button></header><div class="commerce-action-body"><div class="action-product"><img id="actionProductImage" alt="" hidden><div><h3 id="actionProductName"></h3><p id="actionStoreName"></p></div></div><fieldset id="actionVariantLabel"><legend>Opção</legend><div id="actionVariant" role="radiogroup" aria-label="Opções do produto"></div></fieldset><div class="action-quantity-row"><span>Quantidade</span><div class="pdp-stepper"><button id="btnPdpDec" type="button" aria-label="Reduzir quantidade">−</button><output id="pdpQtyVal" aria-label="Quantidade seleccionada">1</output><button id="btnPdpInc" type="button" aria-label="Aumentar quantidade">+</button></div></div><div class="action-total-row"><span>Total</span><strong id="pdpSubtotalVal">—</strong></div><p id="productActionNotice" class="commerce-notice" role="status" hidden></p></div><footer><button type="button" id="actionConfirm">Guardar no carrinho</button></footer></dialog>
-  <dialog id="storeArtworkViewer" class="product-photo-viewer" aria-label="Fotografia da loja">
-    <form method="dialog"><button class="product-photo-close" aria-label="Fechar fotografia" autofocus>×</button></form>
-    <div class="pdp-slide"><img id="storeArtworkFull" alt=""></div>
+  <dialog id="productActionSheet" class="commerce-action-sheet" aria-labelledby="productActionTitle"><header><h2 id="productActionTitle">Adicionar ao carrinho</h2><button type="button" id="btnCloseProductAction" aria-label="Fechar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="m6 6 12 12M6 18 18 6"/></svg></button></header><div class="commerce-action-body"><div class="action-product"><img id="actionProductImage" alt="" hidden><div><h3 id="actionProductName"></h3><p id="actionStoreName"></p></div></div><fieldset id="actionVariantLabel"><legend>Opção</legend><div id="actionVariant" role="radiogroup" aria-label="Opções do produto"></div></fieldset><div class="action-quantity-row"><span>Quantidade</span><div class="pdp-stepper"><button id="btnPdpDec" type="button" aria-label="Reduzir quantidade">−</button><output id="pdpQtyVal" aria-label="Quantidade seleccionada">1</output><button id="btnPdpInc" type="button" aria-label="Aumentar quantidade">+</button></div></div><div class="action-total-row"><span>Total</span><strong id="pdpSubtotalVal">—</strong></div><p id="productActionNotice" class="commerce-notice" role="status" hidden></p></div><footer><button type="button" id="actionConfirm">Adicionar ao carrinho</button></footer></dialog>
+  <dialog id="storeArtworkViewer" class="store-artwork-dialog" aria-labelledby="storeArtworkTitle">
+    <div class="store-artwork-header">
+      <h2 id="storeArtworkTitle">Fotografia da loja</h2>
+      <form method="dialog"><button type="submit" aria-label="Fechar fotografia" autofocus>×</button></form>
+    </div>
+    <img id="storeArtworkFull" alt="">
   </dialog>
   <div class="commerce-toast" id="commerceToast" role="status" aria-live="polite" hidden><span id="commerceToastText"></span><button type="button" id="commerceToastAction" hidden>Ver carrinho</button></div>
 

@@ -41,6 +41,20 @@ do $$declare v_doc jsonb;v_result jsonb;v_id uuid=current_setting('test.edit_pro
  begin update public.kg_products set status='published' where id=v_id;raise exception 'FAIL: direct publication bypass';exception when insufficient_privilege then null;end;
  if (public.kg_merchant_activity(v_store)->'recent')='[]'::jsonb then raise exception 'FAIL: no catalogue events';end if;
 end$$;
+-- Verify the persisted change record through the administrative reader.
+select set_config('request.jwt.claim.sub','30000000-0000-0000-0000-000000000001',true);
+do $$
+begin
+ if not exists (
+   select 1
+   from jsonb_array_elements(public.kg_admin_read('store', p_store_id=>current_setting('test.edit_store')::uuid)->'history') as event
+   where event->>'actor_id'='30000000-0000-0000-0000-000000000002'
+     and event #>> '{metadata,changes,name,before}'='Editor store'
+     and event #>> '{metadata,changes,name,after}'='Edited identity'
+     and event #>> '{metadata,changes,opening_hours,after,0,close}'='17:00'
+     and not (event->'metadata'->'changes' ? 'location')
+ ) then raise exception 'FAIL: store history must retain changed fields and the author'; end if;
+end$$;
 -- Local-only Storage metadata mock. Hosted tests use actual Storage uploads instead.
 reset role;
 select set_config('test.edit_photo','30000000-0000-0000-0000-000000000002/'||current_setting('test.edit_store')||'/'||current_setting('test.edit_product')||'/11111111-1111-4111-8111-111111111111.png',true);

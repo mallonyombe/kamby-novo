@@ -52,18 +52,6 @@
   font-weight: 700;
 }
 .product-card-unavailable { inset-block: auto 6px; color: var(--text-secondary); }
-.product-card-photo-count {
-  position: absolute;
-  inset-inline-end: 6px;
-  inset-block-end: 6px;
-  border-radius: 6px;
-  padding: 3px 6px;
-  background: var(--bg-surface);
-  color: var(--text-secondary);
-  font-size: 11px;
-  font-weight: 600;
-}
-.product-card-visual:has(.product-card-photo-count) .product-card-unavailable { inset-inline: 6px auto; }
 .product-card-action {
   display: grid;
   place-items: center;

@@ -78,3 +78,23 @@ export function baselineCataloguePath(path){
 export function storagePathFromSignedUrl(value,supabaseUrl,bucket){
  try{const url=new URL(value),base=new URL(supabaseUrl),prefix='/storage/v1/object/sign/'+bucket+'/';if(url.origin!==base.origin||!url.pathname.startsWith(prefix))return'';const path=decodeURIComponent(url.pathname.slice(prefix.length));return path.length<=500&&!/(^|\/)\.\.?(\/|$)/.test(path)?path:'';}catch{return'';}
 }
+
+// The card quotes an option that can be bought. Other discounted options
+// get their own label without implying a discount on the displayed price.
+export function cardOffer(row) {
+  const variants = (row.variants || []).filter(option => option.active !== false);
+  const available = variants.filter(option => option.in_stock && variantLimit(option) > 0);
+  const options = available.length ? available : variants.length ? variants : [row];
+  const prices = options.map(option => Number(option.price_minor) || 0);
+  const priceMinor = Math.min(...prices);
+  const cheapest = options.filter(option => Number(option.price_minor) === priceMinor);
+  const previous = new Set(cheapest.map(option => Number(option.previous_price_minor) || 0));
+  const previousPriceMinor = previous.size === 1 ? [...previous][0] : 0;
+  return {
+    priceMinor,
+    previousPriceMinor,
+    priceMode: new Set(prices).size > 1 ? 'from' : 'fixed',
+    otherOffer: previousPriceMinor <= priceMinor &&
+      options.some(option => Number(option.previous_price_minor) > Number(option.price_minor))
+  };
+}

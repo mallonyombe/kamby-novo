@@ -1,6 +1,6 @@
 .app-spinner {display:inline-block;vertical-align:middle;flex:none;width:20px;height:20px;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;animation:app-spin .75s linear infinite;}
 @keyframes app-spin {to{transform:rotate(360deg);}}
-button.is-pending {position:relative;color:transparent!important;pointer-events:none;min-height:24px;}
+button.is-pending {position:relative;color:transparent!important;pointer-events:none;}
 button.is-pending>* {visibility:hidden;}
 button.is-pending::after {content:"";position:absolute;left:calc(50% - 9px);top:calc(50% - 9px);width:18px;height:18px;border:2px solid var(--pending-colour,var(--text-main));border-right-color:transparent;border-radius:50%;box-sizing:border-box;animation:app-spin .75s linear infinite;}
 .app-skeleton {display:block;position:relative;overflow:hidden;border-radius:7px;min-height:1em;width:100%;color:transparent;background:var(--bg-input,#ededf0);}
@@ -20,4 +20,4 @@ button.is-pending::after {content:"";position:absolute;left:calc(50% - 9px);top:
 #merchantListSentinel {min-height:28px;display:grid;place-items:center;}
 .search-status:has(.search-loading-grid) {border:0;background:transparent;padding:0;}
 #viewPDP[aria-busy="true"] .pdp-slide {align-self:stretch;}
-@media(prefers-reduced-motion:reduce){.app-skeleton::after{animation:none;transform:none;}.app-spinner,button.is-pending::after{animation-duration:1.5s;}}
+@media(prefers-reduced-motion:reduce){.app-skeleton::after{animation:none;transform:none;}.app-spinner,button.is-pending::after{animation:none;}}

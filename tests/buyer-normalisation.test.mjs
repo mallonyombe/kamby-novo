@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { variantLimit, sortVariantsForDisplay } from '../frontend/commerce-domain.js';
+import { cardOffer, variantLimit, sortVariantsForDisplay } from '../frontend/commerce-domain.js';
 
 // Execute the actual UI normalisers, isolating network/image signing only.
 const html = readFileSync(new URL('../frontend/index.html', import.meta.url), 'utf8');
@@ -11,7 +11,7 @@ function normalisers(signProductImage = async path => path ? `https://images.tes
     displayStoreName: store => store.name,
     safeHttpUrl: value => value || '',
     cleanProductDescription: row => row.description || '',
-    signProductImage, variantLimit, sortVariantsForDisplay
+    signProductImage, cardOffer, variantLimit, sortVariantsForDisplay
   };
   return Object.fromEntries([
     ['normaliseProduct', 'async function fetchPublishedProducts'],
@@ -46,7 +46,7 @@ for (const [label, changes, expected] of [
 test('related-product query loads quantities and tracking flags used by card availability', () => {
   const query = html.slice(html.indexOf('async function loadPDPRelated('), html.indexOf('async function fetchPDPProduct('));
   assert.match(query, /stock_status,stock_quantity/);
-  assert.match(query, /variants:kg_product_variants\(price_minor,in_stock,stock_quantity,track_quantity,active\)/);
+  assert.match(query, /variants:kg_product_variants\(price_minor,previous_price_minor,in_stock,stock_quantity,track_quantity,active\)/);
 });
 test('variant image uses surviving gallery index when an earlier image cannot be signed', async () => {
   const {normalisePDPProduct} = normalisers(async path => { if(path==='bad') throw Error('unavailable'); return `https://images.test/${path}`; });

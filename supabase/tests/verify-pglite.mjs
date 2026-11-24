@@ -6,7 +6,8 @@ try {
  await db.exec(read('./mock-platform.sql'));
  const migrations=readdirSync(new URL('../migrations/',import.meta.url)).filter(name=>name.endsWith('.sql')).sort();
  if(!migrations.length)throw new Error('No migration files found');
- for(const migration of migrations){
+ const sellerOnboarding=migrations.find(name=>name.endsWith('_seller_onboarding.sql'));
+ for(const migration of migrations.filter(name=>name<sellerOnboarding)){
   await db.exec(read(`../migrations/${migration}`));
   console.log(`PASS: migration compiles on PostgreSQL/PGlite (${migration})`);
   if(migration==='20261111070949_initial_greenfield.sql'){
@@ -32,6 +33,18 @@ try {
  console.log('PASS: atomic product publication, upload paths, variants, cleanup, exact retries and isolated merchant access');
  console.log('PASS: assigned merchants, exact prices, variants, stale writes, private metrics, revocation and isolation');
  console.log('PASS: managed stores, variants, ordered media, variant carts, WhatsApp snapshots, audit and private storage');
+ // The previous suites include legacy administrative creation and assignment
+ // as fixture setup. Exercise those contracts before the deliberate cutover.
+ await db.exec(read('../migrations/'+sellerOnboarding));
+ await db.exec(read('./seller-onboarding.sql'));
+ console.log('PASS: historical seller activation and review migration');
+ for(const migration of migrations.filter(name=>name>sellerOnboarding))await db.exec(read('../migrations/'+migration));
+ await db.exec(read('./seller-self-publication.sql'));
+ await db.exec(read('./catalogue-discovery.sql'));
+ console.log('PASS: anonymous discovery, pagination past 60, scoped search and available variant prices');
+ await db.exec(read('./archived-product-delete.sql'));
+ console.log('PASS: archive-only deletion, access, stale writes and retry');
+ console.log('PASS: versioned consent, private drafts and seller self-publication');
  const tables=await db.query("select count(*)::int as rows from public.kg_stores");
  if(tables.rows[0].rows!==0) throw new Error('Test fixture rollback failed');
  const bucket=await db.query("select public,file_size_limit,allowed_mime_types from storage.buckets where id='kg-product-images'");

@@ -139,13 +139,28 @@ export function setupStorefrontDiscovery({ renderCard, createEmpty }) {
     cover.disabled = avatar.disabled = true;
     cover.onclick = avatar.onclick = null;
     const storeName = store.name;
-    function openArtwork(url, label) {
+    function openArtwork(source, label, kind) {
       const dialog = $('storeArtworkViewer');
       const image = $('storeArtworkFull');
-      dialog.setAttribute('aria-label', label + ' · ' + storeName);
+      const origin = source.parentElement.getBoundingClientRect();
+      $('storeArtworkTitle').textContent = label;
       image.alt = label + ' de ' + storeName;
-      image.src = url;
+      dialog.dataset.artwork = kind;
+      image.width = source.naturalWidth;
+      image.height = source.naturalHeight;
+      image.src = source.currentSrc || source.src;
       dialog.showModal();
+      dialog.onclick = event => { if (event.target === dialog) dialog.close(); };
+      image.getAnimations().forEach(animation => animation.cancel());
+      if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+      const destination = image.getBoundingClientRect();
+      const x = origin.left + origin.width / 2 - destination.left - destination.width / 2;
+      const y = origin.top + origin.height / 2 - destination.top - destination.height / 2;
+      const scale = Math.min(1, origin.width / destination.width, origin.height / destination.height);
+      image.animate([
+        { transform: `translate(${x}px, ${y}px) scale(${scale})`, opacity: .55, borderRadius: kind === 'avatar' ? '50%' : '8px' },
+        { transform: 'none', opacity: 1, borderRadius: '12px' }
+      ], { duration: 260, easing: 'cubic-bezier(.2,.75,.25,1)' });
     }
     const fallback = document.createElement('span');
     fallback.className = 'storefront-avatar-fallback'; fallback.textContent = store.initials;
@@ -155,7 +170,7 @@ export function setupStorefrontDiscovery({ renderCard, createEmpty }) {
       image.decoding = 'async'; image.fetchPriority = 'high'; image.style.objectPosition = artwork.coverPosition;
       image.onload = () => { if (image.parentElement === cover) cover.disabled = false; };
       image.onerror = () => { if (image.parentElement === cover) cover.disabled = true; image.remove(); };
-      cover.onclick = () => openArtwork(artwork.cover, 'Foto de capa');
+      cover.onclick = () => openArtwork(image, 'Foto de capa', 'cover');
       cover.append(image);
     }
     if (artwork.avatar) {
@@ -163,7 +178,7 @@ export function setupStorefrontDiscovery({ renderCard, createEmpty }) {
       image.decoding = 'async'; image.style.objectPosition = artwork.avatarPosition; image.style.objectFit = artwork.avatarFit;
       image.onload = () => { if (image.parentElement === avatar) { fallback.hidden = true; avatar.disabled = false; } };
       image.onerror = () => { if (image.parentElement === avatar) avatar.disabled = true; image.remove(); fallback.hidden = false; };
-      avatar.onclick = () => openArtwork(artwork.avatar, 'Foto de perfil');
+      avatar.onclick = () => openArtwork(image, 'Foto de perfil', 'avatar');
       avatar.append(image);
     }
   }

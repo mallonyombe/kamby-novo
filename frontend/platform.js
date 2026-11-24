@@ -5,11 +5,20 @@ export const catalogueConfig = Object.freeze({
   imageBucket: 'kg-product-images', pageSize: 60
 });
 export const platform = createClient(catalogueConfig.supabaseUrl, catalogueConfig.publishableKey, {
+  global: {
+    fetch: (input, init) => {
+      const url = new URL(typeof input === 'string' || input instanceof URL ? input : input.url);
+      if (url.pathname === '/rest/v1/kg_store_events' || url.pathname === '/rest/v1/rpc/kg_record_contact_activity') {
+        return fetch(input, {...init, keepalive: true});
+      }
+      return fetch(input, init);
+    }
+  },
   auth: { storageKey: 'kamby:account', persistSession: true, autoRefreshToken: true, detectSessionInUrl: true, flowType: 'pkce' }
 });
 const recorded = new Map();
 export function trackStoreEvent(storeId, kind, productId=null) {
-  if (!storeId || !['store_view','whatsapp_click'].includes(kind)) return;
+  if (!storeId || !['store_view','whatsapp_click','whatsapp_intent'].includes(kind)) return;
   const duration = kind === 'store_view' ? 30 * 60 * 1000 : 1500;
   const key = 'kamby:event:' + kind + ':' + storeId;
   let previous = recorded.get(key) || 0;
