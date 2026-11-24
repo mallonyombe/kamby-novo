@@ -45,6 +45,8 @@ try {
  await db.exec(read('./archived-product-delete.sql'));
  console.log('PASS: archive-only deletion, access, stale writes and retry');
  console.log('PASS: versioned consent, private drafts and seller self-publication');
+ await db.exec(read('./admin-detail.sql'));
+ console.log('PASS: administrator detail requires MFA, valid pagination and existing identity');
  const tables=await db.query("select count(*)::int as rows from public.kg_stores");
  if(tables.rows[0].rows!==0) throw new Error('Test fixture rollback failed');
  const bucket=await db.query("select public,file_size_limit,allowed_mime_types from storage.buckets where id='kg-product-images'");

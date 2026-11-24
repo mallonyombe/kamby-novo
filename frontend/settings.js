@@ -50,7 +50,7 @@ export function setupSettings({openSellerSetup,savedProducts,renderProductCard,g
   const panel = node('div', undefined, 'settings-photo-editor');
   const avatar = node('span', undefined, 'profile-avatar');
   avatar.setAttribute('aria-hidden', 'true');
-  const fallback = initials(getAccount().profile?.display_name || user.user_metadata?.display_name || 'Kamby');
+  const fallback = initials(getAccount().profile?.display_name || user.user_metadata?.display_name || user.user_metadata?.full_name || $('profileName').textContent || 'Kamby');
   paintPhoto(avatar, '', fallback);
   const controls = node('div', undefined, 'settings-photo-actions');
   const input = node('input');
@@ -336,85 +336,4 @@ export function setupSettings({openSellerSetup,savedProducts,renderProductCard,g
    ids.forEach(id => reads.delete(id));
   }
  }
- async function toggleSavedProduct(id, trigger) {
-  if (!id || pendingWrites.has(id)) return;
-  const userId = getAccount().user?.id;
-  const state = savedState;
-  const writes = pendingWrites;
-  writes.add(id);
-  paintSavedButtons();
-  const stillCurrent = () => state === savedState && userId === getAccount().user?.id;
-  const feedback = detail => window.dispatchEvent(new CustomEvent('kamby:feedback', { detail }));
-  try {
-   let saved;
-   if (!userId) {
-    const product = trigger?.kambyPreview || currentProductPreview;
-    if (!product || product.id !== id) throw new Error('Produto indisponível.');
-    saved = !toggleGuestEntry(localStorage, product);
-   } else {
-    await mergeGuestSaved(userId);
-    if (!stillCurrent()) return;
-    const existing = await platform.from('kg_saved_products').select('product_id').eq('user_id', userId).eq('product_id', id).maybeSingle();
-    if (!stillCurrent()) return;
-    if (existing.error) throw existing.error;
-    saved = Boolean(existing.data) || deviceEntries(userId).some(entry => entry.product.id === id);
-    const result = saved
-     ? await platform.from('kg_saved_products').delete().eq('user_id', userId).eq('product_id', id)
-     : await platform.from('kg_saved_products').insert({ user_id: userId, product_id: id });
-    if (!stillCurrent()) return;
-    if (result.error && (saved || result.error.code !== '23505')) throw result.error;
-    if (saved) removeFromDevice(localStorage, userId, id);
-   }
-   state.set(id, !saved);
-   if (saved && (screen === 'guardados' || screen === 'actividade') && !view.hidden) {
-    const grid = body.querySelector('.saved-products-grid');
-    const card = [...(grid?.children || [])].find(item => item.dataset.id === id);
-    card?.remove();
-    if (grid && !grid.childElementCount) {
-     grid.remove();
-     empty('Ainda não tens produtos guardados disponíveis', 'Toca no coração de um produto para o guardar.');
-    }
-   }
-   const icon = trigger?.querySelector('svg');
-   if (!saved && icon && !matchMedia('(prefers-reduced-motion: reduce)').matches) {
-    icon.animate([{ transform: 'scale(1)' }, { transform: 'scale(1.16)' }, { transform: 'scale(1)' }],
-      { duration: 220, easing: 'ease-out' });
-   }
-   feedback(saved ? 'Produto removido dos guardados.' : 'Produto guardado.');
-  } catch {
-   if (stillCurrent()) feedback('Não foi possível actualizar os guardados. Tenta novamente.');
-  } finally {
-   writes.delete(id);
-   if (stillCurrent()) paintSavedButtons();
-  }
- }
- window.addEventListener('storage', event => {
-  if (event.key && !event.key.startsWith(savedPrefix)) return;
-  scheduleSavedRefresh();
-  if (!view.hidden && (screen === 'guardados' || screen === 'actividade')) void openSavedAgain();
- });
- async function openSavedAgain() {
-  try { await renderScreen(); } catch { notice('Não foi possível actualizar os guardados.'); }
- }
- window.addEventListener('kamby:catalogue-card', scheduleSavedRefresh);
- window.addEventListener('kamby:product-loading', () => { currentProduct = null; currentProductPreview = null; });
- window.addEventListener('kamby:product-ready', event => {
-  currentProduct = event.detail.id;
-  currentProductPreview = event.detail.preview;
-  paintSavedButtons([[currentProduct, $('btnPdpSaveProduct')]]);
-  scheduleSavedRefresh();
- });
- document.addEventListener('click', event => {
-  const button = event.target.closest('[data-save-product]');
-  if (button) toggleSavedProduct(button.dataset.saveProduct, button);
- });
- $('btnPdpSaveProduct').addEventListener('click', event => toggleSavedProduct(currentProduct, event.currentTarget));
- const preview = $('btnPdpSaveProduct').kambyPreview;
- if (preview) {
-  currentProduct = preview.id;
-  currentProductPreview = preview;
- }
- window.dispatchEvent(new Event('kamby:guardados-prontos'));
- scheduleSavedRefresh();
- return {sync,open,close,isOpen:()=>!view.hidden,recovery:async()=>{recovery=true;await loadAccount();open('palavra-passe');},route:async hash=>{const target=decodeURIComponent(hash.slice('#definicoes/'.length));return open(target,false);},clear:clearSensitive};
-}
+ async function to

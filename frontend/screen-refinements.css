@@ -1,0 +1,26 @@
+
+/* Pesquisa dedicada com controlos de toque compactos. */
+#searchOverlay {display:none;}
+#viewSearchResults .search-results-header-content {padding-bottom:8px;}
+#viewSearchResults .search-results-form {height:44px;min-height:44px;margin-top:0;border-radius:12px;}
+#viewSearchResults .search-result-controls {display:flex;align-items:center;gap:8px;margin:8px 0 16px;}
+#viewSearchResults .search-tabs-row {display:flex;flex:1;gap:20px;padding:0;background:none;border:0;border-radius:0;}
+#viewSearchResults .search-tab-btn {flex:none;min-height:44px;padding:0 2px;border:0;border-bottom:2px solid transparent;border-radius:0;background:none;color:var(--text-secondary);font-size:14px;}
+#viewSearchResults .search-tab-btn[aria-selected="true"] {border-bottom-color:var(--text-main);background:none;color:var(--text-main);}
+#viewSearchResults .search-tools {margin:0;}
+#viewSearchResults .search-filter-action {width:44px;height:44px;min-height:44px;padding:0;justify-content:center;border:0;background:none;border-radius:12px;}
+#viewSearchResults .search-zero-box {padding:40px 16px;gap:12px;}
+#viewSearchResults .search-zero-box svg {width:32px;height:32px;}
+#viewSearchResults .search-zero-box h3 {font-size:16px;}
+#viewSearchResults .search-zero-box p {font-size:14px;line-height:1.5;}
+.profile-edit-link {display:grid;place-items:center;width:44px;height:44px;flex:none;padding:0;border:0;background:transparent;border-radius:12px;}
+.profile-user-info {min-width:0;}
+#profileContact {overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.settings-photo-editor {display:flex;flex-direction:column;align-items:center;gap:12px;padding:12px 0 28px;}
+.settings-photo-editor .profile-avatar {width:96px;height:96px;font-size:30px;}
+.settings-photo-actions {display:flex;justify-content:center;gap:16px;flex-wrap:wrap;}
+.settings-photo-actions button {min-height:44px;font-size:14px;}
+#viewStoreCart {overflow-anchor:none;}
+#viewStoreCart .store-cart-body {padding-top:calc(var(--nav-bar-height,56px) + 24px + var(--safe-top,0px));}
+#viewStoreCart #storeCartNotice:empty {display:none;}
+#viewStoreCart .store-cart-footer>button {height:48px;line-height:20px;}
