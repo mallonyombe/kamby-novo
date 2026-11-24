@@ -18,7 +18,13 @@
   if (!scope) throw Error('Falta o identificador do ensaio');
   for (const kind of ['localStorage', 'sessionStorage']) {
     const real=window[kind], key=name=>'kamby-qa:'+scope+':'+name;
-    Object.defineProperty(window,kind,{value:{getItem:name=>real.getItem(key(name)),setItem:(name,value)=>real.setItem(key(name),value),removeItem:name=>real.removeItem(key(name))}});
+    const prefix = key('');
+    const scopedKeys = () => Object.keys(real).filter(name => name.startsWith(prefix));
+    Object.defineProperty(window,kind,{value:{
+      get length(){return scopedKeys().length;},
+      key:index=>scopedKeys()[index]?.slice(prefix.length) ?? null,
+      getItem:name=>real.getItem(key(name)),setItem:(name,value)=>real.setItem(key(name),value),removeItem:name=>real.removeItem(key(name))
+    }});
   }
   const qa=window.catalogueQA={requests:[],failStores:false,stockChanged:false,feedBlocked:false,errors:[]};
   window.addEventListener('error',e=>qa.errors.push(e.message));

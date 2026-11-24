@@ -6,7 +6,11 @@
   <title>Kamby</title>
   <link rel="icon" href="icone.svg" type="image/svg+xml" />
   <meta name="theme-color" content="#F6F7F9" />
+  <script>
+    if (location.hash && location.hash !== '#inicio') document.documentElement.classList.add('entry-pending');
+  </script>
   <style>
+    .entry-pending #kambyHeader, .entry-pending #viewHome, .entry-pending #floatingNavbar { visibility: hidden; }
     /* ==========================================================================
        1. DESIGN TOKENS OFICIAIS & TIPOGRAFIA (FE-02 & ORB-19)
        ========================================================================== */
@@ -1872,7 +1876,7 @@
        ========================================================================== -->
   <script type="module">
     import {setButtonBusy,showSpinner,showSkeleton} from "./loading.js";
-    import {readSavedEntries, removeFromDevice} from './guardados-locais.js';
+    import {bindGuestHeartsUntilAccountReady, readSavedEntries, removeFromDevice} from './guardados-locais.js';
     import {isTestContact, whatsappURL} from './whatsapp.js';
     import {requireStoreOpen,STORE_CLOSED_COPY} from './store-availability.js';
     import {setupStorefrontDiscovery} from './storefront.js';
@@ -1885,6 +1889,7 @@
     import { normaliseSearch, matchCatalogue, fetchAllPages, normalisePriceFilter } from "./search-engine.js";
     import {editorContractReady,baselineCataloguePath} from "./catalogue-contract.js";
     import { setupMerchant } from "./merchant.js";
+    import { listenForNavigation } from "./navigation.js";
     import { catalogueConfig, trackStoreEvent } from "./platform.js";
     (async function initKambyApp() {
       'use strict';
@@ -3585,7 +3590,7 @@
       }
 
       function renderPDPLoading() {
-        document.getElementById('btnPdpSaveProduct').disabled=true;document.getElementById('btnPdpStoreCart').disabled=true;document.getElementById('btnPdpVisitStore').disabled=true;document.getElementById('pdpRelated').hidden=true;document.getElementById('pdpPreviousPrice').hidden=true;document.getElementById('pdpDiscount').hidden=true;
+        document.getElementById('btnPdpSaveProduct').kambyPreview=null;document.getElementById('btnPdpSaveProduct').disabled=true;document.getElementById('btnPdpStoreCart').disabled=true;document.getElementById('btnPdpVisitStore').disabled=true;document.getElementById('pdpRelated').hidden=true;document.getElementById('pdpPreviousPrice').hidden=true;document.getElementById('pdpDiscount').hidden=true;
         window.dispatchEvent(new Event('kamby:product-loading'));
         const slide = document.createElement('div');
         slide.className = 'pdp-slide';
@@ -3825,6 +3830,7 @@
           }))}),
           imageUrl: product.images[0] || '', inStock: anyInStock
         };
+        document.getElementById('btnPdpSaveProduct').kambyPreview = preview;
         window.dispatchEvent(new CustomEvent('kamby:product-ready',{detail:{id:product.id, preview}}));
         pdpElements.storeName.textContent = product.storeName;
         pdpElements.stockTag.textContent = '';document.getElementById('btnPdpVisitStore').disabled=false;document.getElementById('btnPdpStoreCart').disabled=false;
@@ -4417,6 +4423,7 @@
           : destination === 'lojas'
             ? viewStores
             : destination === 'perfil' ? viewProfile : destination === 'pesquisa' ? viewSearchResults : viewHome;
+        document.documentElement.classList.remove('entry-pending');
         activeView.hidden = false;
         activeView.classList.add('active');
         if (destination === 'inicio') ensureHomeFeed();
@@ -4524,8 +4531,7 @@
         );
       }
 
-      // All routes have distinct hashes. A history traversal also raises hashchange.
-      window.addEventListener('hashchange', routeFromHash);
+      listenForNavigation(window, routeFromHash);
 
       const brandLink = document.querySelector('.brand-link');
       if (brandLink) {
@@ -4548,6 +4554,7 @@
         if (!viewCart.hidden) renderCartView();updateScopedCartBadges();if(!viewStoreCart.hidden)renderStoreCart();
       });
 
+      bindGuestHeartsUntilAccountReady();
       const merchantReady = setupMerchant({
         cartCount: () => readCart().reduce((sum,item) => sum + item.quantity, 0),
         savedProducts: ids => fetchPublishedProducts(true, ids),
@@ -4600,9 +4607,9 @@
           }
         }
       }).then(controller => { merchantController = controller; return controller; });
-      saveCart();
+      updateCartBadge();
       if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
-      void routeFromHash();
+      void routeFromHash().finally(() => document.documentElement.classList.remove('entry-pending'));
 
     })();
   </script>

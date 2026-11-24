@@ -45,3 +45,52 @@ export async function sendClaimedEntries(storage, owner, active, insert) {
  }
  return sent;
 }
+
+export function toggleGuestEntry(storage, product) {
+ const key = keyFor('', product.id);
+ if (storage.getItem(key)) {
+  removeFromDevice(storage, '', product.id);
+  return false;
+ }
+ saveOnDevice(storage, product);
+ return true;
+}
+
+// Os cartões podem ficar prontos antes de carregar o módulo de conta/loja.
+export function bindGuestHeartsUntilAccountReady() {
+ const early = new AbortController();
+ const options = {signal: early.signal};
+ function paint() {
+  let accountPending;
+  let ids;
+  try {
+   accountPending = Boolean(localStorage.getItem('kamby:account'));
+   ids = new Set(readSavedEntries(localStorage).map(entry => entry.product.id));
+  } catch { return; }
+  for (const button of document.querySelectorAll('[data-save-product], #btnPdpSaveProduct')) {
+   if (!button.kambyPreview) continue;
+   const saved = ids.has(button.kambyPreview.id);
+   button.disabled = accountPending;
+   button.setAttribute('aria-pressed', String(saved));
+   button.setAttribute('aria-label', (saved ? 'Remover dos guardados: ' : 'Guardar ') + button.kambyPreview.title);
+  }
+ }
+ window.addEventListener('kamby:product-ready', paint, options);
+ window.addEventListener('kamby:catalogue-card', () => queueMicrotask(paintOnce), options);
+ let queued = false;
+ function paintOnce() {
+  if (queued || early.signal.aborted) return;
+  queued = true;
+  requestAnimationFrame(() => { queued = false; if (!early.signal.aborted) paint(); });
+ }
+ document.addEventListener('click', event => {
+  const button = event.target.closest('[data-save-product], #btnPdpSaveProduct');
+  if (!button?.kambyPreview || button.disabled) return;
+  let message;
+  try { message = toggleGuestEntry(localStorage, button.kambyPreview) ? 'Produto guardado.' : 'Produto removido dos guardados.'; }
+  catch { message = 'Não foi possível actualizar os guardados neste dispositivo.'; }
+  paint();
+  window.dispatchEvent(new CustomEvent('kamby:feedback', {detail:message}));
+ }, options);
+ window.addEventListener('kamby:guardados-prontos', () => early.abort(), {once:true});
+}
