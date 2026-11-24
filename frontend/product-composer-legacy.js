@@ -76,11 +76,6 @@ export function setupProductComposer({getStore,onPublished,onFeedback}) {
   closeButton.addEventListener('click',()=>close());
   sheet.addEventListener('close',()=>{byId('viewMerchant').style.overflowY=previousOverflow;});
   sheet.addEventListener('cancel',event=>{if(busy) event.preventDefault();});
-  sheet.addEventListener('click',event=>{
-    if(event.target!==sheet) return;
-    const rect=sheet.getBoundingClientRect();
-    if(event.clientX<rect.left || event.clientX>rect.right || event.clientY<rect.top || event.clientY>rect.bottom) close();
-  });
   byId('btnRetryProductCategories').addEventListener('click',categories);
   fields.image.addEventListener('click',()=>{if(!busy && !checking) picker.click();});
   picker.addEventListener('change',async()=>{

@@ -21,6 +21,8 @@
 .settings-photo-actions {display:flex;justify-content:center;gap:16px;flex-wrap:wrap;}
 .settings-photo-actions button {min-height:44px;font-size:14px;}
 #viewStoreCart {overflow-anchor:none;}
-#viewStoreCart .store-cart-body {padding-top:calc(var(--nav-bar-height,56px) + 24px + var(--safe-top,0px));}
+#viewStoreCart .store-cart-body {padding-top:18px;}
 #viewStoreCart #storeCartNotice:empty {display:none;}
 #viewStoreCart .store-cart-footer>button {height:48px;line-height:20px;}
+
+#viewStoreCart .store-cart-body {margin-top:0;}

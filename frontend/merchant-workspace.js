@@ -20,6 +20,22 @@ export function setupWorkspace({state,composer,onChanged,onStoreChanged,onTerms}
  <div id="merchantProfileDetails" class="mw-profile-details"></div>
  <dialog id="merchantStoreEditor" class="mw-filter-dialog mw-store-editor" aria-labelledby="merchantStoreEditorTitle">
  <form id="merchantStoreForm"><header><h2 id="merchantStoreEditorTitle">Editar perfil</h2><button type="button" id="merchantCloseStoreEditor" aria-label="Fechar editor">${icon('close')}</button></header><details class="mw-settings-group" open><summary>Identidade</summary><label>Nome da loja<input name="name" minlength="2" maxlength="80" required></label><label>Descrição<textarea name="description" rows="3" maxlength="2000"></textarea></label></details><details class="mw-settings-group"><summary>WhatsApp e localização</summary><label>WhatsApp comercial<input name="whatsapp_e164" type="tel" placeholder="+258 84 123 4567" required></label><label>Localidade<input name="location" maxlength="120" placeholder="Chongoene"></label><label>Endereço<textarea name="address" maxlength="300" rows="2"></textarea></label><label>Área de atendimento<input name="service_area" maxlength="300" placeholder="Ex.: Chongoene e arredores"></label></details><details class="mw-settings-group"><summary>Horário de atendimento</summary><p class="mw-muted">Sem horário definido, vale a abertura manual. Hora de Moçambique. Fora do horário definido, os clientes podem guardar no carrinho, mas não enviar pedidos.</p><div id="merchantOpeningHours"></div></details><p class="merchant-feedback" id="merchantStoreSaveNotice" role="status" hidden></p><footer><button id="merchantSaveStore" class="mw-primary" type="submit">Guardar perfil</button></footer></form></dialog></section></div>`;
+ const navigationDrawer=el('dialog','merchant-navigation-drawer');
+ navigationDrawer.id='merchantNavigationDrawer';
+ navigationDrawer.setAttribute('aria-label','Navegação da loja');
+ const closeNavigation=el('button','mw-icon');closeNavigation.type='button';closeNavigation.setAttribute('aria-label','Fechar menu');closeNavigation.innerHTML=icon('close');closeNavigation.onclick=()=>navigationDrawer.close();
+ navigationDrawer.append(closeNavigation);
+ for(const [key,label,glyph] of [['resumo','Resumo','summary'],['produtos','Produtos','products'],['loja','Loja','store']]){
+  const entry=el('button','store-section-link',label);entry.type='button';entry.insertAdjacentHTML('afterbegin',icon(glyph));
+  entry.onclick=()=>{navigationDrawer.close();void switchTab(key);};navigationDrawer.append(entry);
+ }
+ const exit=el('a','store-section-link','Voltar ao perfil');exit.href='#perfil';exit.onclick=()=>navigationDrawer.close();navigationDrawer.append(exit);
+ document.body.append(navigationDrawer);
+ const menu=el('button','pdp-back-btn');menu.type='button';menu.setAttribute('aria-label','Abrir menu da loja');menu.setAttribute('aria-controls',navigationDrawer.id);menu.setAttribute('aria-expanded','false');menu.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg>';
+ menu.onclick=()=>{navigationDrawer.showModal();menu.setAttribute('aria-expanded','true');};
+ navigationDrawer.addEventListener('close',()=>{menu.setAttribute('aria-expanded','false');menu.focus({preventScroll:true});});
+ const header=view.querySelector('.pdp-nav-content');header.prepend(menu);
+ header.querySelector('#btnBackFromMerchant').hidden=true;
  const $=id=>view.querySelector('#'+id);const set=(id,value)=>$(id).textContent=value;const feedback=copy=>notice($('merchantFeedback'),copy);
  const searchPanel=$('merchantSearchPanel');
  const searchButton=listIcon('search','Pesquisar produtos');
@@ -337,7 +353,6 @@ export function setupWorkspace({state,composer,onChanged,onStoreChanged,onTerms}
      full.width=img.naturalWidth;
      full.height=img.naturalHeight;
      full.src=img.currentSrc||img.src;
-     viewer.onclick=event=>{if(event.target===viewer)viewer.close();};
      viewer.showModal();
    });
    if(editable)action(path||!img.hidden?'Alterar fotografia':'Adicionar fotografia','image',()=>{

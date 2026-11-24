@@ -150,7 +150,6 @@ export function setupStorefrontDiscovery({ renderCard, createEmpty }) {
       image.height = source.naturalHeight;
       image.src = source.currentSrc || source.src;
       dialog.showModal();
-      dialog.onclick = event => { if (event.target === dialog) dialog.close(); };
       image.getAnimations().forEach(animation => animation.cancel());
       if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
       const destination = image.getBoundingClientRect();

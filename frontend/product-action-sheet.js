@@ -85,7 +85,6 @@ export function setupProductActionSheet({ getSelection, setVariant, setQuantity,
   }
   $('btnCloseProductAction').onclick = () => close();
   dialog.addEventListener('cancel', event => { event.preventDefault(); close(); });
-  dialog.addEventListener('click', event => { if (event.target === dialog) close(); });
   $('btnPdpDec').onclick = () => { const selection = getSelection(mode); if (selection.quantity > 1) { setQuantity(selection.quantity - 1); render(); } };
   $('btnPdpInc').onclick = () => { const selection = getSelection(mode); if (selection.quantity < selection.limit) { setQuantity(selection.quantity + 1); render(); } };
   $('actionConfirm').onclick = async () => {
