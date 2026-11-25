@@ -192,7 +192,9 @@ export function setupSettings({openSellerSetup,savedProducts,renderProductCard,g
     }
    });
    measurement.append(description, choice);
-   body.append(group, measurement);
+   const measurementGroup = node('div', undefined, 'profile-menu-list settings-local-actions');
+   measurementGroup.append(measurement);
+   body.append(group, measurementGroup);
    return;
   }
   if(privateScreens.includes(screen)&&!a.user){open('entrar',false);return;}
