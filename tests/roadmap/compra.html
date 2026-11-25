@@ -106,6 +106,23 @@ document.querySelector('#start').onclick=async e=>{
      await until(()=>groups().length===2,'não voltou aos dois carrinhos');
    }
  });
+ await scenario('Loja fechada e preço alterado antes do contacto',async()=>{
+   await load('carrinho/loja/'+uid(900),'&run=revalidacao');
+   await until(()=>!q('#viewStoreCart').hidden && !q('#btnStoreCartWhatsApp').disabled,'carrinho indisponível');
+   app().catalogueQA.closedStore=uid(900);
+   q('#btnStoreCartWhatsApp').click();
+   await until(()=>q('#storeCartNotice').textContent.includes('Loja fechada') && !q('#btnStoreCartWhatsApp').disabled,'pedido não bloqueou com a loja fechada');
+   check(!q('#testContactDialog').open,'abriu pedido para loja fechada');
+   app().catalogueQA.closedStore=null;
+   app().catalogueQA.priceChanged=true;
+   q('#btnStoreCartWhatsApp').click();
+   await until(()=>q('#storeCartNotice').textContent.includes('preços foram actualizados') && !q('#btnStoreCartWhatsApp').disabled,'pedido não pediu revisão do preço');
+   check(q('#storeCartTotal').textContent.includes('840') && !q('#testContactDialog').open,'subtotal não mudou ou abriu pedido sem revisão');
+   q('#btnStoreCartWhatsApp').click();
+   await until(()=>q('#testContactDialog').open,'pedido não abriu após nova confirmação');
+   check(q('#testContactMessage').value.includes('840'),'mensagem não usou o preço revisto');
+   check(app().catalogueQA.externalWindows.length===0,'simulação abriu destino externo');
+ });
  output.textContent=passed+' passaram · '+failed+' falharam';
 };
 </script></html>

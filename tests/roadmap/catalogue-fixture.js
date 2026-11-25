@@ -28,7 +28,7 @@
       getItem:name=>real.getItem(key(name)),setItem:(name,value)=>real.setItem(key(name),value),removeItem:name=>real.removeItem(key(name))
     }});
   }
-  const qa=window.catalogueQA={requests:[],failStores:false,stockChanged:false,feedBlocked:false,errors:[], externalWindows:[]};
+  const qa=window.catalogueQA={requests:[],failStores:false,stockChanged:false,priceChanged:false,closedStore:null,feedBlocked:false,errors:[], externalWindows:[]};
   window.addEventListener('error',e=>qa.errors.push(e.message));
   window.addEventListener('unhandledrejection',e=>qa.errors.push(String(e.reason)));
   window.open = url => { qa.externalWindows.push(String(url)); return null; };
@@ -51,7 +51,10 @@
       return json({total:found.length,ids:found.slice(offset,offset+(args.p_limit||24)).map(row=>row.id)});
     }
     if(resource==='kg_feed_categories') return json(categories.map(c=>({id:c.id,label:c.name})));
-    if(resource==='kg_store_contact_availability') return json({available:store.is_open,reason:store.is_open?'open':'closed'});
+    if(resource==='kg_store_contact_availability') {
+      const closed=args.p_store_id===qa.closedStore;
+      return json({available:!closed,reason:closed?'closed':'open'});
+    }
     if(resource==='kg_stores') {
       if(qa.failStores) return json({},503);
       let stores=[store,secondStore];
@@ -70,6 +73,9 @@
       if(q.has('category_id')) rows=rows.filter(p=>p.category.id===q.get('category_id').slice(3));
       const offset=Number(q.get('offset')||0);
       if(qa.stockChanged && id.startsWith('eq.')) rows=rows.map(p=>({...p,variants:p.variants.map(v=>({...v,in_stock:false,stock_quantity:0}))}));
+      if(qa.priceChanged && id==='eq.'+rice.id) {
+        rows=rows.map(p=>({...p,variants:p.variants.map(v=>v.id===uid(701)?{...v,price_minor:42000}:v)}));
+      }
       return json(rows.slice(offset,offset+Number(q.get('limit')||1000)));
     }
     if(resource==='kg_store_events') return new Response(null,{status:201});
