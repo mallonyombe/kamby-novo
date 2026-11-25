@@ -1,10 +1,13 @@
 export function bindPasswordVisibility(input, button) {
   button.setAttribute('aria-controls', input.id);
+  button.setAttribute('aria-pressed', 'false');
+  const label = input.getAttribute('data-password-label') || 'palavra-passe';
+  button.setAttribute('aria-label', 'Mostrar ' + label);
   button.addEventListener('click', () => {
     const visible = input.type === 'password';
     input.type = visible ? 'text' : 'password';
     button.setAttribute('aria-pressed', String(visible));
-    button.setAttribute('aria-label', visible ? 'Ocultar palavra-passe' : 'Mostrar palavra-passe');
+    button.setAttribute('aria-label', (visible ? 'Ocultar ' : 'Mostrar ') + label);
   });
 }
 
@@ -17,6 +20,8 @@ export function addPasswordVisibility(input) {
   const button = document.getElementById('btnShowAccountPassword').cloneNode(true);
   button.removeAttribute('id');
   input.id ||= 'settings-password-' + input.name;
+  const fieldLabel = label.textContent.trim();
+  input.setAttribute('data-password-label', input.name === 'confirmation' ? 'confirmação da palavra-passe' : fieldLabel.toLowerCase());
   label.htmlFor = input.id;
   label.className = '';
   label.replaceWith(field);
