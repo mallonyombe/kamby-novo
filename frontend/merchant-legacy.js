@@ -291,7 +291,10 @@ export function setupMerchant(hooks) {
     onFeedback:copy=>message('merchantFeedback',copy)
   });
   settings=setupSettings({savedProducts:hooks.savedProducts,renderProductCard:hooks.renderProductCard,getAccount:()=>state,loadAccount,openSubscreen:hooks.openSubscreen,closeSubscreen:hooks.closeSubscreen,navigate:hooks.navigate});
-  platform.auth.onAuthStateChange((event,session)=>{++state.accountRequest;if(event==='SIGNED_OUT'||(state.user&&session?.user?.id!==state.user.id)){state.user=null;state.access=null;state.profile=null;state.phase='guest';state.stores=[];settings.clear();settings.close(true);closeMerchant(false);purgeMerchant();renderProfile();}setTimeout(async()=>{if(accountPending)await accountPending;await loadAccount();if(event==='PASSWORD_RECOVERY')settings.recovery();},0);});
+  platform.auth.onAuthStateChange((event,session)=>{
+  // O arranque já lê a sessão. O evento inicial não invalida essa leitura.
+  if(event==='INITIAL_SESSION') return;
+  ++state.accountRequest;if(event==='SIGNED_OUT'||(state.user&&session?.user?.id!==state.user.id)){state.user=null;state.access=null;state.profile=null;state.phase='guest';state.stores=[];settings.clear();settings.close(true);closeMerchant(false);purgeMerchant();renderProfile();}setTimeout(async()=>{if(accountPending)await accountPending;await loadAccount();if(event==='PASSWORD_RECOVERY')settings.recovery();},0);});
   window.addEventListener('kamby:cart-updated',renderProfile);
   renderProfile(); loadAccount();
   return { renderProfile, loadAccount, open:openMerchant, close:closeMerchant, isOpen:()=>!view.hidden, settings };

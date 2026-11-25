@@ -138,3 +138,17 @@ body[data-view="pesquisa"] #floatingNavbar{display:none}input,select,textarea{sc
   .settings-switch input { appearance: auto; }
   .settings-switch input::before { display: none; }
 }
+
+#viewProfile .profile-menu-item:active:not(:disabled),
+#viewSettingsSubscreen .profile-menu-item:active:not(:disabled),
+#viewSettingsSubscreen .settings-choice:active {
+  background: var(--ui-input);
+}
+
+#viewSettingsSubscreen :is(input, select, textarea) {
+  scroll-margin-block: 80px 24px;
+}
+
+#viewSettingsSubscreen .settings-text-action {
+  min-height: var(--ui-target);
+}

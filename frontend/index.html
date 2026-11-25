@@ -1572,8 +1572,10 @@
   <link rel="stylesheet" href="./list-controls.css">
 <link rel="stylesheet" href="./screen-refinements.css">
   <link rel="stylesheet" href="./seller-setup.css">
+<link rel="stylesheet" href="./design-tokens.css">
 </head>
 <body>
+  <a class="buyer-skip-link" href="#mainContainer">Saltar para o conteúdo</a>
 
   <!-- ==========================================================================
        HEADER PRINCIPAL DO COMPRADOR (SEM NOTIFICAÇÕES / SEM BORDAS ARTIFICIAIS)
@@ -1656,7 +1658,7 @@
   <!-- ==========================================================================
        FEED COMERCIAL DE PRODUTOS
        ========================================================================== -->
-  <main class="feed-container" id="mainContainer">
+  <main class="feed-container" id="mainContainer" tabindex="-1">
     <section id="viewHome" class="kamby-view active" aria-label="Produtos">
       <div class="category-scroll-wrap" role="region" aria-label="Categorias de produtos">
         <div class="category-track" id="categoryTrack"></div>
@@ -1743,7 +1745,7 @@
         </div>
         </div>
       <form class="storefront-search-panel" id="storefrontSearchPanel" role="search" aria-label="Pesquisa nesta loja" hidden>
-        <div class="storefront-search-field"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 5 5"/></svg><input id="storefrontSearchInput" type="search" placeholder="Pesquisar nesta loja" autocomplete="off" maxlength="160" enterkeyhint="search"/><button type="button" id="btnClearStorefrontSearch" aria-label="Limpar pesquisa da loja" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="m6 6 12 12M6 18 18 6"/></svg></button></div><button type="button" id="btnCancelStorefrontSearch">Cancelar</button>
+        <div class="storefront-search-field"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 5 5"/></svg><input id="storefrontSearchInput" type="search" aria-label="Pesquisar produtos na loja" placeholder="Pesquisar nesta loja" autocomplete="off" maxlength="160" enterkeyhint="search"/><button type="button" id="btnClearStorefrontSearch" aria-label="Limpar pesquisa da loja" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="m6 6 12 12M6 18 18 6"/></svg></button></div><button type="button" id="btnCancelStorefrontSearch">Cancelar</button>
       </form>
       </header>
 
@@ -1825,8 +1827,8 @@
         </nav>
       </footer>
     </section>
-    <section id="viewSettingsSubscreen" class="kamby-view pdp-subscreen" hidden aria-label="Definições da conta"><header class="pdp-top-bar"><div class="pdp-nav-content"><button type="button" class="pdp-back-btn" id="btnBackSettings" aria-label="Voltar ao Perfil"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg></button><h1 class="pdp-top-title" id="settingsSubscreenTitle">Perfil</h1></div></header><div class="settings-subscreen-body"><div id="settingsSubscreenContent"></div><div class="profile-menu-list settings-local-actions" id="settingsDeviceActions" hidden><button type="button" class="profile-menu-item" id="btnClearLocalData"><span class="profile-menu-copy"><span class="profile-menu-label">Limpar dados locais</span><span class="profile-menu-sub">Carrinho, guardados de visitante e pesquisas recentes</span></span><span aria-hidden="true">›</span></button></div><div id="settingsLoginPanel" hidden>
-      <form class="profile-login" id="profileLoginForm"><h2>A tua conta</h2><label for="accountIdentity">Telefone ou email</label><input id="accountIdentity" type="text" autocomplete="username" required maxlength="254" placeholder="Telefone ou email" /><label for="accountPassword">Palavra-passe</label><div class="account-password-wrap"><input id="accountPassword" type="password" autocomplete="current-password" required /><button type="button" id="btnShowAccountPassword" aria-label="Mostrar palavra-passe" aria-pressed="false"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg></button></div><p id="accountLoginError" class="field-error" role="alert" hidden></p><button class="merchant-primary-button" id="btnAccountSignIn" type="submit">Entrar</button><button type="button" class="settings-text-action" id="btnForgotPassword">Esqueci a palavra-passe</button><button type="button" class="settings-text-action" id="btnOpenRegistration">Criar conta</button></form>
+    <section id="viewSettingsSubscreen" class="kamby-view pdp-subscreen" hidden aria-label="Definições da conta"><header class="pdp-top-bar"><div class="pdp-nav-content"><button type="button" class="pdp-back-btn" id="btnBackSettings" aria-label="Voltar ao Perfil"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg></button><h1 class="pdp-top-title" id="settingsSubscreenTitle" tabindex="-1">Perfil</h1></div></header><div class="settings-subscreen-body"><div id="settingsSubscreenContent"></div><div class="profile-menu-list settings-local-actions" id="settingsDeviceActions" hidden><button type="button" class="profile-menu-item" id="btnClearLocalData"><span class="profile-menu-copy"><span class="profile-menu-label">Limpar dados locais</span><span class="profile-menu-sub">Carrinho, guardados de visitante e pesquisas recentes</span></span><span aria-hidden="true">›</span></button></div><div id="settingsLoginPanel" hidden>
+      <form class="profile-login" id="profileLoginForm"><label for="accountIdentity">Telefone ou email</label><input id="accountIdentity" type="text" autocomplete="username" autocapitalize="none" spellcheck="false" enterkeyhint="next" required maxlength="254" /><label for="accountPassword">Palavra-passe</label><div class="account-password-wrap"><input id="accountPassword" type="password" autocomplete="current-password" enterkeyhint="go" aria-describedby="accountLoginError" required /><button type="button" id="btnShowAccountPassword" aria-label="Mostrar palavra-passe" aria-pressed="false"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg></button></div><p id="accountLoginError" class="field-error" role="alert" hidden></p><button class="merchant-primary-button" id="btnAccountSignIn" type="submit">Entrar</button><button type="button" class="settings-text-action" id="btnForgotPassword">Esqueci a palavra-passe</button><button type="button" class="settings-text-action" id="btnOpenRegistration">Criar conta</button></form>
     </div><p id="settingsScreenNotice" class="profile-notice" role="status" aria-live="polite" hidden></p></div></section>
     <div class="pwa-install-invite" id="kambyInstallInvite" hidden>
       <button type="button" class="pwa-install-action" id="kambyInstallAccept">
@@ -1866,7 +1868,7 @@
     
     <!-- 1. Início -->
     <a href="#inicio" class="nav-tab active" aria-current="page">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
         <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
         <polyline points="9 22 9 12 15 12 15 22"/>
       </svg>
@@ -1875,7 +1877,7 @@
 
     <!-- 2. Lojas -->
     <a href="#lojas" class="nav-tab">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
         <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/>
         <line x1="3" y1="6" x2="21" y2="6"/>
         <path d="M16 10a4 4 0 0 1-8 0"/>
@@ -1927,6 +1929,13 @@
       const recentChips = document.getElementById('recentChips');
       const floatingNavbar = document.getElementById('floatingNavbar');
       const navTabs = document.querySelectorAll('.nav-tab');
+      document.querySelector('.buyer-skip-link').addEventListener('click', event => {
+        event.preventDefault();
+        document.querySelector('.kamby-view.active')?.querySelector('h1')?.focus({preventScroll:true});
+        if (!document.activeElement?.closest('.kamby-view.active')) {
+          document.getElementById('mainContainer').focus({preventScroll:true});
+        }
+      });
       const header = document.getElementById('kambyHeader');
       enableModalDismiss();
       startAnalytics();

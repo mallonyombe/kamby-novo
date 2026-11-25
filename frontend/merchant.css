@@ -312,3 +312,15 @@ label.mw-check { display:flex;flex-direction:row;align-items:center;gap:8px;line
  .merchant-navigation-drawer[open] {animation:merchant-drawer-enter 180ms ease-out;}
  @keyframes merchant-drawer-enter {from {transform:translateX(-24px);opacity:0;} to {transform:translateX(0);opacity:1;}}
 }
+
+.merchant-workspace .mw-product-row:active {
+  background: var(--ui-input);
+}
+.merchant-workspace :is(input, select, textarea) {
+  scroll-margin-block: 80px 24px;
+}
+
+.merchant-navigation-drawer [aria-current="page"] {
+  color: var(--ui-selection);
+  font-weight: 650;
+}

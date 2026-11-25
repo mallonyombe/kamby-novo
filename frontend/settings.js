@@ -406,10 +406,15 @@ export function setupSettings({openSellerSetup,savedProducts,renderProductCard,g
   if(view.hidden){returnScroll=window.scrollY;openSubscreen();}
   screen=target;view.hidden=false;view.classList.add('active');view.scrollTop=0;document.getElementById('viewProfile').inert=true;
   if(updateHistory)history.pushState({kambySettings:true},'','#definicoes/'+target);
-  try{await renderScreen();}catch{if(screen===target){body.replaceChildren();empty('Não foi possível carregar','Verifica a ligação e tenta novamente.');body.append(button('Tentar novamente','settings-text-action',()=>renderScreen()));}}
+  try {
+   const rendering = renderScreen();
+   $('settingsSubscreenTitle').focus({preventScroll:true});
+   await rendering;
+  }catch{if(screen===target){body.replaceChildren();empty('Não foi possível carregar','Verifica a ligação e tenta novamente.');body.append(button('Tentar novamente','settings-text-action',()=>renderScreen()));}}
   return true;
  }
- function close(force=false){if(view.hidden)return true;if(!force&&(busy||dirty)){if(dirty)confirm('Descartar alterações?','Há dados que ainda não foram guardados.','Descartar',()=>{dirty=false;close(true);history.replaceState(null,'','#perfil');});return false;}generation++;busy=false;dirty=false;body.replaceChildren();$('accountPassword').value='';view.hidden=true;view.classList.remove('active');closeSubscreen();window.scrollTo({top:returnScroll,behavior:'auto'});document.querySelector('[data-settings-target="'+returnFocus+'"]')?.focus({preventScroll:true});document.title='Perfil · Kamby';return true;}
+ function close(force=false){if(view.hidden)return true;if(!force&&(busy||dirty)){if(dirty)confirm('Descartar alterações?','Há dados que ainda não foram guardados.','Descartar',()=>{dirty=false;close(true);history.replaceState(null,'','#perfil');});return false;}generation++;busy=false;dirty=false;body.replaceChildren();$('accountPassword').value='';view.hidden=true;view.classList.remove('active');closeSubscreen();window.scrollTo({top:returnScroll,behavior:'auto'});const trigger = returnFocus === 'entrar' ? $('btnOpenAccountSignIn') : document.querySelector('[data-settings-target="'+returnFocus+'"]');
+  (trigger?.getClientRects().length ? trigger : $('viewProfile').querySelector('.page-title'))?.focus({preventScroll:true});document.title='Perfil · Kamby';return true;}
  for (const link of document.querySelectorAll('.profile-footer [data-settings-target]')) {
   link.addEventListener('click', event => {
    if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
@@ -429,7 +434,7 @@ export function setupSettings({openSellerSetup,savedProducts,renderProductCard,g
   if (close()) history.replaceState(null, '', '#perfil');
  });
  $('btnOpenRegistration').addEventListener('click', () => open('registo'));
- $('btnOpenAccountSignIn').addEventListener('click',()=>open('entrar'));$('btnForgotPassword').addEventListener('click',()=>open('recuperacao'));$('btnRetryAccount').addEventListener('click',async()=>{const b=$('btnRetryAccount');if(b.disabled)return;b.disabled=true;setButtonBusy(b,true);try{await loadAccount();}finally{setButtonBusy(b,false);b.disabled=false;}});
+ $('btnOpenAccountSignIn').addEventListener('click',()=>{returnFocus='entrar';open('entrar');});$('btnForgotPassword').addEventListener('click',()=>open('recuperacao'));$('btnRetryAccount').addEventListener('click',async()=>{const b=$('btnRetryAccount');if(b.disabled)return;b.disabled=true;setButtonBusy(b,true);try{await loadAccount();}finally{setButtonBusy(b,false);b.disabled=false;}});
  window.addEventListener('online',()=>{loadAccount();if(!view.hidden&&!dirty&&!busy&&screen!=='registo')renderScreen();});window.addEventListener('offline',()=>{sync();if(!view.hidden)notice('Sem ligação. A aparência continua disponível; as alterações da conta precisam de ligação.');});
  window.addEventListener('beforeunload',event=>{if(dirty){event.preventDefault();event.returnValue='';}});
  function deviceEntries(owner = '') {

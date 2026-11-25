@@ -1,9 +1,9 @@
 /* Buyer polish: accessible brand accents, quiet actions and a catalogue-first store.
    Keep logo colours unchanged; use ink tokens for small text on neutral surfaces. */
-:root { --buyer-accent-ink:#A84900; --buyer-selection-ink:#BA0644; }
-:root[data-theme="dark"] { --buyer-accent-ink:#FFAC66; --buyer-selection-ink:#FF86AF; }
+:root { --buyer-accent-ink:var(--ui-selection); --buyer-selection-ink:#BA0644; }
+:root[data-theme="dark"] { --buyer-selection-ink:#FF86AF; }
 @media (prefers-color-scheme:dark) {
-  :root:not([data-theme="light"]) { --buyer-accent-ink:#FFAC66; --buyer-selection-ink:#FF86AF; }
+  :root:not([data-theme="light"]) { --buyer-selection-ink:#FF86AF; }
 }
 .floating-navbar .nav-tab.active { color:var(--buyer-accent-ink); }
 .floating-navbar .nav-tab { font-size:12px; }

@@ -27,13 +27,20 @@ export function setupWorkspace({state,composer,onChanged,onStoreChanged,onTerms}
  const closeNavigation=el('button','mw-icon');closeNavigation.type='button';closeNavigation.setAttribute('aria-label','Fechar menu');closeNavigation.innerHTML=icon('close');closeNavigation.onclick=()=>navigationDrawer.close();
  navigationDrawer.append(closeNavigation);
  for(const [key,label,glyph] of [['resumo','Resumo','summary'],['produtos','Produtos','products'],['loja','Loja','store']]){
-  const entry=el('button','store-section-link',label);entry.type='button';entry.insertAdjacentHTML('afterbegin',icon(glyph));
+  const entry=el('button','store-section-link',label);entry.type='button';entry.dataset.destination=key;entry.insertAdjacentHTML('afterbegin',icon(glyph));
   entry.onclick=()=>{navigationDrawer.close();void switchTab(key);};navigationDrawer.append(entry);
  }
  const exit=el('a','store-section-link','Voltar ao perfil');exit.href='#perfil';exit.onclick=()=>navigationDrawer.close();navigationDrawer.append(exit);
  document.body.append(navigationDrawer);
  const menu=el('button','pdp-back-btn');menu.id='merchantMenuTrigger';menu.type='button';menu.setAttribute('aria-label','Abrir menu da loja');menu.setAttribute('aria-controls',navigationDrawer.id);menu.setAttribute('aria-expanded','false');menu.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg>';
- menu.onclick=()=>{navigationDrawer.showModal();menu.setAttribute('aria-expanded','true');};
+ menu.onclick=()=>{
+  for (const entry of navigationDrawer.querySelectorAll('[data-destination]')) {
+   if (entry.dataset.destination === tab) entry.setAttribute('aria-current','page');
+   else entry.removeAttribute('aria-current');
+  }
+  navigationDrawer.showModal();
+  menu.setAttribute('aria-expanded','true');
+ };
  navigationDrawer.addEventListener('close',()=>{menu.setAttribute('aria-expanded','false');menu.focus({preventScroll:true});});
  const header=view.querySelector('.pdp-nav-content');header.prepend(menu);
  header.querySelector('#btnBackFromMerchant').hidden=true;
