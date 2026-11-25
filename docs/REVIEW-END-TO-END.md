@@ -55,3 +55,20 @@ Organizar experiências de divulgação em torno dos relatos que o piloto confir
 | Gestor | Em claro e escuro, menu com destino activo, fecho com Escape, abertura de ficha e largura a 390 px verificados. Estados vazio e erro passaram. |
 | Suítes do repositório | Build, 110 testes de frontend e testes SQL locais passaram. |
 | Por verificar | Jornadas de produção com sessões reais, envio pelo WhatsApp, confirmação nativa de instalação, teclado nativo, contraste elevado e texto ampliado em dispositivos reais. Testes locais usam dados simulados. |
+
+
+## Validação da produção em 25 de Novembro de 2026
+
+O feed e o directório abriram em sessão de visitante e apresentaram os estados sem produtos e sem lojas. O carrinho apresentou zero artigos e a acção «Explorar produtos». Uma consulta de leitura ao projecto de produção confirmou zero registos nas tabelas de lojas e produtos. A compra com dados em produção fica pendente de um catálogo autorizado.
+
+| Ensaio do piloto | Evidência de aceitação |
+|---|---|
+| Loja e catálogo | Uma loja autorizada, com contacto controlado e pelo menos um produto com variantes e preços distintos. A gestão confirma a publicação e o visitante encontra o mesmo produto no feed, na pesquisa e na loja. |
+| Carrinho | A variante mantém-se após recarregar. Mudar a quantidade actualiza o subtotal. O pedido contém os artigos da loja seleccionada. |
+| WhatsApp | O pedido abre uma conversa com o número de teste autorizado e com a variante, quantidade e subtotal correctos. Registar em separado se foi aberto, enviado e recebido. |
+| Sessões reais | Cliente, lojista e gestor confirmam as suas acções com contas autorizadas. Depois de guardar, recarregar a vista e observar o dado persistido. |
+| Instalação | Em Android físico, registar navegador e estado do convite. Tocar em «Instalar Kamby», observar a confirmação nativa e abrir a aplicação pelo ícone. |
+
+## Entrevistas do piloto
+
+Pedir a cada comprador que descreva a última compra local. Onde encontrou a loja, que informação precisou de pedir e em que ponto decidiu avançar ou desistir? Pedir ao lojista que descreva o último pedido recebido. Que dados vinham na primeira mensagem, o que teve de perguntar e como soube se a venda se concretizou? Registar a tarefa, a dificuldade observada e a consequência relatada. Depois, pedir à pessoa que tente encontrar um produto e preparar um pedido no Kamby, sem lhe indicar onde clicar. Usar essas observações para decidir o que entra no próximo ciclo e quais mensagens vale a pena testar na divulgação.
