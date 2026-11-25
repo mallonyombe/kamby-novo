@@ -22,7 +22,28 @@ let permissions=[],revision=0,toastTimer,sessionVersion=0,currentArea='overview'
 const date=v=>v?new Intl.DateTimeFormat('pt-MZ',{dateStyle:'medium',timeStyle:'short',timeZone:'Africa/Maputo'}).format(new Date(v)):'—';
 const can=p=>permissions.includes(p);const $=(selector,within=root)=>within.querySelector(selector);
 function feedback(copy){let n=document.querySelector('#adminFeedback');if(!n){n=el('p','feedback');n.id='adminFeedback';n.setAttribute('role','status');document.body.append(n);}n.textContent=copy;n.hidden=false;clearTimeout(toastTimer);toastTimer=setTimeout(()=>n.hidden=true,4500);}
-function state(node,title,copy,retry){node.replaceChildren();const n=el('div','state-panel');n.append(el('h2','',title),el('p','',copy));if(retry){const b=el('button','secondary','Tentar novamente');b.onclick=retry;n.append(b);}node.append(n);}
+function state(node,title,copy,retry,tone='neutral',actionLabel='Tentar novamente'){
+  const panel=el('div','state-panel');
+  panel.dataset.tone=tone;
+  const message=el('div');
+  message.setAttribute('role','status');
+  message.append(el('h2','',title));
+  if(copy)message.append(el('p','',copy));
+  panel.append(message);
+  if(retry)panel.append(button(actionLabel,'secondary',retry));
+  node.replaceChildren(panel);
+}
+function loadFailure(node,error,retry,subject='os dados'){
+  if(error?.code==='42501'||error?.code==='PGRST301'){
+    state(node,'Confirma o acesso','Volta a confirmar a sessão de gestor.',start,'warning','Confirmar acesso');
+  }else if(error?.code==='P0002'){
+    state(node,'Ficha indisponível','A ficha pode ter sido removida.',null,'neutral');
+  }else if(!navigator.onLine){
+    state(node,'Sem ligação','Volta a ligar-te à internet para continuar.',retry,'warning');
+  }else{
+    state(node,'Não foi possível carregar '+subject,'Tenta novamente daqui a pouco.',retry,'error');
+  }
+}
 async function rpc(name,args){const {data,error}=await platform.rpc(name,args);if(error)throw error;return data;}
 async function read(area,params={}){
   const key=JSON.stringify([area,params]);
@@ -220,7 +241,7 @@ async function route(){
       if(title){title.tabIndex=-1;title.focus({preventScroll:true});}
     }
   }catch(error){
-    if(request===revision)state(main,error.code==='42501'?'Confirmar autorização':'Não foi possível actualizar',adminError(error),error.code==='42501'?start:route);
+    if(request===revision)loadFailure(main,error,route);
   }finally{
     if(request===revision)finish();
   }
@@ -339,7 +360,7 @@ async function listing(main,area,request){const cfg=configs[area];let q=listSett
    if(!error)rows=rows.map(row=>({...row,...photos.find(product=>product.id===row.id)}));
  }
  if(!append)list.replaceChildren();
- for(const row of rows)list.append(renderRow(area,row));offset+=data.rows.length;meta.textContent=total+' '+(area==='stores'?(total===1?'loja encontrada':'lojas encontradas'):(total===1?'resultado':'resultados'));if(!offset)state(list,cfg.empty,q?'Ajusta a pesquisa ou os filtros.':'');more.hidden=offset>=total; }catch(e){if(n===fetchVersion&&request===revision){if(append)feedback(adminError(e));else state(list,'Não foi possível actualizar',adminError(e),()=>load());}}finally{if(n===fetchVersion){more.disabled=false;finish();}}}await load();}
+ for(const row of rows)list.append(renderRow(area,row));offset+=data.rows.length;meta.textContent=total+' '+(area==='stores'?(total===1?'loja encontrada':'lojas encontradas'):(total===1?'resultado':'resultados'));if(!offset)state(list,cfg.empty,q?'Ajusta a pesquisa ou os filtros.':'');more.hidden=offset>=total; }catch(e){if(n===fetchVersion&&request===revision){if(append)feedback(adminError(e));else {meta.textContent='';more.hidden=true;loadFailure(list,e,()=>load(),area==='moderation'?'as denúncias':'a lista');}}}finally{if(n===fetchVersion){more.disabled=false;finish();}}}await load();}
 function renderRow(area,row){
  if(area==='system')return auditRow(row);
  if(area==='products'){
@@ -701,7 +722,7 @@ async function storeDetail(main,id,request,section){
       }catch(error){
         if(current===generation&&request===revision){
           if(append)feedback('Não foi possível carregar mais produtos.');
-          else state(list,'Catálogo indisponível','Tenta novamente.',()=>load());
+          else loadFailure(list,error,()=>load(),'o catálogo');
         }
       }finally{if(current===generation){more.disabled=false;finish();}}
     }

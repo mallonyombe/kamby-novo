@@ -246,6 +246,12 @@ html:has(.admin-shell[data-subpage="true"]) {overscroll-behavior-x:contain}
 
 .store-row:has(>span:first-child):not(:has(.store-mark)):not(.admin-product-row) {grid-template-columns:minmax(0,1fr) auto;width:100%;text-align:left;}
 .store-row>span {min-width:0;}
+.state-panel[data-tone="warning"] h2 {color:var(--warning);}
+.state-panel[data-tone="error"] h2 {color:#ad2533;}
+:root[data-theme="dark"] .state-panel[data-tone="error"] h2 {color:#ff9ba6;}
+@media(prefers-color-scheme:dark){
+ :root:not([data-theme="light"]) .state-panel[data-tone="error"] h2 {color:#ff9ba6;}
+}
 .store-row .row-title {overflow-wrap:normal;}
 .store-profile-actions {display:flex;align-items:center;gap:12px;}
 .store-profile-actions button {display:inline-flex;gap:8px;align-items:center;min-height:44px;}
