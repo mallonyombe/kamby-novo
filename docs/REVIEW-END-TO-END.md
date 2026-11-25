@@ -72,3 +72,9 @@ O feed e o directório abriram em sessão de visitante e apresentaram os estados
 ## Entrevistas do piloto
 
 Pedir a cada comprador que descreva a última compra local. Onde encontrou a loja, que informação precisou de pedir e em que ponto decidiu avançar ou desistir? Pedir ao lojista que descreva o último pedido recebido. Que dados vinham na primeira mensagem, o que teve de perguntar e como soube se a venda se concretizou? Registar a tarefa, a dificuldade observada e a consequência relatada. Depois, pedir à pessoa que tente encontrar um produto e preparar um pedido no Kamby, sem lhe indicar onde clicar. Usar essas observações para decidir o que entra no próximo ciclo e quais mensagens vale a pena testar na divulgação.
+
+## Ensaio com catálogo e contas fictícias
+
+O ensaio do comprador usa 61 produtos distribuídos por duas lojas identificadas como teste. Em Chromium, os sete cenários passaram. O último cenário carrega os dois carrinhos após recarregar e verifica a mensagem de cada loja, a variante, as quantidades e os subtotais de 780 MT e 12 MT. A simulação termina dentro do Kamby, sem janela externa. As vistas do lojista e do gestor foram exercitadas com sessões fictícias. Verificámos credencial incorrecta seguida de entrada válida, loja atribuída, pesquisa e validação do editor em três larguras, menu do gestor e os estados vazio e de erro.
+
+A suíte de frontend inclui três testes do convite PWA. Cobrem a primeira visita elegível, a persistência da dispensa e a app já instalada. O sistema operativo e a confirmação nativa em Android físico continuam fora deste ensaio. Os dados fictícios desta execução ficaram no navegador de teste e na base SQL de teste. A validação de entrega pelo WhatsApp real e as contas de produção continuam pendentes.

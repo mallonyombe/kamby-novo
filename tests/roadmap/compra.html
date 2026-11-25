@@ -78,6 +78,34 @@ document.querySelector('#start').onclick=async e=>{
    q('#btnBackStoreCart').click();
    await until(()=>!q('#viewPDP').hidden && q('#pdpTitle').textContent==='Arroz do ensaio','voltar abriu outro destino');
  });
+ await scenario('Duas lojas, carrinho persistente e WhatsApp simulado',async()=>{
+   await load('produto/'+uid(1),'&run=segunda-loja');
+   await until(()=>q('#pdpTitle')?.textContent==='Caneca do ensaio' && !q('#btnPdpAddToCart').disabled,'produto da segunda loja indisponível');
+   q('#btnPdpAddToCart').click();
+   check(q('#productActionSheet').open,'não abriu a confirmação');
+   q('#actionConfirm').click();
+   await until(()=>!q('#productActionSheet').open,'não adicionou o artigo');
+   await load('carrinho','&run=dois-carrinhos');
+   const groups=()=>[...doc().querySelectorAll('#cartGroupsContainer .cart-store-summary')];
+   await until(()=>groups().length===2,'carrinhos não persistiram separadamente');
+   for(const [store, item, excluded, total] of [
+     ['Mercado QA','2x Arroz do ensaio (5 kg)','Caneca do ensaio','780'],
+     ['Casa QA','1x Caneca do ensaio','Arroz do ensaio','12'],
+   ]){
+     groups().find(group=>group.textContent.includes(store)).querySelector('.cart-summary-heading').click();
+     await until(()=>!q('#viewStoreCart').hidden && !q('#btnStoreCartWhatsApp').disabled,'carrinho da loja não abriu');
+     q('#btnStoreCartWhatsApp').click();
+     await until(()=>q('#testContactDialog').open,'resumo não abriu para '+store);
+     const message = q('#testContactMessage').value;
+     check(message.includes(store) && message.includes(item) && !message.includes(excluded),'mensagem mistura artigos ou variantes');
+     check(message.split('\n').find(line=>line.includes('Subtotal estimado:'))?.includes(total),'subtotal incorrecto');
+     check(app().catalogueQA.externalWindows.length===0,'foi aberta uma janela externa na simulação');
+     q('#btnFinishTestContact').click();
+     check(!q('#testContactDialog').open,'resumo não fechou');
+     q('#btnStoreCartGeneral').click();
+     await until(()=>groups().length===2,'não voltou aos dois carrinhos');
+   }
+ });
  output.textContent=passed+' passaram · '+failed+' falharam';
 };
 </script></html>
