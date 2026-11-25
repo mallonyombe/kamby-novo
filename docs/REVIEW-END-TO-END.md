@@ -80,3 +80,7 @@ O ensaio do comprador usa 61 produtos distribuídos por duas lojas identificadas
 A suíte de frontend inclui três testes do convite PWA. Cobrem a primeira visita elegível, a persistência da dispensa e a app já instalada. O sistema operativo e a confirmação nativa em Android físico continuam fora deste ensaio. Os dados fictícios desta execução ficaram no navegador de teste e na base SQL de teste. A validação de entrega pelo WhatsApp real e as contas de produção continuam pendentes.
 
 O oitavo cenário do comprador passou em Chromium. A loja fechada bloqueou o pedido. Após reabrir, o aumento de preço actualizou o subtotal de 780 MT para 840 MT e exigiu um novo toque. Só depois desse toque foi apresentado o pedido simulado com o valor revisto.
+
+### Actualização e acesso offline da PWA
+
+Depois de `npm run build`, executar `node tests/pwa-offline-browser.mjs` com Playwright, Chromium e Python 3 disponíveis. A variável `KAMBY_QA_CHROMIUM` permite usar outro executável Chromium. O ensaio usa uma cópia temporária do build num servidor local e bloqueia pedidos externos do navegador. Em Chromium, o Perfil reabriu sem rede. Após voltar a ligar, o novo service worker assumiu o controlo, removeu a cache anterior e a versão nova reabriu também sem rede.
