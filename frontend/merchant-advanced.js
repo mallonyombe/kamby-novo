@@ -4,7 +4,8 @@ import {openSellerSetup as showSellerSetup} from './seller-setup.js';
 import {el,icon} from './merchant-ui.js';
 import {canPrepareStore} from './merchant-domain.js';
 import {setButtonBusy,showSpinner,showSkeleton} from "./loading.js";
-import { platform } from './platform.js';
+import { catalogueConfig, platform } from './platform.js';
+import { bindPasswordVisibility } from './password-visibility.js';
 import { loadAccountAccess } from './account-access.js';
 import { parsePriceMinor, initials, signInIdentity } from './merchant-domain.js';
 import { fetchAllPages } from './search-engine.js';
@@ -129,10 +130,37 @@ export function setupMerchant(hooks) {
       message('accountLoginError',value);
     } finally { setButtonBusy(button,false);button.disabled=false; }
   });
-  byId('btnShowAccountPassword').addEventListener('click',()=>{
-    const input=byId('accountPassword'); const visible=input.type==='password'; input.type=visible?'text':'password';
-    byId('btnShowAccountPassword').setAttribute('aria-pressed',String(visible));
-    byId('btnShowAccountPassword').setAttribute('aria-label',visible?'Ocultar palavra-passe':'Mostrar palavra-passe');
+  bindPasswordVisibility(byId('accountPassword'), byId('btnShowAccountPassword'));
+  const googleButton = byId('btnGoogleSignIn');
+  const loginPanel = byId('settingsLoginPanel');
+  let googleSettingsRequest;
+  new MutationObserver(() => {
+    if (loginPanel.hidden || googleSettingsRequest) return;
+    googleSettingsRequest = fetch(new URL('/auth/v1/settings', catalogueConfig.supabaseUrl), {
+      headers: { apikey: catalogueConfig.publishableKey },
+      cache: 'no-store'
+    }).then(async response => {
+      if (!response.ok) throw new Error('Auth settings unavailable');
+      const settings = await response.json();
+      googleButton.hidden = settings.external?.google !== true;
+    }).catch(() => {
+      googleSettingsRequest = null;
+    });
+  }).observe(loginPanel, { attributes: true, attributeFilter: ['hidden'] });
+  googleButton.addEventListener('click', async () => {
+    googleButton.disabled = true;
+    message('accountLoginError', '');
+    try {
+      const { error } = await platform.auth.signInWithOAuth({
+        provider: 'google',
+        options: { redirectTo: new URL('/', window.location.origin).href }
+      });
+      if (error) throw error;
+    } catch {
+      message('accountLoginError', 'Não foi possível continuar com Google. Tenta novamente.');
+    } finally {
+      googleButton.disabled = false;
+    }
   });
   byId('btnAccountSignOut').addEventListener('click',async()=>{
     byId('btnAccountSignOut').disabled=true;setButtonBusy(byId('btnAccountSignOut'),true);
