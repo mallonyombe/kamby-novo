@@ -2,6 +2,9 @@
 export async function preparePhoto(file, longestEdge) {
   const bitmap = await createImageBitmap(file, { imageOrientation: 'from-image' });
   try {
+    if (bitmap.width * bitmap.height > 60000000) {
+      throw new Error('A resolução da fotografia é demasiado alta.');
+    }
     const scale = Math.min(1, longestEdge / Math.max(bitmap.width, bitmap.height));
     const canvas = document.createElement('canvas');
     canvas.width = Math.max(1, Math.round(bitmap.width * scale));

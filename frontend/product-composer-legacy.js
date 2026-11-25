@@ -1,6 +1,7 @@
 import {setButtonBusy,showSpinner,showSkeleton} from "./loading.js";
 import { platform, catalogueConfig } from './platform.js';
 import { normaliseNewProduct, validateProductPhoto } from './merchant-domain.js';
+import { preparePhoto } from './prepare-photo.js';
 
 export function setupProductComposer({getStore,onPublished,onFeedback}) {
   const byId=id=>document.getElementById(id);
@@ -83,12 +84,13 @@ export function setupProductComposer({getStore,onPublished,onFeedback}) {
     const request=++photoRequest;
     let nextUrl='';photoPending=true;controls();
     try {
-      validateProductPhoto(next);nextUrl=URL.createObjectURL(next);
-      const image=new Image();image.src=nextUrl;await image.decode();
-      if(request!==photoRequest) {URL.revokeObjectURL(nextUrl);return;}
-      if(!image.naturalWidth || !image.naturalHeight) throw new Error('Fotografia inválida.');
+      validateProductPhoto(next);
+      const image=await preparePhoto(next,1600);
+      validateProductPhoto(image);
+      if(request!==photoRequest)return;
+      nextUrl=URL.createObjectURL(image);
       if(previewUrl) URL.revokeObjectURL(previewUrl);
-      previewUrl=nextUrl;file=next;attempt=null;
+      previewUrl=nextUrl;file=image;attempt=null;
       byId('previewNewProdImg').src=previewUrl;byId('previewNewProdImg').hidden=false;byId('newProdPhotoPlaceholder').hidden=true;
       fields.image.textContent='Trocar fotografia';notice('newProductError','');
     } catch(e) {

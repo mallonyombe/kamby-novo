@@ -1,6 +1,7 @@
 import {canPrepareStore} from './merchant-domain.js';
 import {setButtonBusy,showSpinner,showSkeleton} from "./loading.js";
 import { platform } from './platform.js';
+import { preparePhoto } from './prepare-photo.js';
 import { parsePriceMinor, validateProductPhoto } from './merchant-domain.js';
 import { el,icon,money,notice,confirmAction,imageUrl,showProductThumbnail } from './merchant-ui.js';
 
@@ -51,7 +52,12 @@ export function setupProductComposer(hooks){
  async function close(force=false){if(!dialog.open)return true;if(!force&&(busy||uncertain)){if(uncertain)fail('Confirma o resultado do pedido antes de sair.');return false;}if(!force&&dirty&&!await confirmAction('Sair sem guardar?','As alterações deste produto ainda não foram guardadas.','Descartar'))return false;dialog.close();document.body.classList.remove('merchant-editing');release();model=null;uncertain=null;dirty=false;q('formNewProduct').reset();['editorGallery','editorVariants','editorPrices','editorReview'].forEach(id=>q(id).replaceChildren());return true;}
  q('btnCloseNewProductModal').onclick=()=>close();dialog.addEventListener('cancel',e=>{e.preventDefault();close();});
  q('btnChooseNewProdImg').onclick=()=>q('inputNewProdImage').click();q('inputNewProdImage').addEventListener('change',async e=>{await addPhotos([...e.target.files]);e.target.value='';});
- async function optimise(file){validateProductPhoto(file);const object=URL.createObjectURL(file);try{const img=new Image();img.src=object;await img.decode();if(!img.naturalWidth||!img.naturalHeight||img.naturalWidth*img.naturalHeight>60000000)throw Error('A fotografia é demasiado grande.');const scale=Math.min(1,1600/Math.max(img.naturalWidth,img.naturalHeight));const canvas=document.createElement('canvas');canvas.width=Math.round(img.naturalWidth*scale);canvas.height=Math.round(img.naturalHeight*scale);canvas.getContext('2d').drawImage(img,0,0,canvas.width,canvas.height);const blob=await new Promise(resolve=>canvas.toBlob(resolve,'image/webp',.86));if(!blob)throw Error('Não foi possível preparar a fotografia.');return blob.size<file.size?new File([blob],'produto.webp',{type:'image/webp'}):file;}finally{URL.revokeObjectURL(object);}}
+ async function optimise(file) {
+   validateProductPhoto(file);
+   const image = await preparePhoto(file, 1600);
+   validateProductPhoto(image);
+   return image;
+ }
  async function addPhotos(files,replaceKey=null){
    if(!model||busy||!files.length)return;
    const target=model,prepared=[];

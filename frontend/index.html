@@ -1898,7 +1898,6 @@
     import {editorContractReady,baselineCataloguePath} from "./catalogue-contract.js";
     import {enableModalDismiss} from './modal-dismiss.js';
     import { setupMerchant } from "./merchant.js";
-    import {startAudience} from "./audience.js";
     import { listenForNavigation } from "./navigation.js";
     import { platform, catalogueConfig, trackStoreEvent } from "./platform.js";
     (async function initKambyApp() {
@@ -1911,7 +1910,6 @@
       const recentChips = document.getElementById('recentChips');
       const floatingNavbar = document.getElementById('floatingNavbar');
       const navTabs = document.querySelectorAll('.nav-tab');
-      startAudience(platform);
       const header = document.getElementById('kambyHeader');
       enableModalDismiss();
       let merchantController = null;
