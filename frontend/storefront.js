@@ -140,6 +140,7 @@ export function setupStorefrontDiscovery({ renderCard, createEmpty }) {
     cover.onclick = avatar.onclick = null;
     const storeName = store.name;
     function openArtwork(source, label, kind) {
+      if (!source.naturalWidth || !source.naturalHeight) return;
       const dialog = $('storeArtworkViewer');
       const image = $('storeArtworkFull');
       const origin = source.parentElement.getBoundingClientRect();
@@ -152,7 +153,12 @@ export function setupStorefrontDiscovery({ renderCard, createEmpty }) {
       dialog.showModal();
       image.getAnimations().forEach(animation => animation.cancel());
       if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+      if (kind === 'cover') {
+        image.animate([{opacity:0},{opacity:1}],{duration:160,easing:'ease-out'});
+        return;
+      }
       const destination = image.getBoundingClientRect();
+      if (!destination.width || !destination.height) return;
       const x = origin.left + origin.width / 2 - destination.left - destination.width / 2;
       const y = origin.top + origin.height / 2 - destination.top - destination.height / 2;
       const scale = Math.min(1, origin.width / destination.width, origin.height / destination.height);

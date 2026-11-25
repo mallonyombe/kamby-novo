@@ -4,7 +4,7 @@ import {el,icon} from './merchant-ui.js';
 import {showSkeleton} from './loading.js';
 
 export const summaryMarkup=`
-  <div class="mw-summary-heading"><div><h2>Resumo</h2><p id="merchantSummaryStatus" class="mw-muted" role="status"></p></div>
+  <div class="mw-summary-heading"><p id="merchantSummaryStatus" class="mw-muted" role="status"></p>
     <button type="button" id="merchantQuickNew" class="mw-primary" disabled>${icon('plus')}Novo produto</button>
   </div>
   <section id="merchantPreparation" class="mw-preparation" hidden></section>

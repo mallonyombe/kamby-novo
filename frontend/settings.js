@@ -5,7 +5,8 @@ import {initials} from './merchant-domain.js';
 import {profileValues,passwordError,readTheme} from './settings-domain.js';
 import {savedPrefix, readSavedEntries, toggleGuestEntry, removeFromDevice, claimGuestEntries, sendClaimedEntries} from './guardados-locais.js';
 import {applyTheme} from './theme.js';
-const paths={gear:'M10 2h4l.5 3 2 .9 2.7-1.4 2 3.5-2.3 2v2.3l2.3 2-2 3.5-2.7-1.4-2 .9-.5 3h-4l-.5-3-2-.9-2.7 1.4-2-3.5 2.3-2V10L2.8 8l2-3.5 2.7 1.4 2-.9Z M12 8.5a2.8 2.8 0 1 0 0 5.6 2.8 2.8 0 0 0 0-5.6Z',user:'M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2 M12 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8',heart:'M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1.1-1.1a5.5 5.5 0 0 0-7.8 7.8L12 21l8.8-8.6a5.5 5.5 0 0 0 0-7.8Z',bookmark:'M5 3h14v18l-7-5-7 5Z',shield:'m12 3 9 4v6c0 5-9 8-9 8s-9-3-9-8V7Z M8 12l3 3 5-6',bell:'M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9 M10 21h4',sun:'M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8 M12 2v2m0 16v2M2 12h2m16 0h2M5 5l2 2m10 10 2 2M5 19l2-2M17 7l2-2',help:'M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20 M9 9a3 3 0 0 1 6 0c0 2-3 2-3 5m0 3v1',info:'M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20 M12 10v7m0-11v1',key:'M9 15a6 6 0 1 0-6-6 6 6 0 0 0 6 6 M13 13l8 8m-3-3 3-3',device:'M4 3h16v13H4Z M8 21h8m-4-5v5',chevron:'m9 6 6 6-6 6'};
+import {preparePhoto} from './prepare-photo.js';
+const paths={gear:'M10 2h4l.5 3 2 .9 2.7-1.4 2 3.5-2.3 2v2.3l2.3 2-2 3.5-2.7-1.4-2 .9-.5 3h-4l-.5-3-2-.9-2.7 1.4-2-3.5 2.3-2V10L2.8 8l2-3.5 2.7 1.4 2-.9Z M12 8.5a2.8 2.8 0 1 0 0 5.6 2.8 2.8 0 0 0 0-5.6Z',user:'M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2 M12 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8',heart:'M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1.1-1.1a5.5 5.5 0 0 0-7.8 7.8L12 21l8.8-8.6a5.5 5.5 0 0 0 0-7.8Z',bookmark:'M5 3h14v18l-7-5-7 5Z',shield:'M12 3 20 6.5v5.2c0 4-3.3 7-8 9.3-4.7-2.3-8-5.3-8-9.3V6.5L12 3Z M8.5 12l2.3 2.4 4.7-5',bell:'M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9 M10 21h4',sun:'M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8 M12 2v2m0 16v2M2 12h2m16 0h2M5 5l2 2m10 10 2 2M5 19l2-2M17 7l2-2',help:'M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20 M9 9a3 3 0 0 1 6 0c0 2-3 2-3 5m0 3v1',info:'M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20 M12 10v7m0-11v1',key:'M9 15a6 6 0 1 0-6-6 6 6 0 0 0 6 6 M13 13l8 8m-3-3 3-3',device:'M4 3h16v13H4Z M8 21h8m-4-5v5',chevron:'m9 6 6 6-6 6'};
 function icon(name){const n=document.createElementNS('http://www.w3.org/2000/svg','svg');n.setAttribute('viewBox','0 0 24 24');n.setAttribute('fill','none');n.setAttribute('stroke','currentColor');n.setAttribute('aria-hidden','true');n.classList.add('settings-menu-icon');const p=document.createElementNS(n.namespaceURI,'path');p.setAttribute('d',paths[name]||paths.info);n.append(p);return n;}
 const node=(tag,text,cls)=>{const n=document.createElement(tag);if(text!==undefined)n.textContent=text;if(cls)n.className=cls;return n;};
 function button(copy,cls,action){const b=node('button',copy,cls);b.type='button';if(action)b.addEventListener('click',action);return b;}
@@ -85,8 +86,11 @@ export function setupSettings({openSellerSetup,savedProducts,renderProductCard,g
    choose.disabled = remove.disabled = true;
    const path = user.id + '/avatar';
    try {
-    const result = file
-     ? await profilesBucket.upload(path, file, { upsert: true, contentType: file.type, cacheControl: '0' })
+    const image = file ? await preparePhoto(file, 768) : null;
+    if (getAccount().user?.id !== user.id) return;
+    if (image?.size > 2097152) throw new Error('Fotografia demasiado grande.');
+    const result = image
+     ? await profilesBucket.upload(path, image, { upsert: true, contentType: image.type, cacheControl: '0' })
      : await profilesBucket.remove([path]);
     if (result.error) throw result.error;
     if (getAccount().user?.id !== user.id) return;
@@ -233,7 +237,7 @@ export function setupSettings({openSellerSetup,savedProducts,renderProductCard,g
   if(screen==='notificacoes'){lead('Preferências de avisos','Os avisos são apresentados aqui, dentro do Kamby.');const pending=node('div');body.append(pending);showSkeleton(pending,'rows',3);const [pref,notes]=await Promise.all([platform.from('kg_user_preferences').select('catalogue_alerts,account_alerts').eq('user_id',a.user.id).maybeSingle(),platform.from('kg_notifications').select('id,title,body,read_at,created_at,action').eq('user_id',a.user.id).order('created_at',{ascending:false}).limit(50)]);if(request!==generation)return;pending.remove();if(pref.error||notes.error){empty('Não foi possível carregar','Verifica a ligação e tenta novamente.');body.append(button('Tentar novamente','settings-text-action',renderScreen));return;}let values=pref.data||{catalogue_alerts:true,account_alerts:true};const g=node('div',undefined,'settings-group');for(const [key,label,sub]of[['catalogue_alerts','Produtos guardados','Alterações de preço e disponibilidade'],['account_alerts','Pedidos da conta','Actualizações do pedido de encerramento']]){const l=node('label',undefined,'settings-choice'),copy=node('span',label),input=node('input');copy.append(node('small',sub));input.type='checkbox';input.checked=values[key];input.addEventListener('change',async()=>{const value=input.checked;input.disabled=true;const pending=node('span');l.append(pending);showSpinner(pending);try{await ownedWrite('kg_user_preferences',a.user.id,{...values,[key]:value});if(request!==generation)return;values[key]=value;notice('Preferência guardada.');}catch{if(request!==generation)return;input.checked=!value;notice('Não foi possível guardar a preferência.');}finally{pending.remove();input.disabled=false;}});l.append(copy,input);g.append(l);}body.append(g);if(!notes.data.length)empty('Sem avisos','Os novos avisos aparecem aqui.');for(const n of notes.data){const article=node('article',undefined,'settings-item'+(!n.read_at?' settings-notification-unread':'')),meta=node('div');meta.append(node('strong',n.title),node('p',n.body));article.append(meta);if(n.action==='seller_setup'&&openSellerSetup&&a.access?.sellerOnboarding){article.append(button('Configurar loja','settings-text-action',()=>{close(true);navigate('perfil');openSellerSetup();}));}if(!n.read_at){const read=button('Lido','settings-text-action',async()=>{read.disabled=true;setButtonBusy(read,true);const {error}=await platform.from('kg_notifications').update({read_at:new Date().toISOString()}).eq('id',n.id).eq('user_id',a.user.id);if(request!==generation)return;if(error){setButtonBusy(read,false);read.disabled=false;notice('Não foi possível marcar como lido.');}else{article.classList.remove('settings-notification-unread');read.remove();}});article.append(read);}body.append(article);}return;}
   if(screen==='encerramento'){const pending=node('div');body.append(pending);showSkeleton(pending,'rows',2);const {data,error}=await platform.from('kg_account_requests').select('status,created_at').eq('user_id',a.user.id).maybeSingle();if(request!==generation)return;pending.remove();if(error){empty('Não foi possível carregar','Tenta novamente mais tarde.');return;}if(data){const statuses={pending:'Pedido em análise',processing:'Pedido em tratamento',completed:'Pedido concluído pela gestão',declined:'Pedido revisto pela gestão'};empty(statuses[data.status]||'Pedido registado','O pedido não elimina a conta automaticamente.');return;}lead('Encerramento da conta','Pede à equipa Kamby a análise do encerramento da tua conta. A conta mantém-se activa enquanto o pedido é tratado.');body.append(button('Pedir encerramento','settings-text-action profile-sign-out',()=>confirm('Registar pedido de encerramento?','O pedido será enviado à gestão da plataforma. Esta acção não apaga os teus dados imediatamente.','Registar pedido',async()=>{if(busy)return;busy=true;const action=body.querySelector('button');action.disabled=true;setButtonBusy(action,true);try{const {error}=await platform.from('kg_account_requests').insert({user_id:a.user.id});if(error&&error.code!=='23505')notice('Não foi possível registar o pedido.');else renderScreen();}finally{setButtonBusy(action,false);action.disabled=false;busy=false;}})));return;}
   if(screen==='ajuda'){lead('Como podemos ajudar?');for(const [q,copy]of[['Como contactar uma loja?','Na página da loja, toca em Perguntar à loja. Para enviar um pedido com os teus artigos, abre o carrinho dessa loja e toca em Enviar pedido pelo WhatsApp.'],['O contacto confirma a compra?','Não. Confirma o preço, a disponibilidade, o pagamento e a entrega com a loja.'],['Como recuperar o acesso?','Usa Esqueci a palavra-passe na entrada da conta. A recuperação por email depende de um email associado.'],['Onde ficam os meus produtos?','Os produtos adicionados ficam no Carrinho deste dispositivo. Encontra os favoritos em Perfil → Guardados. Sem conta, ficam neste dispositivo.']]){const d=node('details',undefined,'settings-group'),s=node('summary',q);s.style.padding='16px';const p=node('p',copy,'settings-copy');p.style.padding='0 16px';d.append(s,p);body.append(d);}return;}
-  if(screen==='sobre'){lead('Kamby','Orbion Technology');body.append(node('p','Descobre produtos e lojas e contacta cada vendedor pelo WhatsApp.','settings-copy'),node('p','Os termos e a política de privacidade formais ainda não foram disponibilizados.','settings-copy'));}
+  if(screen==='sobre'){lead('Kamby','Orbion');body.append(node('p','Descobre produtos e lojas e contacta cada vendedor pelo WhatsApp.','settings-copy'),node('p','Os termos e a política de privacidade formais ainda não foram disponibilizados.','settings-copy'));}
  }
  async function open(target,updateHistory=true){if(!titles[target])return false;if(!view.hidden&&screen===target&&!dirty)return true;if(busy)return false;if(dirty){confirm('Descartar alterações?','Há dados que ainda não foram guardados.','Descartar',()=>{dirty=false;open(target,updateHistory);});return false;}
   afterSignIn = '';
@@ -336,4 +340,85 @@ export function setupSettings({openSellerSetup,savedProducts,renderProductCard,g
    ids.forEach(id => reads.delete(id));
   }
  }
- async function to
+ async function toggleSavedProduct(id, trigger) {
+  if (!id || pendingWrites.has(id)) return;
+  const userId = getAccount().user?.id;
+  const state = savedState;
+  const writes = pendingWrites;
+  writes.add(id);
+  paintSavedButtons();
+  const stillCurrent = () => state === savedState && userId === getAccount().user?.id;
+  const feedback = detail => window.dispatchEvent(new CustomEvent('kamby:feedback', { detail }));
+  try {
+   let saved;
+   if (!userId) {
+    const product = trigger?.kambyPreview || currentProductPreview;
+    if (!product || product.id !== id) throw new Error('Produto indisponível.');
+    saved = !toggleGuestEntry(localStorage, product);
+   } else {
+    await mergeGuestSaved(userId);
+    if (!stillCurrent()) return;
+    const existing = await platform.from('kg_saved_products').select('product_id').eq('user_id', userId).eq('product_id', id).maybeSingle();
+    if (!stillCurrent()) return;
+    if (existing.error) throw existing.error;
+    saved = Boolean(existing.data) || deviceEntries(userId).some(entry => entry.product.id === id);
+    const result = saved
+     ? await platform.from('kg_saved_products').delete().eq('user_id', userId).eq('product_id', id)
+     : await platform.from('kg_saved_products').insert({ user_id: userId, product_id: id });
+    if (!stillCurrent()) return;
+    if (result.error && (saved || result.error.code !== '23505')) throw result.error;
+    if (saved) removeFromDevice(localStorage, userId, id);
+   }
+   state.set(id, !saved);
+   if (saved && (screen === 'guardados' || screen === 'actividade') && !view.hidden) {
+    const grid = body.querySelector('.saved-products-grid');
+    const card = [...(grid?.children || [])].find(item => item.dataset.id === id);
+    card?.remove();
+    if (grid && !grid.childElementCount) {
+     grid.remove();
+     empty('Ainda não tens produtos guardados disponíveis', 'Toca no coração de um produto para o guardar.');
+    }
+   }
+   const icon = trigger?.querySelector('svg');
+   if (!saved && icon && !matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    icon.animate([{ transform: 'scale(1)' }, { transform: 'scale(1.16)' }, { transform: 'scale(1)' }],
+      { duration: 220, easing: 'ease-out' });
+   }
+   feedback(saved ? 'Produto removido dos guardados.' : 'Produto guardado.');
+  } catch {
+   if (stillCurrent()) feedback('Não foi possível actualizar os guardados. Tenta novamente.');
+  } finally {
+   writes.delete(id);
+   if (stillCurrent()) paintSavedButtons();
+  }
+ }
+ window.addEventListener('storage', event => {
+  if (event.key && !event.key.startsWith(savedPrefix)) return;
+  scheduleSavedRefresh();
+  if (!view.hidden && (screen === 'guardados' || screen === 'actividade')) void openSavedAgain();
+ });
+ async function openSavedAgain() {
+  try { await renderScreen(); } catch { notice('Não foi possível actualizar os guardados.'); }
+ }
+ window.addEventListener('kamby:catalogue-card', scheduleSavedRefresh);
+ window.addEventListener('kamby:product-loading', () => { currentProduct = null; currentProductPreview = null; });
+ window.addEventListener('kamby:product-ready', event => {
+  currentProduct = event.detail.id;
+  currentProductPreview = event.detail.preview;
+  paintSavedButtons([[currentProduct, $('btnPdpSaveProduct')]]);
+  scheduleSavedRefresh();
+ });
+ document.addEventListener('click', event => {
+  const button = event.target.closest('[data-save-product]');
+  if (button) toggleSavedProduct(button.dataset.saveProduct, button);
+ });
+ $('btnPdpSaveProduct').addEventListener('click', event => toggleSavedProduct(currentProduct, event.currentTarget));
+ const preview = $('btnPdpSaveProduct').kambyPreview;
+ if (preview) {
+  currentProduct = preview.id;
+  currentProductPreview = preview;
+ }
+ window.dispatchEvent(new Event('kamby:guardados-prontos'));
+ scheduleSavedRefresh();
+ return {sync,open,close,isOpen:()=>!view.hidden,recovery:async()=>{recovery=true;await loadAccount();open('palavra-passe');},route:async hash=>{const target=decodeURIComponent(hash.slice('#definicoes/'.length));return open(target,false);},clear:clearSensitive};
+}

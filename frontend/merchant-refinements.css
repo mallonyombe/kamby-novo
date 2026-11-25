@@ -157,7 +157,7 @@
 #viewMerchant .mw-icon.has-filters::after {content:"";position:absolute;top:8px;right:8px;width:6px;height:6px;border-radius:50%;background:currentColor;}
 #viewMerchant .mw-list-meta {min-height:24px;}
 #viewMerchant .mw-product-row {gap:4px;padding:0;}
-#viewMerchant .mw-product-entry {min-width:0;flex:1;display:flex;align-items:center;gap:12px;padding:12px 4px;text-align:left;color:var(--text-primary);}
+#viewMerchant .mw-product-entry {min-width:0;flex:1;display:flex;align-items:center;gap:12px;padding:12px 4px;text-align:left;color:var(--text-main);}
 #viewMerchant button.mw-product-entry:hover {background:color-mix(in srgb,currentColor 4%,transparent);}
 #viewMerchant .mw-product-photo {width:58px;height:58px;border-radius:10px;}
 #viewMerchant .mw-product-meta {display:grid;gap:3px;}
@@ -165,7 +165,7 @@
 #viewMerchant .mw-product-price {font-size:14px;font-weight:650;}
 #viewMerchant .mw-row-details {gap:8px;font-size:12px;line-height:1.35;}
 .mw-product-state {color:var(--text-secondary);}
-.mw-stock-alert {color:var(--text-primary);font-weight:650;}
+.mw-stock-alert {color:var(--text-main);font-weight:650;}
 #viewMerchant .mw-settings-group {padding:0 0 10px;}
 .mw-settings-group > summary,.editor-extra > summary,.mw-filter-extra > summary {cursor:pointer;font-weight:650;padding:12px 0;line-height:1.4;}
 .mw-settings-group:not([open]),.editor-extra:not([open]) {border-bottom:1px solid var(--border-subtle);}

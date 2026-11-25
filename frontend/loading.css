@@ -20,4 +20,16 @@ button.is-pending::after {content:"";position:absolute;left:calc(50% - 9px);top:
 #merchantListSentinel {min-height:28px;display:grid;place-items:center;}
 .search-status:has(.search-loading-grid) {border:0;background:transparent;padding:0;}
 #viewPDP[aria-busy="true"] .pdp-slide {align-self:stretch;}
+/* Give cached responses a moment to settle before showing motion. */
+.app-spinner,button.is-pending::after {visibility:hidden;}
+@keyframes app-pending-reveal {to{visibility:visible;}}
+@media(prefers-reduced-motion:no-preference){
+ .app-spinner,button.is-pending::after {
+  animation:app-spin .75s linear infinite,app-pending-reveal 1ms step-end 120ms forwards;
+ }
+ .app-skeleton::after {animation-delay:180ms;}
+}
+@media(prefers-reduced-motion:reduce){
+ .app-spinner,button.is-pending::after {visibility:visible;}
+}
 @media(prefers-reduced-motion:reduce){.app-skeleton::after{animation:none;transform:none;}.app-spinner,button.is-pending::after{animation:none;}}

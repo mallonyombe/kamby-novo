@@ -106,7 +106,15 @@ export function setupMerchant(hooks) {
   }
 
   byId('profileLoginForm').addEventListener('submit',async event=>{
-    event.preventDefault(); const button=byId('btnAccountSignIn'); if(button.disabled)return;button.disabled=true;setButtonBusy(button,true);
+    event.preventDefault();
+    const button=byId('btnAccountSignIn');
+    if(button.disabled)return;
+    if(!navigator.onLine){
+      message('accountLoginError','Sem ligação à internet. Liga-te e tenta novamente.');
+      return;
+    }
+    button.disabled=true;
+    setButtonBusy(button,true);
     message('accountLoginError','');
     try {
       const identity=signInIdentity(byId('accountIdentity').value);
@@ -144,7 +152,7 @@ export function setupMerchant(hooks) {
   window.clearLocalSession=clearLocalSession;
 
   function storeState() {
-    const store=state.store;if(!store)return;byId('merchantHeaderTitle').textContent=store.name;
+    const store=state.store;if(!store)return;
     text('merchantStoreName',store.name);text('merchantStoreLocation',store.location||'');text('merchantStoreContact',store.whatsapp_e164||'');
     const button=byId('btnToggleStoreStatus');button.textContent=store.status==='approved'?(store.is_open?'Aberta':'Fechada'):'Indisponível';button.classList.toggle('closed',!store.is_open||store.status!=='approved');button.setAttribute('aria-pressed',String(store.is_open));button.setAttribute('aria-label',store.is_open?'Fechar loja':'Abrir loja');button.disabled=state.busy||store.status!=='approved';setButtonBusy(button,state.busy);workspace.syncStoreStatus();
   }

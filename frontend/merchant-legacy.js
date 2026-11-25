@@ -85,7 +85,15 @@ export function setupMerchant(hooks) {
   }
 
   byId('profileLoginForm').addEventListener('submit',async event=>{
-    event.preventDefault(); const button=byId('btnAccountSignIn'); if(button.disabled)return;button.disabled=true;setButtonBusy(button,true);
+    event.preventDefault();
+    const button=byId('btnAccountSignIn');
+    if(button.disabled)return;
+    if(!navigator.onLine){
+      message('accountLoginError','Sem ligação à internet. Liga-te e tenta novamente.');
+      return;
+    }
+    button.disabled=true;
+    setButtonBusy(button,true);
     message('accountLoginError','');
     try {
       const identity=signInIdentity(byId('accountIdentity').value);

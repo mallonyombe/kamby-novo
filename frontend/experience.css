@@ -30,3 +30,11 @@ body[data-view="pesquisa"] #floatingNavbar{display:none}input,select,textarea{sc
 }
 #viewProfile .profile-menu-copy,
 #viewSettingsSubscreen .profile-menu-copy {min-width:0;overflow-wrap:anywhere;}
+#viewProfile .profile-menu-item > svg:last-child,
+#viewSettingsSubscreen .profile-menu-item > svg:last-child {
+  flex-basis:16px;
+  width:16px;
+  height:16px;
+  min-width:16px;
+  color:var(--text-secondary);
+}

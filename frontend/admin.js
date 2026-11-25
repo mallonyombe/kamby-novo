@@ -54,9 +54,10 @@ function shell(){
   root.innerHTML=`
     <div class="admin-shell">
       <header class="admin-topbar" aria-label="Navegação da gestão">
-
         <button type="button" class="icon-button admin-drawer-trigger" aria-label="Abrir menu"
           aria-controls="adminDrawer" aria-expanded="false">${icon('menu')}</button>
+        <h1 id="adminPrimaryTitle" tabindex="-1"></h1>
+        <span id="adminPrimaryActions" class="admin-primary-actions"></span>
       </header>
       <dialog id="adminDrawer" class="admin-drawer" aria-labelledby="adminDrawerTitle">
         <div class="admin-drawer-body">
@@ -110,10 +111,16 @@ function shell(){
 }
 function showRouteHeader(area,id,section){
   const context=$('#adminContext');
-  const subpage=Boolean(id)||!mobileAreas.includes(area);
+  const subpage=Boolean(id);
   $('.admin-shell').dataset.subpage=String(subpage);
   context.replaceChildren();
-  if(!subpage)return;
+  const primaryTitle=$('#adminPrimaryTitle');
+  const primaryActions=$('#adminPrimaryActions');
+  if(primaryActions)primaryActions.replaceChildren();
+  if(!subpage){
+    primaryTitle.textContent=areas.find(([key])=>key===area)?.[1]||'Gestão';
+    return;
+  }
   const top=el('header','admin-subbar');
   const back=el('a','detail-back');
   const nested=id&&section!=='resumo';
@@ -209,7 +216,7 @@ async function route(){
     renderedRoute=destination;
     if(!refresh){
       window.scrollTo(0,listPositions.get(destination)||0);
-      const title=$('#adminContext h1')||$('h1',main);
+      const title=$('#adminContext h1')||$('#adminPrimaryTitle')||$('h1',main);
       if(title){title.tabIndex=-1;title.focus({preventScroll:true});}
     }
   }catch(error){
@@ -239,7 +246,7 @@ async function overview(main,request){
     actions.append(link);
   }
   if(actions.children.length===1)actions.append(el('p','queue-empty','Tudo em dia'));
-  main.replaceChildren(heading('Visão geral'));
+  main.replaceChildren();
   if(can('analytics.read'))void renderAudience(main,7,request);
   if(can('analytics.read')){
     const activity=el('section','overview-metrics');
@@ -307,10 +314,10 @@ async function listing(main,area,request){const cfg=configs[area];let q=listSett
  toolbar.classList.add('kamby-search-panel');
  toolbar.hidden=!q;
  bindListSearch(searchButton,toolbar,input);
- const contextualActions=$('#adminContext .subbar-spacer');
+ const contextualActions=$('#adminContext .subbar-spacer')||$('#adminPrimaryActions');
  if(contextualActions){
   contextualActions.replaceChildren(actions);
-  contextualActions.closest('.admin-subbar').classList.toggle('has-list-filters',Boolean(cfg.filters));
+  contextualActions.closest('.admin-subbar')?.classList.toggle('has-list-filters',Boolean(cfg.filters));
   main.replaceChildren(toolbar);
  }else{
   main.replaceChildren(heading(cfg.title,actions),toolbar);
@@ -933,7 +940,7 @@ async function renderAudience(container,days,request){
   section.append(help);
  }catch{section.append(el('p','muted','Métricas de utilização indisponíveis.'));}finally{finish();}
 }
-async function analytics(main,request){let days=7;const select=el('select','filter-select');select.setAttribute('aria-label','Período de actividade');for(const value of [7,30]){const o=el('option','',value+' dias');o.value=value;select.append(o);}const content=el('div');const tools=el('div','subpage-tools');tools.append(select);main.replaceChildren(tools,content);let n=0;async function load(){const version=++n;const finish=beginAdminLoad(content,'chart');try{const data=await read('analytics',{p_days:days});if(request!==revision||version!==n)return;content.replaceChildren();const legend=el('div','legend');legend.append(el('span','','Visitas às lojas'),el('span','','Cliques WhatsApp'));content.append(legend);const graph=el('div','analytics-bars');graph.setAttribute('aria-hidden','true');const max=Math.max(1,...data.rows.flatMap(r=>[r.views,r.contacts]));for(const day of data.rows){const bar=el('div','day-bar');for(const value of [day.views,day.contacts]){const line=el('span');line.style.height=(Number(value)/max*100)+'%';bar.append(line);}graph.append(bar);}const totals=el('dl','traffic-totals');
+async function analytics(main,request){let days=7;const select=el('select','filter-select admin-period-select');select.setAttribute('aria-label','Período de actividade');for(const value of [7,30]){const o=el('option','',value+' dias');o.value=value;select.append(o);}const content=el('div');const actions=$('#adminPrimaryActions');if(actions)actions.replaceChildren(select);main.replaceChildren(content);let n=0;async function load(){const version=++n;const finish=beginAdminLoad(content,'chart');try{const data=await read('analytics',{p_days:days});if(request!==revision||version!==n)return;content.replaceChildren();const legend=el('div','legend');legend.append(el('span','','Visitas às lojas'),el('span','','Cliques WhatsApp'));content.append(legend);const graph=el('div','analytics-bars');graph.setAttribute('aria-hidden','true');const max=Math.max(1,...data.rows.flatMap(r=>[r.views,r.contacts]));for(const day of data.rows){const bar=el('div','day-bar');for(const value of [day.views,day.contacts]){const line=el('span');line.style.height=(Number(value)/max*100)+'%';bar.append(line);}graph.append(bar);}const totals=el('dl','traffic-totals');
  for(const [key,label] of [['views','Visitas às lojas'],['contacts','Cliques no WhatsApp']]){
    const item=el('div');
    item.append(el('dt','',label),el('dd','',data.rows.reduce((sum,day)=>sum+Number(day[key]||0),0).toLocaleString('pt-MZ')));
