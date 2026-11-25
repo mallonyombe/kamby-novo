@@ -1,53 +1,48 @@
 import { trackAnalytics } from './analytics.js';
 
-const panel = document.querySelector('#kambyInstall');
-const button = panel.querySelector('button');
-const status = panel.querySelector('[role="status"]');
 const invite = document.querySelector('#kambyInstallInvite');
 const accept = document.querySelector('#kambyInstallAccept');
 const dismiss = document.querySelector('#kambyInstallDismiss');
 const standalone = matchMedia('(display-mode: standalone)');
-const dismissedKey = 'kamby:install-invite-after';
-const revisitAfter = 7 * 24 * 60 * 60 * 1000;
+const visitedKey = 'kamby:install-visited';
+const visitKey = 'kamby:install-visit';
+const dismissedKey = 'kamby:install-invite-dismissed';
+const legacyDismissedKey = 'kamby:install-invite-after';
 let installPrompt;
 let installed = false;
-let readyToInvite = false;
+let returningVisit = false;
 let dismissed = false;
-let installing = false;
+
+try {
+  dismissed = localStorage.getItem(dismissedKey) === '1'
+    || Number(localStorage.getItem(legacyDismissedKey)) > 0;
+  let visit = sessionStorage.getItem(visitKey);
+  if (!visit) {
+    visit = localStorage.getItem(visitedKey) === '1' ? 'returning' : 'first';
+    sessionStorage.setItem(visitKey, visit);
+    localStorage.setItem(visitedKey, '1');
+  }
+  returningVisit = visit === 'returning';
+} catch {
+  // Without storage the invitation stays hidden.
+}
 
 function reflectInstallation() {
   const hasApp = installed || standalone.matches || navigator.standalone === true;
-  panel.hidden = hasApp;
-  invite.hidden = hasApp || !readyToInvite || !installPrompt || dismissed || installing;
+  invite.hidden = hasApp || !returningVisit || !installPrompt || dismissed;
 }
 
-function postponeInvite() {
+function dismissInvite() {
   dismissed = true;
-  try { localStorage.setItem(dismissedKey, String(Date.now() + revisitAfter)); } catch {}
+  try { localStorage.setItem(dismissedKey, '1'); } catch {}
   reflectInstallation();
+  document.querySelector('#floatingNavbar a')?.focus({ preventScroll: true });
 }
 
-function showInstructions() {
-  const appleMobile = /iPad|iPhone|iPod/.test(navigator.userAgent) ||
-    (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-  status.textContent = appleMobile
-    ? 'Abre no Safari. Toca em Partilhar e escolhe Adicionar ao ecrã principal.'
-    : 'Abre o Kamby no Chrome e, no menu ⋮, procura Instalar app ou Adicionar ao ecrã principal.';
-  status.hidden = false;
-}
-
-async function requestInstallation(fromInvite) {
-  if (installing) return;
-  if (!installPrompt) {
-    showInstructions();
-    return;
-  }
-
+async function requestInstallation() {
+  if (invite.hidden) return;
   const prompt = installPrompt;
   installPrompt = undefined;
-  installing = true;
-  button.disabled = true;
-  status.hidden = true;
   reflectInstallation();
   try {
     await prompt.prompt();
@@ -55,42 +50,33 @@ async function requestInstallation(fromInvite) {
     if (outcome === 'accepted') {
       installed = true;
     } else {
-      postponeInvite();
+      dismissInvite();
     }
   } catch {
-    postponeInvite();
-    if (!fromInvite) showInstructions();
-  } finally {
-    installing = false;
-    button.disabled = false;
-    reflectInstallation();
+    document.querySelector('#floatingNavbar a')?.focus({ preventScroll: true });
   }
-  if (fromInvite && !installed) document.querySelector('#floatingNavbar a')?.focus({ preventScroll: true });
+  reflectInstallation();
 }
 
-try { dismissed = Number(localStorage.getItem(dismissedKey)) > Date.now(); } catch {}
 window.addEventListener('beforeinstallprompt', event => {
   event.preventDefault();
   installPrompt = event;
   reflectInstallation();
 });
-window.setTimeout(() => {
-  readyToInvite = true;
-  reflectInstallation();
-}, 8000);
-standalone.addEventListener('change', reflectInstallation);
-button.addEventListener('click', () => requestInstallation(false));
-accept.addEventListener('click', () => requestInstallation(true));
-dismiss.addEventListener('click', () => {
-  postponeInvite();
-  document.querySelector('#floatingNavbar a')?.focus({ preventScroll: true });
+window.addEventListener('storage', event => {
+  if (event.key === dismissedKey && event.newValue === '1') {
+    dismissed = true;
+    reflectInstallation();
+  }
 });
-
+standalone.addEventListener('change', reflectInstallation);
+accept.addEventListener('click', requestInstallation);
+dismiss.addEventListener('click', dismissInvite);
 window.addEventListener('appinstalled', () => {
-  trackAnalytics('pwa_install');
   installed = true;
   installPrompt = undefined;
   reflectInstallation();
+  trackAnalytics('pwa_install');
 });
 reflectInstallation();
 

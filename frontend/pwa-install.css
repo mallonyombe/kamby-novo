@@ -55,6 +55,3 @@ body:has(dialog[open]) .pwa-install-invite {
 .pwa-install-dismiss svg { width: 20px; height: 20px; }
 .pwa-install-action:active,
 .pwa-install-dismiss:active { background: var(--bg-input); }
-#kambyInstall [role="status"] { padding: 0 16px 14px; color: var(--text-secondary); }
-
-#kambyInstall { margin-block-start: 14px; }
