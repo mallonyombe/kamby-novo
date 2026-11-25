@@ -9,6 +9,29 @@ import {savedPrefix, readSavedEntries, toggleGuestEntry, removeFromDevice, claim
 import {applyTheme} from './theme.js';
 import {preparePhoto} from './prepare-photo.js';
 const paths={gear:'M10 2h4l.5 3 2 .9 2.7-1.4 2 3.5-2.3 2v2.3l2.3 2-2 3.5-2.7-1.4-2 .9-.5 3h-4l-.5-3-2-.9-2.7 1.4-2-3.5 2.3-2V10L2.8 8l2-3.5 2.7 1.4 2-.9Z M12 8.5a2.8 2.8 0 1 0 0 5.6 2.8 2.8 0 0 0 0-5.6Z',user:'M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2 M12 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8',heart:'M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1.1-1.1a5.5 5.5 0 0 0-7.8 7.8L12 21l8.8-8.6a5.5 5.5 0 0 0 0-7.8Z',bookmark:'M5 3h14v18l-7-5-7 5Z',shield:'M12 3 20 6.5v5.2c0 4-3.3 7-8 9.3-4.7-2.3-8-5.3-8-9.3V6.5L12 3Z M8.5 12l2.3 2.4 4.7-5',bell:'M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9 M10 21h4',sun:'M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8 M12 2v2m0 16v2M2 12h2m16 0h2M5 5l2 2m10 10 2 2M5 19l2-2M17 7l2-2',help:'M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20 M9 9a3 3 0 0 1 6 0c0 2-3 2-3 5m0 3v1',info:'M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20 M12 10v7m0-11v1',key:'M9 15a6 6 0 1 0-6-6 6 6 0 0 0 6 6 M13 13l8 8m-3-3 3-3',device:'M4 3h16v13H4Z M8 21h8m-4-5v5',chevron:'m9 6 6 6-6 6'};
+paths.moon = 'M20 15.5A8.5 8.5 0 0 1 8.5 4 8.5 8.5 0 1 0 20 15.5Z';
+paths.check = 'm5 12 4 4L19 6';
+const themeOptions = [
+ ['auto', 'Automático', 'device'],
+ ['light', 'Claro', 'sun'],
+ ['dark', 'Escuro', 'moon'],
+];
+function currentTheme() {
+ try { return readTheme(localStorage); } catch { return 'auto'; }
+}
+function privacyToggle(label, description, enabled, save) {
+ const control = node('label', undefined, 'settings-choice settings-switch');
+ const copy = node('span', label);
+ if (description) copy.append(node('small', description));
+ const input = node('input');
+ input.type = 'checkbox';
+ input.setAttribute('role', 'switch');
+ input.checked = enabled;
+ input.addEventListener('change', () => save(input));
+ control.append(copy, input);
+ return control;
+}
+
 function icon(name){const n=document.createElementNS('http://www.w3.org/2000/svg','svg');n.setAttribute('viewBox','0 0 24 24');n.setAttribute('fill','none');n.setAttribute('stroke','currentColor');n.setAttribute('aria-hidden','true');n.classList.add('settings-menu-icon');const p=document.createElementNS(n.namespaceURI,'path');p.setAttribute('d',paths[name]||paths.info);n.append(p);return n;}
 const node=(tag,text,cls)=>{const n=document.createElement(tag);if(text!==undefined)n.textContent=text;if(cls)n.className=cls;return n;};
 function button(copy,cls,action){const b=node('button',copy,cls);b.type='button';if(action)b.addEventListener('click',action);return b;}
@@ -113,7 +136,7 @@ export function setupSettings({openSellerSetup,savedProducts,renderProductCard,g
   return panel;
  }
  const privateScreens=['pessoais','seguranca','palavra-passe','sessoes','notificacoes','encerramento'];
- const titles={preferencias:'Definições',entrar:'Iniciar sessão',registo:'Criar conta',pessoais:'Dados pessoais',actividade:'Guardados',guardados:'Guardados',seguranca:'Segurança e acesso','palavra-passe':'Palavra-passe',sessoes:'Sessões',notificacoes:'Notificações',encerramento:'Encerramento da conta',aparencia:'Aparência',ajuda:'Ajuda e suporte',sobre:'Sobre o Kamby',privacidade:'Privacidade',termos:'Termos',recuperacao:'Recuperar acesso'};
+ const titles={preferencias:'Definições',entrar:'Iniciar sessão',registo:'Criar conta',pessoais:'Dados pessoais',actividade:'Guardados',guardados:'Guardados',seguranca:'Segurança e acesso','palavra-passe':'Palavra-passe',sessoes:'Outras sessões',notificacoes:'Notificações',encerramento:'Encerramento da conta',aparencia:'Aparência',ajuda:'Ajuda e suporte',sobre:'Sobre o Kamby',privacidade:'Privacidade',termos:'Termos',recuperacao:'Recuperar acesso'};
  function notice(copy){$('settingsScreenNotice').textContent=copy;$('settingsScreenNotice').hidden=!copy;}
  function row(name,sub,kind,target,disabled=false){const b=button('','profile-menu-item',()=>{returnFocus=target;open(target);});b.dataset.settingsTarget=target;b.append(icon(kind));const c=node('span',undefined,'profile-menu-copy');c.append(node('span',name,'profile-menu-label'));if(sub)c.append(node('span',sub,'profile-menu-sub'));b.append(c,icon('chevron'));b.disabled=disabled;return b;}
  function confirm(title,copy,accept,action){const dialog=$('settingsConfirmDialog');$('settingsConfirmTitle').textContent=title;$('settingsConfirmCopy').textContent=copy;$('settingsConfirmAccept').textContent=accept;$('settingsConfirmAccept').onclick=()=>{dialog.close();action();};dialog.showModal();}
@@ -134,6 +157,7 @@ export function setupSettings({openSellerSetup,savedProducts,renderProductCard,g
   $('btnProfilePersonal').hidden = !a.user || unavailable;
   activities.append(row('Guardados', null, 'heart', 'guardados', unavailable));
 
+  if (a.user) activities.append(row('Notificações', null, 'bell', 'notificacoes', unavailable));
   menu.append(activities);
   const work = $('profileWorkMenu');
   work.replaceChildren();
@@ -151,8 +175,13 @@ export function setupSettings({openSellerSetup,savedProducts,renderProductCard,g
    work.append(link);
   }
   const publicMenu = $('settingsPublicMenu');
-  publicMenu.replaceChildren(row('Definições', null, 'gear', 'preferencias'), row('Ajuda', null, 'help', 'ajuda'));
-  publicMenu.prepend(row('Aparência', null, 'sun', 'aparencia'));
+  const appearance = row('Aparência', null, 'sun', 'aparencia');
+  const value = node('span', themeOptions.find(([key]) => key === currentTheme())[1], 'profile-menu-value');
+  value.id = 'profileThemeValue';
+  appearance.insertBefore(value, appearance.lastChild);
+  publicMenu.replaceChildren(appearance);
+  if (a.user) publicMenu.append(row('Segurança e acesso', null, 'shield', 'seguranca', unavailable));
+  publicMenu.append(row('Ajuda', null, 'help', 'ajuda'));
   if (a.user && !view.hidden && ['entrar', 'registo'].includes(screen)) {
    const destination = afterSignIn;
    afterSignIn = '';
@@ -170,37 +199,36 @@ export function setupSettings({openSellerSetup,savedProducts,renderProductCard,g
  async function ownedWrite(table,id,values){const update=()=>platform.from(table).update(values).eq(table==='kg_profiles'?'id':'user_id',id).select().maybeSingle();let r=await update();if(r.error)throw r.error;if(r.data)return r.data;r=await platform.from(table).insert({[table==='kg_profiles'?'id':'user_id']:id,...values}).select().single();if(r.error?.code==='23505')r=await update();if(r.error)throw r.error;return r.data;}
  function saveForm(form,copy,action){const submit=button(copy,'merchant-primary-button');submit.type='submit';form.append(submit);form.addEventListener('submit',async event=>{event.preventDefault();if(busy)return;busy=true;submit.disabled=true;setButtonBusy(submit,true);const request=generation;formError(form,'');try{await action();if(request!==generation)return;}catch(error){if(request===generation)formError(form,error.safeMessage||'Não foi possível guardar. Verifica a ligação e tenta novamente.');}finally{if(request===generation){busy=false;setButtonBusy(submit,false);submit.disabled=false;}}});return submit;}
  async function renderScreen(){const request=++generation;body.replaceChildren();notice('');$('settingsLoginPanel').hidden=screen!=='entrar';$('settingsSubscreenTitle').textContent=titles[screen];document.title=titles[screen]+' · Kamby';const a=getAccount();
-  $('settingsDeviceActions').hidden = !['preferencias', 'privacidade'].includes(screen);
+  $('settingsDeviceActions').hidden = screen !== 'privacidade';
   if (screen === 'preferencias') {
    const group = node('div', undefined, 'profile-menu-list');
-   const unavailable = !navigator.onLine || a.phase !== 'ready';
-   if (a.user) group.append(row('Segurança e acesso', null, 'shield', 'seguranca', unavailable), row('Notificações', null, 'bell', 'notificacoes', unavailable));
-   group.append(row('Sobre o Kamby', null, 'info', 'sobre'));
+   group.append(row('Aparência', null, 'sun', 'aparencia'), row('Privacidade', null, 'shield', 'privacidade'));
    body.append(group);
+   return;
   }
   if (screen === 'privacidade') {
-   lead('Dados neste dispositivo', 'Podes apagar o carrinho, os guardados de visitante e as pesquisas recentes deste navegador.');
-  }
-  if (screen === 'preferencias' || screen === 'privacidade') {
-   const measurement = node('label', undefined, 'settings-choice');
-   const description = node('span', 'Medição de utilização');
-   description.append(node('small', 'Partilha eventos de navegação com o Google Analytics.'));
-   const choice = node('input');
-   choice.type = 'checkbox';
-   choice.checked = analyticsAllowed();
-   choice.addEventListener('change', () => {
+   let saveSearches = true;
+   try { saveSearches = localStorage.getItem('kamby:search-history') !== 'off'; } catch {}
+   const search = privacyToggle('Guardar pesquisas recentes', null, saveSearches, input => {
     try {
-     setAnalyticsAllowed(choice.checked);
-     notice(choice.checked ? 'Medição activada neste navegador.' : 'Medição desactivada neste navegador.');
+     if (!input.checked) localStorage.removeItem('kamby:recent-searches');
+     localStorage.setItem('kamby:search-history', input.checked ? 'on' : 'off');
+     window.dispatchEvent(new Event('kamby:search-history'));
     } catch {
-     choice.checked = analyticsAllowed();
+     input.checked = !input.checked;
      notice('Não foi possível guardar a preferência.');
     }
    });
-   measurement.append(description, choice);
-   const measurementGroup = node('div', undefined, 'profile-menu-list settings-local-actions');
-   measurementGroup.append(measurement);
-   body.append(measurementGroup);
+   const measurement = privacyToggle('Medição de utilização', 'Partilha eventos de navegação com o Google Analytics.', analyticsAllowed(), input => {
+    try { setAnalyticsAllowed(input.checked); }
+    catch {
+     input.checked = analyticsAllowed();
+     notice('Não foi possível guardar a preferência.');
+    }
+   });
+   const group = node('div', undefined, 'settings-group');
+   group.append(search, measurement);
+   body.append(group);
    return;
   }
   if (screen === 'termos') {
@@ -280,11 +308,43 @@ export function setupSettings({openSellerSetup,savedProducts,renderProductCard,g
    });
    return;
   }
-  if(screen==='aparencia'){lead('À tua maneira','Escolhe a aparência do Kamby.');const g=node('div',undefined,'settings-group');let theme='auto';try{theme=readTheme(localStorage);}catch{}for(const [value,label,sub] of [['auto','Automático','Acompanha o dispositivo'],['light','Claro','Superfícies claras'],['dark','Escuro','Superfícies escuras']]){const l=node('label',undefined,'settings-choice'),c=node('span',label),i=node('input');c.append(node('small',sub));i.type='radio';i.name='appearance';i.value=value;i.checked=value===theme;i.addEventListener('change',()=>{try{applyTheme(value);notice('Aparência actualizada.');}catch{notice('Não foi possível guardar a preferência neste dispositivo.');i.checked=false;g.querySelector('input[value="'+theme+'"]').checked=true;}});l.append(icon('sun'),c,i);g.append(l);}body.append(g);const historyLabel=node('label',undefined,'settings-choice'),copy=node('span','Guardar pesquisas recentes'),check=node('input');check.type='checkbox';try{check.checked=localStorage.getItem('kamby:search-history')!=='off';}catch{}check.addEventListener('change',()=>{try{localStorage.setItem('kamby:search-history',check.checked?'on':'off');if(!check.checked)localStorage.removeItem('kamby:recent-searches');window.dispatchEvent(new Event('kamby:search-history'));notice('Preferência guardada.');}catch{check.checked=!check.checked;notice('Não foi possível guardar a preferência.');}});historyLabel.append(copy,check);body.append(historyLabel);return;}
+  if (screen === 'aparencia') {
+   const group = node('fieldset', undefined, 'settings-group appearance-options');
+   group.setAttribute('aria-label', 'Tema');
+   let selected = currentTheme();
+   for (const [value, label, symbol] of themeOptions) {
+    const option = node('label', undefined, 'settings-choice appearance-option');
+    const copy = node('span', label);
+    if (value === 'auto') copy.append(node('small', 'Segue o tema do dispositivo'));
+    const input = node('input');
+    input.type = 'radio';
+    input.name = 'appearance';
+    input.value = value;
+    input.checked = value === selected;
+    input.addEventListener('change', () => {
+     try {
+      applyTheme(value);
+      selected = value;
+      const profileValue = $('profileThemeValue');
+      if (profileValue) profileValue.textContent = label;
+      notice('');
+     } catch {
+      group.querySelector('input[value="' + selected + '"]').checked = true;
+      notice('Não foi possível guardar a preferência.');
+     }
+    });
+    const check = icon('check');
+    check.classList.add('appearance-check');
+    option.append(icon(symbol), copy, input, check);
+    group.append(option);
+   }
+   body.append(group);
+   return;
+  }
   if(screen==='pessoais'){body.append(createPhotoEditor(a.user));const form=node('form',undefined,'settings-form');const name=field(form,'name','Nome completo',a.profile?.display_name||a.user.user_metadata?.display_name||a.user.user_metadata?.full_name||'','text',true);name.maxLength=80;name.autocomplete='name';const location=field(form,'location','Localização',a.profile?.location||'');location.maxLength=120;const phone=field(form,'phone','Telefone',a.user.phone?'+'+a.user.phone.replace(/^\+/, ''):'Não associado');phone.readOnly=true;const email=field(form,'email','Email',(/@kamby\.invalid$/i.test(a.user.email || '') ? '' : a.user.email)||'Não associado');email.readOnly=true;form.addEventListener('input',()=>{dirty=true;});body.append(form);saveForm(form,'Guardar alterações',async()=>{let values;try{values=profileValues(name.value,location.value);}catch(e){throw{safeMessage:e.message};}const id=a.user.id;await ownedWrite('kg_profiles',id,values);if(id!==getAccount().user?.id)return;dirty=false;await loadAccount();notice('Dados guardados.');});return;}
-  if(screen==='seguranca'){const g=node('div',undefined,'settings-group');g.append(row('Alterar palavra-passe',null,'key','palavra-passe'),row('Sessões','Terminar acesso noutros dispositivos','device','sessoes'),row('Recuperar acesso',null,'help','recuperacao'),row('Encerramento da conta','Pedir análise à equipa Kamby','user','encerramento'));body.append(g);return;}
+  if(screen==='seguranca'){const g=node('div',undefined,'settings-group');g.append(row('Alterar palavra-passe',null,'key','palavra-passe'),row('Outras sessões',null,'device','sessoes'),row('Recuperar acesso',null,'help','recuperacao'),row('Encerramento da conta','Pedir análise à equipa Kamby','user','encerramento'));body.append(g);return;}
   if(screen==='palavra-passe'){lead(null,recovery?'Define uma nova palavra-passe para concluir a recuperação.':'Confirma o acesso à conta antes de alterar a palavra-passe.');const form=node('form',undefined,'settings-form');let current=null;if(!recovery){current=field(form,'current','Palavra-passe actual','','password',true);current.autocomplete='current-password';}const next=field(form,'new','Nova palavra-passe','','password',true),repeat=field(form,'confirmation','Confirmar nova palavra-passe','','password',true);next.autocomplete=repeat.autocomplete='new-password';next.maxLength=repeat.maxLength=128;const show=node('label',undefined,'settings-choice'),check=node('input');check.type='checkbox';show.append(node('span','Mostrar palavras-passe'),check);check.addEventListener('change',()=>[current,next,repeat].filter(Boolean).forEach(i=>i.type=check.checked?'text':'password'));form.append(show);body.append(form);saveForm(form,'Actualizar palavra-passe',async()=>{const err=passwordError(next.value,repeat.value);if(err)throw{safeMessage:err};try{if(current){const identity=a.user.email?{email:a.user.email}:{phone:a.user.phone};const {error}=await platform.auth.signInWithPassword({...identity,password:current.value});if(error)throw{safeMessage:'Não foi possível confirmar a palavra-passe actual.'};}const {error}=await platform.auth.updateUser({password:next.value});if(error)throw{safeMessage:error.code==='same_password'?'Escolhe uma palavra-passe diferente.':error.code==='reauthentication_needed'?'É necessária uma nova confirmação de acesso. Volta a entrar e tenta novamente.':'Não foi possível actualizar a palavra-passe. Volta a entrar ou recupera o acesso.'};recovery=false;notice('Palavra-passe actualizada.');}finally{[current,next,repeat].filter(Boolean).forEach(i=>i.value='');}});return;}
-  if(screen==='sessoes'){lead('Sessão actual','Este dispositivo tem sessão iniciada na tua conta.');const g=node('div',undefined,'settings-group');g.append(row('Terminar outras sessões','Mantém a sessão deste dispositivo','device','sessoes'));g.replaceChild(g.firstChild.cloneNode(true),g.firstChild);g.firstChild.onclick=()=>confirm('Terminar outras sessões?','Os outros dispositivos terão de voltar a entrar. O acesso já emitido pode manter-se até expirar.','Terminar',async()=>{if(busy)return;busy=true;const action=g.firstChild;action.disabled=true;setButtonBusy(action,true);try{const {error}=await platform.auth.signOut({scope:'others'});notice(error?'Não foi possível terminar as outras sessões.':'As outras sessões já não podem ser renovadas.');}finally{setButtonBusy(action,false);action.disabled=false;busy=false;}});body.append(g);return;}
+  if(screen==='sessoes'){const g=node('div',undefined,'settings-group');g.append(row('Terminar outras sessões','Mantém a sessão deste dispositivo','device','sessoes'));g.replaceChild(g.firstChild.cloneNode(true),g.firstChild);g.firstChild.onclick=()=>confirm('Terminar outras sessões?','Os outros dispositivos terão de voltar a entrar. O acesso já emitido pode manter-se até expirar.','Terminar',async()=>{if(busy)return;busy=true;const action=g.firstChild;action.disabled=true;setButtonBusy(action,true);try{const {error}=await platform.auth.signOut({scope:'others'});notice(error?'Não foi possível terminar as outras sessões.':'As outras sessões já não podem ser renovadas.');}finally{setButtonBusy(action,false);action.disabled=false;busy=false;}});body.append(g);return;}
   if(screen==='recuperacao'){lead('Recuperar acesso','Indica o email associado à conta para pedir uma ligação de recuperação.');const form=node('form',undefined,'settings-form'),email=field(form,'email','Email da conta',a.user?.email||'','email',true);email.autocomplete='email';body.append(form);saveForm(form,'Pedir ligação',async()=>{const {error}=await platform.auth.resetPasswordForEmail(email.value.trim(),{redirectTo:new URL('/?account=recovery',window.location.origin).href});if(error)throw{safeMessage:'Não foi possível pedir a ligação. Tenta novamente mais tarde.'};notice('Se existir uma conta com este email, receberás uma ligação de recuperação. Verifica também o spam.');});body.append(node('p','Para contas apenas com telefone, a recuperação precisa de assistência da equipa Kamby.','settings-copy'));return;}
   if (screen === 'actividade' || screen === 'guardados') {
    const pending = node('div');
@@ -337,8 +397,8 @@ export function setupSettings({openSellerSetup,savedProducts,renderProductCard,g
   }
   if(screen==='notificacoes'){lead('Preferências de avisos','Os avisos são apresentados aqui, dentro do Kamby.');const pending=node('div');body.append(pending);showSkeleton(pending,'rows',3);const [pref,notes]=await Promise.all([platform.from('kg_user_preferences').select('catalogue_alerts,account_alerts').eq('user_id',a.user.id).maybeSingle(),platform.from('kg_notifications').select('id,title,body,read_at,created_at,action').eq('user_id',a.user.id).order('created_at',{ascending:false}).limit(50)]);if(request!==generation)return;pending.remove();if(pref.error||notes.error){empty('Não foi possível carregar','Verifica a ligação e tenta novamente.');body.append(button('Tentar novamente','settings-text-action',renderScreen));return;}let values=pref.data||{catalogue_alerts:true,account_alerts:true};const g=node('div',undefined,'settings-group');for(const [key,label,sub]of[['catalogue_alerts','Produtos guardados','Alterações de preço e disponibilidade'],['account_alerts','Pedidos da conta','Actualizações do pedido de encerramento']]){const l=node('label',undefined,'settings-choice'),copy=node('span',label),input=node('input');copy.append(node('small',sub));input.type='checkbox';input.checked=values[key];input.addEventListener('change',async()=>{const value=input.checked;input.disabled=true;const pending=node('span');l.append(pending);showSpinner(pending);try{await ownedWrite('kg_user_preferences',a.user.id,{...values,[key]:value});if(request!==generation)return;values[key]=value;notice('Preferência guardada.');}catch{if(request!==generation)return;input.checked=!value;notice('Não foi possível guardar a preferência.');}finally{pending.remove();input.disabled=false;}});l.append(copy,input);g.append(l);}body.append(g);if(!notes.data.length)empty('Sem avisos','Os novos avisos aparecem aqui.');for(const n of notes.data){const article=node('article',undefined,'settings-item'+(!n.read_at?' settings-notification-unread':'')),meta=node('div');meta.append(node('strong',n.title),node('p',n.body));article.append(meta);if(n.action==='seller_setup'&&openSellerSetup&&a.access?.sellerOnboarding){article.append(button('Configurar loja','settings-text-action',()=>{close(true);navigate('perfil');openSellerSetup();}));}if(!n.read_at){const read=button('Lido','settings-text-action',async()=>{read.disabled=true;setButtonBusy(read,true);const {error}=await platform.from('kg_notifications').update({read_at:new Date().toISOString()}).eq('id',n.id).eq('user_id',a.user.id);if(request!==generation)return;if(error){setButtonBusy(read,false);read.disabled=false;notice('Não foi possível marcar como lido.');}else{article.classList.remove('settings-notification-unread');read.remove();}});article.append(read);}body.append(article);}return;}
   if(screen==='encerramento'){const pending=node('div');body.append(pending);showSkeleton(pending,'rows',2);const {data,error}=await platform.from('kg_account_requests').select('status,created_at').eq('user_id',a.user.id).maybeSingle();if(request!==generation)return;pending.remove();if(error){empty('Não foi possível carregar','Tenta novamente mais tarde.');return;}if(data){const statuses={pending:'Pedido em análise',processing:'Pedido em tratamento',completed:'Pedido concluído pela gestão',declined:'Pedido revisto pela gestão'};empty(statuses[data.status]||'Pedido registado','O pedido não elimina a conta automaticamente.');return;}lead('Encerramento da conta','Pede à equipa Kamby a análise do encerramento da tua conta. A conta mantém-se activa enquanto o pedido é tratado.');body.append(button('Pedir encerramento','settings-text-action profile-sign-out',()=>confirm('Registar pedido de encerramento?','O pedido será enviado à gestão da plataforma. Esta acção não apaga os teus dados imediatamente.','Registar pedido',async()=>{if(busy)return;busy=true;const action=body.querySelector('button');action.disabled=true;setButtonBusy(action,true);try{const {error}=await platform.from('kg_account_requests').insert({user_id:a.user.id});if(error&&error.code!=='23505')notice('Não foi possível registar o pedido.');else renderScreen();}finally{setButtonBusy(action,false);action.disabled=false;busy=false;}})));return;}
-  if(screen==='ajuda'){lead('Como podemos ajudar?');for(const [q,copy]of[['Como contactar uma loja?','Na página da loja, toca em Perguntar à loja. Para enviar um pedido com os teus artigos, abre o carrinho dessa loja e toca em Enviar pedido pelo WhatsApp.'],['O contacto confirma a compra?','Não. Confirma o preço, a disponibilidade, o pagamento e a entrega com a loja.'],['Como recuperar o acesso?','Usa Esqueci a palavra-passe na entrada da conta. A recuperação por email depende de um email associado.'],['Onde ficam os meus produtos?','Os produtos adicionados ficam no Carrinho deste dispositivo. Encontra os favoritos em Perfil → Guardados. Sem conta, ficam neste dispositivo.']]){const d=node('details',undefined,'settings-group'),s=node('summary',q);s.style.padding='16px';const p=node('p',copy,'settings-copy');p.style.padding='0 16px';d.append(s,p);body.append(d);}return;}
-  if(screen==='sobre'){lead('Kamby','Orbion');body.append(node('p','Descobre produtos e lojas e contacta cada vendedor pelo WhatsApp.','settings-copy'));}
+  if(screen==='ajuda'){for(const [q,copy]of[['Como contactar uma loja?','Na página da loja, toca em Perguntar à loja. Para enviar um pedido com os teus artigos, abre o carrinho dessa loja e toca em Enviar pedido pelo WhatsApp.'],['O contacto confirma a compra?','Não. Confirma o preço, a disponibilidade, o pagamento e a entrega com a loja.'],['Como recuperar o acesso?','Usa Esqueci a palavra-passe na entrada da conta. A recuperação por email depende de um email associado.'],['Onde ficam os meus produtos?','Os produtos adicionados ficam no Carrinho deste dispositivo. Encontra os favoritos em Perfil → Guardados. Sem conta, ficam neste dispositivo.']]){const d=node('details',undefined,'settings-group'),s=node('summary',q);s.style.padding='16px';const p=node('p',copy,'settings-copy');p.style.padding='0 16px';d.append(s,p);body.append(d);}const links=node('div',undefined,'profile-menu-list');links.append(row('Sobre o Kamby',null,'info','sobre'));body.append(links);return;}
+  if(screen==='sobre'){lead('Kamby · Orbion');body.append(node('p','Descobre produtos e lojas e contacta cada vendedor pelo WhatsApp.','settings-copy'));}
  }
  async function open(target,updateHistory=true){if(!titles[target])return false;if(!view.hidden&&screen===target&&!dirty)return true;if(busy)return false;if(dirty){confirm('Descartar alterações?','Há dados que ainda não foram guardados.','Descartar',()=>{dirty=false;open(target,updateHistory);});return false;}
   afterSignIn = '';
@@ -361,7 +421,7 @@ export function setupSettings({openSellerSetup,savedProducts,renderProductCard,g
  $('btnProfilePersonal').addEventListener('click', () => { returnFocus = 'pessoais'; open('pessoais'); });
  $('btnBackSettings').addEventListener('click', async () => {
   const parent = screen === 'registo' ? 'entrar' : ['palavra-passe', 'sessoes', 'encerramento'].includes(screen) ? 'seguranca'
-   : ['seguranca', 'notificacoes', 'sobre'].includes(screen) ? 'preferencias' : '';
+   : screen === 'sobre' ? 'ajuda' : '';
   if (parent) {
    if (await open(parent, false)) history.replaceState(null, '', '#definicoes/' + parent);
    return;

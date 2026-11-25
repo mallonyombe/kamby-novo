@@ -4,32 +4,18 @@ const invite = document.querySelector('#kambyInstallInvite');
 const accept = document.querySelector('#kambyInstallAccept');
 const dismiss = document.querySelector('#kambyInstallDismiss');
 const standalone = matchMedia('(display-mode: standalone)');
-const visitedKey = 'kamby:install-visited';
-const visitKey = 'kamby:install-visit';
 const dismissedKey = 'kamby:install-invite-dismissed';
-const legacyDismissedKey = 'kamby:install-invite-after';
 let installPrompt;
 let installed = false;
-let returningVisit = false;
 let dismissed = false;
 
 try {
-  dismissed = localStorage.getItem(dismissedKey) === '1'
-    || Number(localStorage.getItem(legacyDismissedKey)) > 0;
-  let visit = sessionStorage.getItem(visitKey);
-  if (!visit) {
-    visit = localStorage.getItem(visitedKey) === '1' ? 'returning' : 'first';
-    sessionStorage.setItem(visitKey, visit);
-    localStorage.setItem(visitedKey, '1');
-  }
-  returningVisit = visit === 'returning';
-} catch {
-  // Without storage the invitation stays hidden.
-}
+  dismissed = localStorage.getItem(dismissedKey) === '1';
+} catch {}
 
 function reflectInstallation() {
   const hasApp = installed || standalone.matches || navigator.standalone === true;
-  invite.hidden = hasApp || !returningVisit || !installPrompt || dismissed;
+  invite.hidden = hasApp || !installPrompt || dismissed;
 }
 
 function dismissInvite() {
