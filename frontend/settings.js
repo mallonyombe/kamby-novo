@@ -113,7 +113,7 @@ export function setupSettings({openSellerSetup,savedProducts,renderProductCard,g
   return panel;
  }
  const privateScreens=['pessoais','seguranca','palavra-passe','sessoes','notificacoes','encerramento'];
- const titles={preferencias:'Definições',entrar:'Iniciar sessão',registo:'Criar conta',pessoais:'Dados pessoais',actividade:'Guardados',guardados:'Guardados',seguranca:'Segurança e acesso','palavra-passe':'Palavra-passe',sessoes:'Sessões',notificacoes:'Notificações',encerramento:'Encerramento da conta',aparencia:'Aparência',ajuda:'Ajuda e suporte',sobre:'Sobre o Kamby',recuperacao:'Recuperar acesso'};
+ const titles={preferencias:'Definições',entrar:'Iniciar sessão',registo:'Criar conta',pessoais:'Dados pessoais',actividade:'Guardados',guardados:'Guardados',seguranca:'Segurança e acesso','palavra-passe':'Palavra-passe',sessoes:'Sessões',notificacoes:'Notificações',encerramento:'Encerramento da conta',aparencia:'Aparência',ajuda:'Ajuda e suporte',sobre:'Sobre o Kamby',privacidade:'Privacidade',termos:'Termos',recuperacao:'Recuperar acesso'};
  function notice(copy){$('settingsScreenNotice').textContent=copy;$('settingsScreenNotice').hidden=!copy;}
  function row(name,sub,kind,target,disabled=false){const b=button('','profile-menu-item',()=>{returnFocus=target;open(target);});b.dataset.settingsTarget=target;b.append(icon(kind));const c=node('span',undefined,'profile-menu-copy');c.append(node('span',name,'profile-menu-label'));if(sub)c.append(node('span',sub,'profile-menu-sub'));b.append(c,icon('chevron'));b.disabled=disabled;return b;}
  function confirm(title,copy,accept,action){const dialog=$('settingsConfirmDialog');$('settingsConfirmTitle').textContent=title;$('settingsConfirmCopy').textContent=copy;$('settingsConfirmAccept').textContent=accept;$('settingsConfirmAccept').onclick=()=>{dialog.close();action();};dialog.showModal();}
@@ -170,12 +170,18 @@ export function setupSettings({openSellerSetup,savedProducts,renderProductCard,g
  async function ownedWrite(table,id,values){const update=()=>platform.from(table).update(values).eq(table==='kg_profiles'?'id':'user_id',id).select().maybeSingle();let r=await update();if(r.error)throw r.error;if(r.data)return r.data;r=await platform.from(table).insert({[table==='kg_profiles'?'id':'user_id']:id,...values}).select().single();if(r.error?.code==='23505')r=await update();if(r.error)throw r.error;return r.data;}
  function saveForm(form,copy,action){const submit=button(copy,'merchant-primary-button');submit.type='submit';form.append(submit);form.addEventListener('submit',async event=>{event.preventDefault();if(busy)return;busy=true;submit.disabled=true;setButtonBusy(submit,true);const request=generation;formError(form,'');try{await action();if(request!==generation)return;}catch(error){if(request===generation)formError(form,error.safeMessage||'Não foi possível guardar. Verifica a ligação e tenta novamente.');}finally{if(request===generation){busy=false;setButtonBusy(submit,false);submit.disabled=false;}}});return submit;}
  async function renderScreen(){const request=++generation;body.replaceChildren();notice('');$('settingsLoginPanel').hidden=screen!=='entrar';$('settingsSubscreenTitle').textContent=titles[screen];document.title=titles[screen]+' · Kamby';const a=getAccount();
-  $('settingsDeviceActions').hidden = screen !== 'preferencias';
+  $('settingsDeviceActions').hidden = !['preferencias', 'privacidade'].includes(screen);
   if (screen === 'preferencias') {
    const group = node('div', undefined, 'profile-menu-list');
    const unavailable = !navigator.onLine || a.phase !== 'ready';
    if (a.user) group.append(row('Segurança e acesso', null, 'shield', 'seguranca', unavailable), row('Notificações', null, 'bell', 'notificacoes', unavailable));
    group.append(row('Aparência', null, 'sun', 'aparencia'), row('Sobre o Kamby', null, 'info', 'sobre'));
+   body.append(group);
+  }
+  if (screen === 'privacidade') {
+   lead('Dados neste dispositivo', 'Podes apagar o carrinho, os guardados de visitante e as pesquisas recentes deste navegador.');
+  }
+  if (screen === 'preferencias' || screen === 'privacidade') {
    const measurement = node('label', undefined, 'settings-choice');
    const description = node('span', 'Medição de utilização');
    description.append(node('small', 'Partilha eventos de navegação com o Google Analytics.'));
@@ -194,7 +200,12 @@ export function setupSettings({openSellerSetup,savedProducts,renderProductCard,g
    measurement.append(description, choice);
    const measurementGroup = node('div', undefined, 'profile-menu-list settings-local-actions');
    measurementGroup.append(measurement);
-   body.append(group, measurementGroup);
+   body.append(measurementGroup);
+   return;
+  }
+  if (screen === 'termos') {
+   lead('Pedidos às lojas', 'Confirma directamente com a loja o preço, a disponibilidade, o pagamento e a entrega. Enviar um pedido pelo WhatsApp inicia o contacto com a loja.');
+   body.append(node('p', 'Os termos de utilização ainda não foram publicados.', 'settings-copy'));
    return;
   }
   if(privateScreens.includes(screen)&&!a.user){open('entrar',false);return;}
@@ -327,7 +338,7 @@ export function setupSettings({openSellerSetup,savedProducts,renderProductCard,g
   if(screen==='notificacoes'){lead('Preferências de avisos','Os avisos são apresentados aqui, dentro do Kamby.');const pending=node('div');body.append(pending);showSkeleton(pending,'rows',3);const [pref,notes]=await Promise.all([platform.from('kg_user_preferences').select('catalogue_alerts,account_alerts').eq('user_id',a.user.id).maybeSingle(),platform.from('kg_notifications').select('id,title,body,read_at,created_at,action').eq('user_id',a.user.id).order('created_at',{ascending:false}).limit(50)]);if(request!==generation)return;pending.remove();if(pref.error||notes.error){empty('Não foi possível carregar','Verifica a ligação e tenta novamente.');body.append(button('Tentar novamente','settings-text-action',renderScreen));return;}let values=pref.data||{catalogue_alerts:true,account_alerts:true};const g=node('div',undefined,'settings-group');for(const [key,label,sub]of[['catalogue_alerts','Produtos guardados','Alterações de preço e disponibilidade'],['account_alerts','Pedidos da conta','Actualizações do pedido de encerramento']]){const l=node('label',undefined,'settings-choice'),copy=node('span',label),input=node('input');copy.append(node('small',sub));input.type='checkbox';input.checked=values[key];input.addEventListener('change',async()=>{const value=input.checked;input.disabled=true;const pending=node('span');l.append(pending);showSpinner(pending);try{await ownedWrite('kg_user_preferences',a.user.id,{...values,[key]:value});if(request!==generation)return;values[key]=value;notice('Preferência guardada.');}catch{if(request!==generation)return;input.checked=!value;notice('Não foi possível guardar a preferência.');}finally{pending.remove();input.disabled=false;}});l.append(copy,input);g.append(l);}body.append(g);if(!notes.data.length)empty('Sem avisos','Os novos avisos aparecem aqui.');for(const n of notes.data){const article=node('article',undefined,'settings-item'+(!n.read_at?' settings-notification-unread':'')),meta=node('div');meta.append(node('strong',n.title),node('p',n.body));article.append(meta);if(n.action==='seller_setup'&&openSellerSetup&&a.access?.sellerOnboarding){article.append(button('Configurar loja','settings-text-action',()=>{close(true);navigate('perfil');openSellerSetup();}));}if(!n.read_at){const read=button('Lido','settings-text-action',async()=>{read.disabled=true;setButtonBusy(read,true);const {error}=await platform.from('kg_notifications').update({read_at:new Date().toISOString()}).eq('id',n.id).eq('user_id',a.user.id);if(request!==generation)return;if(error){setButtonBusy(read,false);read.disabled=false;notice('Não foi possível marcar como lido.');}else{article.classList.remove('settings-notification-unread');read.remove();}});article.append(read);}body.append(article);}return;}
   if(screen==='encerramento'){const pending=node('div');body.append(pending);showSkeleton(pending,'rows',2);const {data,error}=await platform.from('kg_account_requests').select('status,created_at').eq('user_id',a.user.id).maybeSingle();if(request!==generation)return;pending.remove();if(error){empty('Não foi possível carregar','Tenta novamente mais tarde.');return;}if(data){const statuses={pending:'Pedido em análise',processing:'Pedido em tratamento',completed:'Pedido concluído pela gestão',declined:'Pedido revisto pela gestão'};empty(statuses[data.status]||'Pedido registado','O pedido não elimina a conta automaticamente.');return;}lead('Encerramento da conta','Pede à equipa Kamby a análise do encerramento da tua conta. A conta mantém-se activa enquanto o pedido é tratado.');body.append(button('Pedir encerramento','settings-text-action profile-sign-out',()=>confirm('Registar pedido de encerramento?','O pedido será enviado à gestão da plataforma. Esta acção não apaga os teus dados imediatamente.','Registar pedido',async()=>{if(busy)return;busy=true;const action=body.querySelector('button');action.disabled=true;setButtonBusy(action,true);try{const {error}=await platform.from('kg_account_requests').insert({user_id:a.user.id});if(error&&error.code!=='23505')notice('Não foi possível registar o pedido.');else renderScreen();}finally{setButtonBusy(action,false);action.disabled=false;busy=false;}})));return;}
   if(screen==='ajuda'){lead('Como podemos ajudar?');for(const [q,copy]of[['Como contactar uma loja?','Na página da loja, toca em Perguntar à loja. Para enviar um pedido com os teus artigos, abre o carrinho dessa loja e toca em Enviar pedido pelo WhatsApp.'],['O contacto confirma a compra?','Não. Confirma o preço, a disponibilidade, o pagamento e a entrega com a loja.'],['Como recuperar o acesso?','Usa Esqueci a palavra-passe na entrada da conta. A recuperação por email depende de um email associado.'],['Onde ficam os meus produtos?','Os produtos adicionados ficam no Carrinho deste dispositivo. Encontra os favoritos em Perfil → Guardados. Sem conta, ficam neste dispositivo.']]){const d=node('details',undefined,'settings-group'),s=node('summary',q);s.style.padding='16px';const p=node('p',copy,'settings-copy');p.style.padding='0 16px';d.append(s,p);body.append(d);}return;}
-  if(screen==='sobre'){lead('Kamby','Orbion');body.append(node('p','Descobre produtos e lojas e contacta cada vendedor pelo WhatsApp.','settings-copy'),node('p','Os termos e a política de privacidade formais ainda não foram disponibilizados.','settings-copy'));}
+  if(screen==='sobre'){lead('Kamby','Orbion');body.append(node('p','Descobre produtos e lojas e contacta cada vendedor pelo WhatsApp.','settings-copy'));}
  }
  async function open(target,updateHistory=true){if(!titles[target])return false;if(!view.hidden&&screen===target&&!dirty)return true;if(busy)return false;if(dirty){confirm('Descartar alterações?','Há dados que ainda não foram guardados.','Descartar',()=>{dirty=false;open(target,updateHistory);});return false;}
   afterSignIn = '';
@@ -339,6 +350,14 @@ export function setupSettings({openSellerSetup,savedProducts,renderProductCard,g
   return true;
  }
  function close(force=false){if(view.hidden)return true;if(!force&&(busy||dirty)){if(dirty)confirm('Descartar alterações?','Há dados que ainda não foram guardados.','Descartar',()=>{dirty=false;close(true);history.replaceState(null,'','#perfil');});return false;}generation++;busy=false;dirty=false;body.replaceChildren();$('accountPassword').value='';view.hidden=true;view.classList.remove('active');closeSubscreen();window.scrollTo({top:returnScroll,behavior:'auto'});document.querySelector('[data-settings-target="'+returnFocus+'"]')?.focus({preventScroll:true});document.title='Perfil · Kamby';return true;}
+ for (const link of document.querySelectorAll('.profile-footer [data-settings-target]')) {
+  link.addEventListener('click', event => {
+   if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+   event.preventDefault();
+   returnFocus = link.dataset.settingsTarget;
+   open(returnFocus);
+  });
+ }
  $('btnProfilePersonal').addEventListener('click', () => { returnFocus = 'pessoais'; open('pessoais'); });
  $('btnBackSettings').addEventListener('click', async () => {
   const parent = screen === 'registo' ? 'entrar' : ['palavra-passe', 'sessoes', 'encerramento'].includes(screen) ? 'seguranca'
