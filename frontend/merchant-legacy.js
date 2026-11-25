@@ -1,3 +1,4 @@
+import { loadAccountProfile } from './account-registration.js';
 import {setButtonBusy,showSpinner,showSkeleton} from "./loading.js";
 import {legacyComposerMarkup} from './merchant-legacy-markup.js';
 import { platform } from './platform.js';
@@ -64,7 +65,7 @@ export function setupMerchant(hooks) {
       const {data:{user},error}=await platform.auth.getUser();
       if(error) throw error;
       const [profileResult,accountResult]=await Promise.all([
-        platform.from('kg_profiles').select('display_name,location').eq('id',user.id).maybeSingle(),
+        loadAccountProfile(platform, user),
         loadAccountAccess(platform,user.id)
       ]);
       if(request!==state.accountRequest) return;
@@ -103,7 +104,7 @@ export function setupMerchant(hooks) {
       if(accountPending) await accountPending;
       await loadAccount();
     } catch(error) {
-      const value=error.code==='invalid_credentials' ? 'Telefone, email ou palavra-passe incorrectos.' : error.code==='email_not_confirmed' ? 'A conta ainda não foi confirmada.' : error.message?.startsWith('Indica') ? error.message : 'Não foi possível entrar. Verifica os dados e a ligação.';
+      const value=error.code==='invalid_credentials' ? 'Telefone, email ou palavra-passe incorrectos.' : error.code==='email_not_confirmed' ? 'Abre o e-mail de confirmação e toca no link antes de entrar.' : error.message?.startsWith('Indica') ? error.message : 'Não foi possível entrar. Verifica os dados e a ligação.';
       message('accountLoginError',value);
     } finally { setButtonBusy(button,false);button.disabled=false; }
   });

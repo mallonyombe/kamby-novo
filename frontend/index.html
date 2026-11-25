@@ -1819,7 +1819,7 @@
       <span id="profileCartCountSub" hidden></span><p class="settings-version">Kamby · Orbion</p>
     </section>
     <section id="viewSettingsSubscreen" class="kamby-view pdp-subscreen" hidden aria-label="Definições da conta"><header class="pdp-top-bar"><div class="pdp-nav-content"><button type="button" class="pdp-back-btn" id="btnBackSettings" aria-label="Voltar ao Perfil"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg></button><h1 class="pdp-top-title" id="settingsSubscreenTitle">Perfil</h1></div></header><div class="settings-subscreen-body"><div id="settingsSubscreenContent"></div><div class="profile-menu-list settings-local-actions" id="settingsDeviceActions" hidden><button type="button" class="profile-menu-item" id="btnClearLocalData"><span class="profile-menu-copy"><span class="profile-menu-label">Limpar dados locais</span><span class="profile-menu-sub">Carrinho, guardados de visitante e pesquisas recentes</span></span><span aria-hidden="true">›</span></button></div><div id="settingsLoginPanel" hidden>
-      <form class="profile-login" id="profileLoginForm"><h2>A tua conta</h2><label for="accountIdentity">Telefone ou email</label><input id="accountIdentity" type="text" autocomplete="username" required maxlength="254" placeholder="Telefone ou email" /><label for="accountPassword">Palavra-passe</label><div class="account-password-wrap"><input id="accountPassword" type="password" autocomplete="current-password" required /><button type="button" id="btnShowAccountPassword" aria-label="Mostrar palavra-passe" aria-pressed="false"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg></button></div><p id="accountLoginError" class="field-error" role="alert" hidden></p><button class="merchant-primary-button" id="btnAccountSignIn" type="submit">Entrar</button><button type="button" class="settings-text-action" id="btnForgotPassword">Esqueci a palavra-passe</button></form>
+      <form class="profile-login" id="profileLoginForm"><h2>A tua conta</h2><label for="accountIdentity">Telefone ou email</label><input id="accountIdentity" type="text" autocomplete="username" required maxlength="254" placeholder="Telefone ou email" /><label for="accountPassword">Palavra-passe</label><div class="account-password-wrap"><input id="accountPassword" type="password" autocomplete="current-password" required /><button type="button" id="btnShowAccountPassword" aria-label="Mostrar palavra-passe" aria-pressed="false"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg></button></div><p id="accountLoginError" class="field-error" role="alert" hidden></p><button class="merchant-primary-button" id="btnAccountSignIn" type="submit">Entrar</button><button type="button" class="settings-text-action" id="btnForgotPassword">Esqueci a palavra-passe</button><button type="button" class="settings-text-action" id="btnOpenRegistration">Criar conta</button></form>
     </div><p id="settingsScreenNotice" class="profile-notice" role="status" aria-live="polite" hidden></p></div></section>
     <dialog id="settingsConfirmDialog" class="local-data-dialog" aria-labelledby="settingsConfirmTitle"><h2 id="settingsConfirmTitle"></h2><p id="settingsConfirmCopy"></p><div class="local-dialog-actions"><button type="button" id="settingsConfirmCancel" autofocus>Cancelar</button><button type="button" id="settingsConfirmAccept">Confirmar</button></div></dialog>
     <section id="viewMerchant" class="kamby-view pdp-subscreen" hidden aria-label="Espaço do Lojista">
@@ -1899,6 +1899,7 @@
     import {enableModalDismiss} from './modal-dismiss.js';
     import { setupMerchant } from "./merchant.js";
     import { listenForNavigation } from "./navigation.js";
+    import { startAnalytics, trackAnalytics } from './analytics.js';
     import { platform, catalogueConfig, trackStoreEvent } from "./platform.js";
     (async function initKambyApp() {
       'use strict';
@@ -1912,6 +1913,7 @@
       const navTabs = document.querySelectorAll('.nav-tab');
       const header = document.getElementById('kambyHeader');
       enableModalDismiss();
+      startAnalytics();
       let merchantController = null;
       function cleanProductDescription(row){return String(row.description || '');}
       function displayStoreName(store){return String(store?.name || '').replace(/\s*[·–-]\s*Teste$/i, '');}
@@ -3887,6 +3889,7 @@
           if (requestId !== currentPDP.requestId) return;
           const entry = history.state;
           renderPDP(product, preferredVariantId, entry?.productId === product.id ? entry.quantity : 1);
+          trackAnalytics('view_item');
           if (openCartSheet && !pdpElements.addCart.disabled) productAction.open('cart');
         } catch (error) {
           if (requestId !== currentPDP.requestId) return;
@@ -3976,7 +3979,7 @@
           if(!option?.inStock)throw Error('Esta opção já não está disponível. Escolhe outra opção ou volta mais tarde.');
           if(option.priceMinor!==variant.priceMinor){currentPDP.product=fresh;currentPDP.activeVariant=option;renderPDPVariants();updatePDPCalculations();productAction.refresh();throw Error('A loja actualizou o preço. Confere o novo total antes de continuar.');}
           if(quantity>quantityLimit(fresh,option,mode,readCart()))throw Error('A quantidade disponível mudou. Reduz a quantidade e tenta novamente.');
-          if(mode==='cart'){kambyCart=addCartLine(readCart(),fresh,option,quantity);saveCart();showCommerceToast('Adicionado ao carrinho da loja.',()=>openStoreCart(fresh.storeId,true,fresh.storeName));return true;}
+          if(mode==='cart'){kambyCart=addCartLine(readCart(),fresh,option,quantity);saveCart();trackAnalytics('add_to_cart');showCommerceToast('Adicionado ao carrinho da loja.',()=>openStoreCart(fresh.storeId,true,fresh.storeName));return true;}
           await requireStoreOpen(catalogueRequest,fresh.storeId);
           if (currentPDP.product?.id !== fresh.id || viewPDP.hidden) return false;
           const message='Olá, encontrei este produto no Kamby:\n\n'+fresh.title+(option.id?'\nOpção: '+option.name:'')+'\nQuantidade: '+quantity+'\nTotal estimado: '+formatPrice(option.priceMinor*quantity)+'\n\nGostaria de confirmar o pedido e combinar a entrega.';

@@ -1,3 +1,4 @@
+import { trackAnalytics } from './analytics.js';
 import { createClient } from '@supabase/supabase-js';
 export const catalogueConfig = Object.freeze({
   supabaseUrl: 'https://wbjhhkjriqeloiinvbii.supabase.co',
@@ -25,6 +26,8 @@ export function trackStoreEvent(storeId, kind, productId=null) {
   try { previous = Math.max(previous, Number(sessionStorage.getItem(key) || 0)); } catch (_error) {}
   if (Date.now() - previous < duration) return;
   recorded.set(key, Date.now());
+  if (kind === 'store_view') trackAnalytics('view_store');
+  if (kind === 'whatsapp_click') trackAnalytics('whatsapp_contact');
   try { sessionStorage.setItem(key, String(Date.now())); } catch (_error) {}
   if(kind==='whatsapp_click') platform.auth.getSession().then(({data})=>{if(data.session)return platform.rpc('kg_record_contact_activity',{p_store_id:storeId,p_product_id:productId,p_request_id:crypto.randomUUID()});}).catch(()=>{});
   // Recording never blocks a shop or WhatsApp action. No visitor identity is collected.

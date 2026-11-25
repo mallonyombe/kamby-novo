@@ -1,3 +1,5 @@
+import { trackAnalytics } from './analytics.js';
+
 const panel = document.querySelector('#kambyInstall');
 const button = panel.querySelector('button');
 const status = panel.querySelector('[role="status"]');
@@ -40,6 +42,7 @@ button.addEventListener('click', async () => {
 });
 
 window.addEventListener('appinstalled', () => {
+  trackAnalytics('pwa_install');
   installPrompt = undefined;
   panel.hidden = true;
 });

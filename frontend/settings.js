@@ -1,3 +1,5 @@
+import { analyticsAllowed, setAnalyticsAllowed } from './analytics.js';
+import { registrationCredentials, registrationError } from './account-registration.js';
 import {setButtonBusy,showSpinner,showSkeleton} from "./loading.js";
 import {platform} from './platform.js';
 import {canShowAdminEntry} from './account-access.js';
@@ -111,7 +113,7 @@ export function setupSettings({openSellerSetup,savedProducts,renderProductCard,g
   return panel;
  }
  const privateScreens=['pessoais','seguranca','palavra-passe','sessoes','notificacoes','encerramento'];
- const titles={preferencias:'Definições',entrar:'Iniciar sessão',pessoais:'Dados pessoais',actividade:'Guardados',guardados:'Guardados',seguranca:'Segurança e acesso','palavra-passe':'Palavra-passe',sessoes:'Sessões',notificacoes:'Notificações',encerramento:'Encerramento da conta',aparencia:'Aparência',ajuda:'Ajuda e suporte',sobre:'Sobre o Kamby',recuperacao:'Recuperar acesso'};
+ const titles={preferencias:'Definições',entrar:'Iniciar sessão',registo:'Criar conta',pessoais:'Dados pessoais',actividade:'Guardados',guardados:'Guardados',seguranca:'Segurança e acesso','palavra-passe':'Palavra-passe',sessoes:'Sessões',notificacoes:'Notificações',encerramento:'Encerramento da conta',aparencia:'Aparência',ajuda:'Ajuda e suporte',sobre:'Sobre o Kamby',recuperacao:'Recuperar acesso'};
  function notice(copy){$('settingsScreenNotice').textContent=copy;$('settingsScreenNotice').hidden=!copy;}
  function row(name,sub,kind,target,disabled=false){const b=button('','profile-menu-item',()=>{returnFocus=target;open(target);});b.dataset.settingsTarget=target;b.append(icon(kind));const c=node('span',undefined,'profile-menu-copy');c.append(node('span',name,'profile-menu-label'));if(sub)c.append(node('span',sub,'profile-menu-sub'));b.append(c,icon('chevron'));b.disabled=disabled;return b;}
  function confirm(title,copy,accept,action){const dialog=$('settingsConfirmDialog');$('settingsConfirmTitle').textContent=title;$('settingsConfirmCopy').textContent=copy;$('settingsConfirmAccept').textContent=accept;$('settingsConfirmAccept').onclick=()=>{dialog.close();action();};dialog.showModal();}
@@ -151,7 +153,7 @@ export function setupSettings({openSellerSetup,savedProducts,renderProductCard,g
   const publicMenu = $('settingsPublicMenu');
   publicMenu.replaceChildren(row('Definições', null, 'gear', 'preferencias'), row('Ajuda', null, 'help', 'ajuda'));
   if (!a.user) publicMenu.prepend(row('Aparência', null, 'sun', 'aparencia'));
-  if (a.user && !view.hidden && screen === 'entrar') {
+  if (a.user && !view.hidden && ['entrar', 'registo'].includes(screen)) {
    const destination = afterSignIn;
    afterSignIn = '';
    close(true);
@@ -174,11 +176,97 @@ export function setupSettings({openSellerSetup,savedProducts,renderProductCard,g
    const unavailable = !navigator.onLine || a.phase !== 'ready';
    if (a.user) group.append(row('Segurança e acesso', null, 'shield', 'seguranca', unavailable), row('Notificações', null, 'bell', 'notificacoes', unavailable));
    group.append(row('Aparência', null, 'sun', 'aparencia'), row('Sobre o Kamby', null, 'info', 'sobre'));
-   body.append(group);
+   const measurement = node('label', undefined, 'settings-choice');
+   const description = node('span', 'Medição de utilização');
+   description.append(node('small', 'Partilha eventos de navegação com o Google Analytics.'));
+   const choice = node('input');
+   choice.type = 'checkbox';
+   choice.checked = analyticsAllowed();
+   choice.addEventListener('change', () => {
+    try {
+     setAnalyticsAllowed(choice.checked);
+     notice(choice.checked ? 'Medição activada neste navegador.' : 'Medição desactivada neste navegador.');
+    } catch {
+     choice.checked = analyticsAllowed();
+     notice('Não foi possível guardar a preferência.');
+    }
+   });
+   measurement.append(description, choice);
+   body.append(group, measurement);
    return;
   }
   if(privateScreens.includes(screen)&&!a.user){open('entrar',false);return;}
   if(screen==='entrar')return;
+  if (screen === 'registo') {
+   const form = node('form', undefined, 'settings-form');
+   const name = field(form, 'name', 'Nome completo', '', 'text', true);
+   const email = field(form, 'email', 'E-mail', '', 'email', true);
+   const password = field(form, 'password', 'Palavra-passe', '', 'password', true);
+   const confirmation = field(form, 'confirmation', 'Confirmar palavra-passe', '', 'password', true);
+   name.autocomplete = 'name';
+   name.maxLength = 80;
+   email.autocomplete = 'email';
+   email.maxLength = 254;
+   for (const input of [password, confirmation]) {
+    input.autocomplete = 'new-password';
+    input.minLength = 8;
+    input.maxLength = 128;
+   }
+   const visibility = node('label', undefined, 'settings-choice');
+   const show = node('input');
+   show.type = 'checkbox';
+   visibility.append(node('span', 'Mostrar palavras-passe'), show);
+   show.addEventListener('change', () => {
+    password.type = confirmation.type = show.checked ? 'text' : 'password';
+   });
+   form.append(visibility);
+   const instructions = node('div');
+   instructions.tabIndex = -1;
+   instructions.hidden = true;
+   instructions.append(
+    node('h2', 'Confirma o teu e-mail', 'settings-lead'),
+    node('p', 'Abre o teu e-mail e toca no link de confirmação. Usa o mesmo dispositivo e navegador em que criaste a conta.', 'settings-copy'),
+    node('p', 'Se a mensagem não aparecer, verifica o spam.', 'settings-copy')
+   );
+   const resend = node('form', undefined, 'settings-form');
+   const resendEmail = field(resend, 'email', 'E-mail', '', 'email', true);
+   resendEmail.readOnly = true;
+   saveForm(resend, 'Reenviar link', async () => {
+    if (!navigator.onLine) throw { safeMessage: 'Sem ligação à internet. Liga-te e tenta novamente.' };
+    const { error } = await platform.auth.resend({
+     type: 'signup',
+     email: resendEmail.value,
+     options: { emailRedirectTo: new URL('/', window.location.origin).href }
+    });
+    if (error) throw { safeMessage: registrationError(error) };
+    if (request === generation) notice('Pedido de reenvio concluído. Verifica o teu e-mail.');
+   });
+   instructions.append(resend, button('Voltar para entrar', 'settings-text-action', async () => {
+    $('accountIdentity').value = resendEmail.value;
+    if (await open('entrar', false)) history.replaceState(null, '', '#definicoes/entrar');
+   }));
+   body.append(form, instructions);
+   saveForm(form, 'Criar conta', async () => {
+    if (!navigator.onLine) throw { safeMessage: 'Sem ligação à internet. Liga-te e tenta novamente.' };
+    let credentials;
+    try {
+     credentials = registrationCredentials({
+      name: name.value, email: email.value, password: password.value, confirmation: confirmation.value
+     }, window.location.origin);
+    } catch (error) {
+     throw { safeMessage: error.message };
+    }
+    const { data, error } = await platform.auth.signUp(credentials);
+    if (error) throw { safeMessage: registrationError(error) };
+    password.value = confirmation.value = '';
+    if (request !== generation || data.session) return;
+    resendEmail.value = credentials.email;
+    form.hidden = true;
+    instructions.hidden = false;
+    instructions.focus();
+   });
+   return;
+  }
   if(screen==='aparencia'){lead('À tua maneira','Escolhe a aparência do Kamby.');const g=node('div',undefined,'settings-group');let theme='auto';try{theme=readTheme(localStorage);}catch{}for(const [value,label,sub] of [['auto','Automático','Acompanha o dispositivo'],['light','Claro','Superfícies claras'],['dark','Escuro','Superfícies escuras']]){const l=node('label',undefined,'settings-choice'),c=node('span',label),i=node('input');c.append(node('small',sub));i.type='radio';i.name='appearance';i.value=value;i.checked=value===theme;i.addEventListener('change',()=>{try{applyTheme(value);notice('Aparência actualizada.');}catch{notice('Não foi possível guardar a preferência neste dispositivo.');i.checked=false;g.querySelector('input[value="'+theme+'"]').checked=true;}});l.append(icon('sun'),c,i);g.append(l);}body.append(g);const historyLabel=node('label',undefined,'settings-choice'),copy=node('span','Guardar pesquisas recentes'),check=node('input');check.type='checkbox';try{check.checked=localStorage.getItem('kamby:search-history')!=='off';}catch{}check.addEventListener('change',()=>{try{localStorage.setItem('kamby:search-history',check.checked?'on':'off');if(!check.checked)localStorage.removeItem('kamby:recent-searches');window.dispatchEvent(new Event('kamby:search-history'));notice('Preferência guardada.');}catch{check.checked=!check.checked;notice('Não foi possível guardar a preferência.');}});historyLabel.append(copy,check);body.append(historyLabel);return;}
   if(screen==='pessoais'){body.append(createPhotoEditor(a.user));const form=node('form',undefined,'settings-form');const name=field(form,'name','Nome completo',a.profile?.display_name||a.user.user_metadata?.display_name||a.user.user_metadata?.full_name||'','text',true);name.maxLength=80;name.autocomplete='name';const location=field(form,'location','Localização',a.profile?.location||'');location.maxLength=120;const phone=field(form,'phone','Telefone',a.user.phone?'+'+a.user.phone.replace(/^\+/, ''):'Não associado');phone.readOnly=true;const email=field(form,'email','Email',(/@kamby\.invalid$/i.test(a.user.email || '') ? '' : a.user.email)||'Não associado');email.readOnly=true;form.addEventListener('input',()=>{dirty=true;});body.append(form);saveForm(form,'Guardar alterações',async()=>{let values;try{values=profileValues(name.value,location.value);}catch(e){throw{safeMessage:e.message};}const id=a.user.id;await ownedWrite('kg_profiles',id,values);if(id!==getAccount().user?.id)return;dirty=false;await loadAccount();notice('Dados guardados.');});return;}
   if(screen==='seguranca'){const g=node('div',undefined,'settings-group');g.append(row('Alterar palavra-passe',null,'key','palavra-passe'),row('Sessões','Terminar acesso noutros dispositivos','device','sessoes'),row('Recuperar acesso',null,'help','recuperacao'),row('Encerramento da conta','Pedir análise à equipa Kamby','user','encerramento'));body.append(g);return;}
@@ -248,10 +336,10 @@ export function setupSettings({openSellerSetup,savedProducts,renderProductCard,g
   try{await renderScreen();}catch{if(screen===target){body.replaceChildren();empty('Não foi possível carregar','Verifica a ligação e tenta novamente.');body.append(button('Tentar novamente','settings-text-action',()=>renderScreen()));}}
   return true;
  }
- function close(force=false){if(view.hidden)return true;if(!force&&(busy||dirty)){if(dirty)confirm('Descartar alterações?','Há dados que ainda não foram guardados.','Descartar',()=>{dirty=false;close(true);history.replaceState(null,'','#perfil');});return false;}generation++;dirty=false;body.replaceChildren();$('accountPassword').value='';view.hidden=true;view.classList.remove('active');closeSubscreen();window.scrollTo({top:returnScroll,behavior:'auto'});document.querySelector('[data-settings-target="'+returnFocus+'"]')?.focus({preventScroll:true});document.title='Perfil · Kamby';return true;}
+ function close(force=false){if(view.hidden)return true;if(!force&&(busy||dirty)){if(dirty)confirm('Descartar alterações?','Há dados que ainda não foram guardados.','Descartar',()=>{dirty=false;close(true);history.replaceState(null,'','#perfil');});return false;}generation++;busy=false;dirty=false;body.replaceChildren();$('accountPassword').value='';view.hidden=true;view.classList.remove('active');closeSubscreen();window.scrollTo({top:returnScroll,behavior:'auto'});document.querySelector('[data-settings-target="'+returnFocus+'"]')?.focus({preventScroll:true});document.title='Perfil · Kamby';return true;}
  $('btnProfilePersonal').addEventListener('click', () => { returnFocus = 'pessoais'; open('pessoais'); });
  $('btnBackSettings').addEventListener('click', async () => {
-  const parent = ['palavra-passe', 'sessoes', 'encerramento'].includes(screen) ? 'seguranca'
+  const parent = screen === 'registo' ? 'entrar' : ['palavra-passe', 'sessoes', 'encerramento'].includes(screen) ? 'seguranca'
    : ['seguranca', 'notificacoes', 'sobre'].includes(screen) || (screen === 'aparencia' && getAccount().user) ? 'preferencias' : '';
   if (parent) {
    if (await open(parent, false)) history.replaceState(null, '', '#definicoes/' + parent);
@@ -259,8 +347,9 @@ export function setupSettings({openSellerSetup,savedProducts,renderProductCard,g
   }
   if (close()) history.replaceState(null, '', '#perfil');
  });
+ $('btnOpenRegistration').addEventListener('click', () => open('registo'));
  $('btnOpenAccountSignIn').addEventListener('click',()=>open('entrar'));$('btnForgotPassword').addEventListener('click',()=>open('recuperacao'));$('btnRetryAccount').addEventListener('click',async()=>{const b=$('btnRetryAccount');if(b.disabled)return;b.disabled=true;setButtonBusy(b,true);try{await loadAccount();}finally{setButtonBusy(b,false);b.disabled=false;}});
- window.addEventListener('online',()=>{loadAccount();if(!view.hidden&&!dirty)renderScreen();});window.addEventListener('offline',()=>{sync();if(!view.hidden)notice('Sem ligação. A aparência continua disponível; as alterações da conta precisam de ligação.');});
+ window.addEventListener('online',()=>{loadAccount();if(!view.hidden&&!dirty&&!busy&&screen!=='registo')renderScreen();});window.addEventListener('offline',()=>{sync();if(!view.hidden)notice('Sem ligação. A aparência continua disponível; as alterações da conta precisam de ligação.');});
  window.addEventListener('beforeunload',event=>{if(dirty){event.preventDefault();event.returnValue='';}});
  function deviceEntries(owner = '') {
   try { return readSavedEntries(localStorage, owner); } catch { return []; }
