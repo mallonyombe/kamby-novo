@@ -15,7 +15,7 @@ test('analytics loads only on production after opt-in and stops on revoke', () =
   assert.equal(scripts.length, 0);
 
   setAnalyticsAllowed(false);
-  location.hostname = 'kamby-novo.vercel.app';
+  location.hostname = 'kambymz.vercel.app';
   location.origin = 'https://' + location.hostname;
   trackAnalytics('view_item');
   assert.equal(scripts.length, 0);

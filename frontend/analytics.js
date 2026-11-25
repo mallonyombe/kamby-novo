@@ -1,5 +1,5 @@
 const measurementId = 'G-XWTGWKM4XH';
-const productionHost = 'kamby-novo.vercel.app';
+const productionHost = 'kambymz.vercel.app';
 const preferenceKey = 'kamby:analytics';
 const eventNames = new Set(['page_view', 'view_item', 'view_store', 'add_to_cart', 'whatsapp_contact', 'pwa_install']);
 
