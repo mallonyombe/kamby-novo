@@ -152,7 +152,7 @@ export function setupSettings({openSellerSetup,savedProducts,renderProductCard,g
   }
   const publicMenu = $('settingsPublicMenu');
   publicMenu.replaceChildren(row('Definições', null, 'gear', 'preferencias'), row('Ajuda', null, 'help', 'ajuda'));
-  if (!a.user) publicMenu.prepend(row('Aparência', null, 'sun', 'aparencia'));
+  publicMenu.prepend(row('Aparência', null, 'sun', 'aparencia'));
   if (a.user && !view.hidden && ['entrar', 'registo'].includes(screen)) {
    const destination = afterSignIn;
    afterSignIn = '';
@@ -175,7 +175,7 @@ export function setupSettings({openSellerSetup,savedProducts,renderProductCard,g
    const group = node('div', undefined, 'profile-menu-list');
    const unavailable = !navigator.onLine || a.phase !== 'ready';
    if (a.user) group.append(row('Segurança e acesso', null, 'shield', 'seguranca', unavailable), row('Notificações', null, 'bell', 'notificacoes', unavailable));
-   group.append(row('Aparência', null, 'sun', 'aparencia'), row('Sobre o Kamby', null, 'info', 'sobre'));
+   group.append(row('Sobre o Kamby', null, 'info', 'sobre'));
    body.append(group);
   }
   if (screen === 'privacidade') {
@@ -361,7 +361,7 @@ export function setupSettings({openSellerSetup,savedProducts,renderProductCard,g
  $('btnProfilePersonal').addEventListener('click', () => { returnFocus = 'pessoais'; open('pessoais'); });
  $('btnBackSettings').addEventListener('click', async () => {
   const parent = screen === 'registo' ? 'entrar' : ['palavra-passe', 'sessoes', 'encerramento'].includes(screen) ? 'seguranca'
-   : ['seguranca', 'notificacoes', 'sobre'].includes(screen) || (screen === 'aparencia' && getAccount().user) ? 'preferencias' : '';
+   : ['seguranca', 'notificacoes', 'sobre'].includes(screen) ? 'preferencias' : '';
   if (parent) {
    if (await open(parent, false)) history.replaceState(null, '', '#definicoes/' + parent);
    return;
