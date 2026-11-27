@@ -128,10 +128,12 @@ body:has(.admin-drawer[open]) {overflow:hidden}
 .subpage-tools {display:flex;justify-content:flex-end;margin-bottom:12px}
 .admin-subbar .subbar-spacer {margin-left:auto}
 @media(prefers-reduced-motion:no-preference){
- .admin-drawer {transition:translate 190ms ease,opacity 160ms ease,display 190ms allow-discrete,overlay 190ms allow-discrete;translate:-24px 0;opacity:0}
- .admin-drawer[open] {translate:0 0;opacity:1}
- @starting-style {.admin-drawer[open] {translate:-24px 0;opacity:0}}
- .admin-drawer-trigger:active,.admin-drawer-close:active {transform:scale(.94)}
+ .admin-drawer[data-pointer-open][open] {
+  transition:transform 180ms cubic-bezier(.16,1,.3,1),opacity 140ms cubic-bezier(.16,1,.3,1);
+ }
+ @starting-style {
+  .admin-drawer[data-pointer-open][open] {transform:translateX(-12px);opacity:0}
+ }
 }
 
 .audit-day {font-size:13px;font-weight:650;color:var(--muted);margin:18px 0 4px}

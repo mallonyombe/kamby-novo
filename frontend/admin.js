@@ -128,8 +128,9 @@ function shell(){
   const drawer=$('#adminDrawer');
   const toggle=$('.admin-drawer-trigger');
   const close=$('.admin-drawer-close');
-  toggle.onclick=()=>{
+  toggle.onclick=event=>{
     if(drawer.open)return;
+    drawer.toggleAttribute('data-pointer-open',event.detail>0);
     drawer.showModal();
     toggle.setAttribute('aria-expanded','true');
     const active=$('[aria-current="page"]',drawer);
