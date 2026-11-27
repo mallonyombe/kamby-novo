@@ -1,3 +1,4 @@
+import {loadAccountTerms, showAccountTerms} from './account-terms.js';
 import {showFeedback} from './merchant-ui.js';
 import { addPasswordVisibility, describeNewPassword } from './password-visibility.js';
 import { analyticsAllowed, setAnalyticsAllowed } from './analytics.js';
@@ -241,7 +242,10 @@ export function setupSettings({openSellerSetup,savedProducts,renderProductCard,g
      notice('Não foi possível guardar a preferência.');
     }
    });
-   const measurement = privacyToggle('Medição de utilização', 'Partilha eventos de navegação com o Google Analytics.', analyticsAllowed(), input => {
+   lead('Dados da conta', 'O Kamby usa o teu nome, contacto e dados de conta para autenticar a sessão, guardar preferências e disponibilizar as funcionalidades do teu perfil. Podes actualizar os dados em Perfil e solicitar o encerramento em Segurança e acesso.');
+   lead('Dados neste dispositivo', 'O dispositivo guarda a sessão, o carrinho, os guardados de visitante e as preferências. Podes limpar os dados locais nesta página.');
+   lead('Funcionamento das lojas', 'O Kamby conta aberturas de lojas e pedidos de contacto para apresentar indicadores ao lojista. Quando estás na tua conta, a actividade de contacto pode ficar associada ao teu perfil.');
+   const measurement = privacyToggle('Medição opcional', 'Se activares, o Google Analytics recebe eventos de utilização. Os cookies de medição têm uma duração configurada de até 30 dias. Podes desligar esta opção aqui.', analyticsAllowed(), input => {
     try { setAnalyticsAllowed(input.checked); }
     catch {
      input.checked = analyticsAllowed();
@@ -254,8 +258,13 @@ export function setupSettings({openSellerSetup,savedProducts,renderProductCard,g
    return;
   }
   if (screen === 'termos') {
-   lead('Pedidos às lojas', 'Confirma directamente com a loja o preço, a disponibilidade, o pagamento e a entrega. Enviar um pedido pelo WhatsApp inicia o contacto com a loja.');
-   body.append(node('p', 'Os termos de utilização ainda não foram publicados.', 'settings-copy'));
+   const pending=node('div');
+   body.append(pending);
+   showSpinner(pending, 'A carregar os termos');
+   const terms=await loadAccountTerms(platform);
+   if(request!==generation)return;
+   pending.remove();
+   showAccountTerms(body,terms);
    return;
   }
   if(privateScreens.includes(screen)&&!a.user){open('entrar',false);return;}

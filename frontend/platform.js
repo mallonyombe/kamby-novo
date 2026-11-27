@@ -9,10 +9,13 @@ export const platform = createClient(catalogueConfig.supabaseUrl, catalogueConfi
   global: {
     fetch: (input, init) => {
       const url = new URL(typeof input === 'string' || input instanceof URL ? input : input.url);
+      // The SDK can add a user session to both reads and writes. Keep those
+      // responses out of the browser's HTTP cache.
+      const options = { ...init, cache: 'no-store' };
       if (url.pathname === '/rest/v1/kg_store_events' || url.pathname === '/rest/v1/rpc/kg_record_contact_activity') {
-        return fetch(input, {...init, keepalive: true});
+        options.keepalive = true;
       }
-      return fetch(input, init);
+      return fetch(input, options);
     }
   },
   auth: { storageKey: 'kamby:account', persistSession: true, autoRefreshToken: true, detectSessionInUrl: true, flowType: 'pkce' }

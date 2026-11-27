@@ -27,7 +27,7 @@ try {
     'from http.server import ThreadingHTTPServer, SimpleHTTPRequestHandler',
     'class Handler(SimpleHTTPRequestHandler):',
     '    def end_headers(self):',
-    '        self.send_header("Cache-Control", "no-store")',
+    '        self.send_header("Cache-Control", "no-store" if self.path.startswith("/admin") else "no-cache")',
     '        super().end_headers()',
     'server = ThreadingHTTPServer(("127.0.0.1", 0), Handler)',
     'print(server.server_port)',
@@ -54,6 +54,10 @@ try {
   await page.reload();
   await expectRelease('primeira');
   console.log('PASSOU: o Perfil reabre offline.');
+  const adminPage = await context.newPage();
+  await assert.rejects(adminPage.goto(address + '/admin.html'), /ERR_INTERNET_DISCONNECTED/);
+  await adminPage.close();
+  console.log('PASSOU: o painel de Administração exige ligação à rede.');
 
   await context.setOffline(false);
   await writeFile(htmlPath, releaseHtml('segunda'));

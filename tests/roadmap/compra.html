@@ -1,8 +1,13 @@
 <!doctype html><html lang="pt-MZ"><meta charset="utf-8"><title>Ensaio Kamby · compra no telemóvel</title>
-<style>body{font:16px system-ui;max-width:950px;margin:20px auto}iframe{width:390px;height:760px;border:1px solid #777}li{margin-block:.5em}main{display:flex;gap:1rem;align-items:flex-start;flex-wrap:wrap}</style>
-<h1>Compra sem conta</h1><p>Ensaio isolado, 61 produtos, janela de 390 px.</p><button id="start">Executar percurso</button><main><iframe title="Kamby a 390 px"></iframe><section><output aria-live="polite"></output><ol></ol></section></main>
+<style>body{font:16px system-ui;max-width:950px;margin:20px auto}iframe{width:390px;height:760px;border:1px solid #777;flex:none}li{margin-block:.5em}main{display:flex;gap:1rem;align-items:flex-start;flex-wrap:wrap}</style>
+<h1>Compra sem conta</h1><p id="testContext"></p><button id="start">Executar percurso</button><main><iframe title="Kamby"></iframe><section><output aria-live="polite"></output><ol></ol></section></main>
 <script type="module">
 const frame = document.querySelector('iframe'), output = document.querySelector('output');
+const params = new URLSearchParams(location.search);
+const width = [320,390,1040].find(size=>String(size)===params.get('width')) || 390;
+const theme = params.get('theme')==='dark' ? 'dark' : 'light';
+frame.style.width=width+'px';
+document.querySelector('#testContext').textContent='61 produtos · '+width+' px · '+(theme==='dark'?'tema escuro':'tema claro');
 const uid = n => '00000000-0000-4000-8000-'+String(n).padStart(12,'0'), rice=uid(61);
 const scope=crypto.randomUUID(), results=document.querySelector('ol');
 const doc=()=>frame.contentDocument, q=s=>doc().querySelector(s), app=()=>frame.contentWindow;
@@ -16,6 +21,8 @@ async function load(hash, extra='') {
   const next=new URL('app.html',location.href); next.search='scope='+scope+extra; next.hash=hash;
   await new Promise(ok=>{frame.onload=ok;frame.src=next.href;});
   frame.onload=null;
+  check(app().innerWidth===width,'a janela não tem a largura pedida');
+  doc().documentElement.dataset.theme=theme;
 }
 function check(ok,message) {if(!ok) throw Error(message);}
 let passed=0,failed=0;
@@ -48,6 +55,33 @@ document.querySelector('#start').onclick=async e=>{
  await scenario('Pesquisa de produtos enquanto as lojas falham',async()=>{
    await load('pesquisa?q=Arroz&aba=products','&failStores=1');
    await until(()=>q('#searchProductsGrid .product-card-title')?.textContent==='Arroz do ensaio','pesquisa não encontrou arroz');
+ });
+ await scenario('Pesquisa recente e limpar resultados',async()=>{
+   await load('pesquisa','&run=pesquisa-recente');
+   await until(()=>[...doc().querySelectorAll('#recentChips button')].some(b=>b.textContent==='Arroz'),'pesquisa recente escondida');
+   check(!q('#searchDiscovery').hidden && q('#searchResultControls').hidden,'controlos de resultados aparecem antes da pesquisa');
+   check(doc().documentElement.scrollWidth===doc().documentElement.clientWidth,'pesquisa transborda a largura do ecrã');
+   [...doc().querySelectorAll('#recentChips button')].find(b=>b.textContent==='Arroz').click();
+   await until(()=>!q('#searchResultsProductsWrap').hidden && q('#searchProductsGrid .product-card-title')?.textContent==='Arroz do ensaio','recente não abriu a pesquisa');
+   check(q('#searchDiscovery').hidden && !q('#searchResultControls').hidden,'descoberta e resultados misturados');
+   q('#btnCloseSearchResults').click();
+   check(app().location.hash==='#pesquisa' && !q('#searchDiscovery').hidden,'limpar não regressou à descoberta');
+   check(q('#searchResultsProductsWrap').hidden && q('#searchResultControls').hidden,'resultados anteriores ainda visíveis');
+   check(doc().activeElement===q('#searchResultsInput'),'foco não regressou à pesquisa');
+ });
+ await scenario('Sugestão abre o produto num toque e preserva o termo ao voltar',async()=>{
+   await load('inicio','&run=sugestao-directa');
+   await until(()=>q('#productsGrid .product-card-title')?.textContent==='Caneca do ensaio','produto ainda não está no feed');
+   q('#searchInput').focus();
+   const input=q('#searchResultsInput');
+   input.value='Caneca';
+   input.dispatchEvent(new Event('input'));
+   await until(()=>!q('#searchResultsSuggestions').hidden && q('#searchResultsSuggestions button')?.textContent.includes('Caneca do ensaio'),'sugestão de produto ausente');
+   q('#searchResultsSuggestions button').click();
+   await until(()=>!q('#viewPDP').hidden && q('#pdpTitle').textContent==='Caneca do ensaio','sugestão não abriu a ficha');
+   q('#btnBackFromPDP').click();
+   await until(()=>app().location.hash==='#pesquisa' && !q('#viewSearchResults').hidden && q('#viewPDP').hidden,'voltar não regressou à pesquisa');
+   check(input.value==='Caneca','o termo perdeu-se ao voltar');
  });
  await scenario('Coração do convidado persiste após recarregar',async()=>{
    await load('produto/'+rice,'&run=guardados');
@@ -88,11 +122,15 @@ document.querySelector('#start').onclick=async e=>{
    await load('carrinho','&run=dois-carrinhos');
    const groups=()=>[...doc().querySelectorAll('#cartGroupsContainer .cart-store-summary')];
    await until(()=>groups().length===2,'carrinhos não persistiram separadamente');
+   check(doc().documentElement.scrollWidth===doc().documentElement.clientWidth,'resumos transbordam a largura do ecrã');
    for(const [store, item, excluded, total] of [
      ['Mercado QA','2x Arroz do ensaio (5 kg)','Caneca do ensaio','780'],
      ['Casa QA','1x Caneca do ensaio','Arroz do ensaio','12'],
    ]){
-     groups().find(group=>group.textContent.includes(store)).querySelector('.cart-summary-heading').click();
+     const summary=groups().find(group=>group.textContent.includes(store));
+     check(summary.querySelectorAll('button,a').length===1,'resumo tem destinos concorrentes');
+     check(summary.querySelector('.cart-summary-total').textContent.includes('artigo'),'quantidade não está visível no resumo');
+     summary.querySelector('.cart-summary-thumb').click();
      await until(()=>!q('#viewStoreCart').hidden && !q('#btnStoreCartWhatsApp').disabled,'carrinho da loja não abriu');
      q('#btnStoreCartWhatsApp').click();
      await until(()=>q('#testContactDialog').open,'resumo não abriu para '+store);

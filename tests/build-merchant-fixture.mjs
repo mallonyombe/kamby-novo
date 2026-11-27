@@ -7,6 +7,7 @@ const fixture = function () {
   const access='eyJhbGciOiJIUzI1NiJ9.'+btoa(JSON.stringify({sub:user.id,aud:'authenticated',role:'authenticated',exp:Math.floor(Date.now()/1000)+3600}))+'.qa-signature';
   const session={access_token:access,refresh_token:'qa-refresh',token_type:'bearer',expires_at:Math.floor(Date.now()/1000)+3600,expires_in:3600,user};
   const mode=new URLSearchParams(location.search).get('qa');
+ let termsAccepted=mode!=='terms';
   let signedIn=mode!=='guest';
   const memory=new Map();
   const storage={getItem:key=>memory.get(key)??null,setItem:(key,value)=>memory.set(key,String(value)),removeItem:key=>memory.delete(key),clear:()=>memory.clear(),key:index=>Array.from(memory.keys())[index]??null,get length(){return memory.size;}};
@@ -17,6 +18,8 @@ const fixture = function () {
   const own={id:'s1',name:'Moheim Studio',location:'Chongoene, Centro',whatsapp_e164:'+258841234567',description:'Artigos de casa',slug:'moheim-studio',status:'approved',is_open:true,opening_hours:[],updated_at:now()};
   if(['draft','pending','suspended'].includes(mode))own.status=mode;
   if(mode==='closed')own.is_open=false;
+  if(mode==='draft-ready')own.status='draft';
+  if(mode==='scheduled')own.opening_hours=[{day:0,closed:false,open:'08:00',close:'17:00'}];
   const other={...own,id:'s2',name:'Outra loja',slug:'outra-loja'};
   const product=(id,title,store,price,status='published')=>({id,title,store_id:store.id,store,price_minor:price,stock_status:'available',status,unit_reference:'un',created_at:now(),updated_at:now(),description:'Artigo do catálogo.',category_id:title==='Arroz'?'bbbbbbbb-cccc-4ddd-8eee-ffffffffffff':'aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee',image_url:location.origin+(title==='Arroz'?'/catalogue-arroz.jpg':'/catalogue-caneca.jpg'),images:[],variants:[]});
   const products=[product('p1','Caneca azul',own,12500),product('p2','Arroz',own,15000),product('p3','Artigo de outra loja',other,50000)];
@@ -38,7 +41,12 @@ const fixture = function () {
     let body={};try{body=JSON.parse(options.body||'{}');}catch{}
     const path=url.pathname;
     if(path.endsWith('/rpc/kg_store_contact_availability'))return json({available:mode!=='closed',reason:mode==='closed'?'closed':'open'});
-    if(path.endsWith('/rpc/kg_account_context'))return json({user_id:user.id,roles:['customer','merchant'],merchant_store_ids:mode==='unassigned'?[]:['s1'],admin_access:false,admin_mfa_required:false});
+    if(path.endsWith('/rpc/kg_current_account_terms'))return json({version:'qa',user_id:user.id,title:'Termos do ensaio',sections:[{title:'Conta',body:'Dados simulados.'}],accepted:termsAccepted});
+ if(path.endsWith('/rpc/kg_accept_account_terms')){
+  if(body.p_version!=='qa'||body.p_user_id!==user.id)return json({code:'40001'},409);
+  termsAccepted=true;return new Response(null,{status:204});
+ }
+if(path.endsWith('/rpc/kg_account_context'))return json({user_id:user.id,roles:['customer','merchant'],merchant_store_ids:mode==='unassigned'?[]:['s1'],admin_access:false,admin_mfa_required:false});
     if(path==='/auth/v1/user') return signedIn?json(user):json({message:'No session'},401);
     if(path==='/auth/v1/token') {
       if(body.password!=='demo-password' && !body.refresh_token) return json({code:'invalid_credentials',msg:'Invalid credentials'},400);
@@ -87,6 +95,16 @@ const fixture = function () {
       if(mode==='create-uncertain'&&!uncertainReturned){uncertainReturned=true;return json({code:'',message:'Unavailable'},503);}return json(result);
     }
     if(path.endsWith('/rpc/kg_save_store_settings')){if(mode==='save-error')return json({code:'40001',message:'Concurrent'},409);evidence('Horário enviado: '+JSON.stringify(body.p_document.opening_hours));Object.assign(own,body.p_document,{updated_at:now()});return json(own);}
+    if(path.endsWith('/rpc/kg_current_seller_terms')&&mode==='draft-ready')return json({title:'Condições de ensaio',version:'qa',body:'Dados simulados.',accepted:true});
+    if(path.endsWith('/rpc/kg_merchant_activity_period')){
+      if(mode==='activity-error')return json({message:'Activity unavailable'},503);
+      if(mode==='activity-loading')return new Promise(()=>{});
+      const period=Number(body.p_days);
+      return json({days:Array.from({length:period},(_,i)=>({
+        day:new Date(Date.UTC(2026,10,27-period+1+i)).toISOString().slice(0,10),
+        views:mode==='activity-empty'?0:2,contacts:mode==='activity-empty'?0:1
+      }))});
+    }
     if(path.endsWith('/rpc/kg_merchant_activity'))return json({days:Array.from({length:7},(_,i)=>({day:'2026-11-'+String(6+i).padStart(2,'0'),views:i*2,contacts:i})),recent:[],as_of:now()});
     if(path.endsWith('/rpc/kg_my_managed_stores')) return json(signedIn&&mode!=='unassigned'?[own]:[]);
     if(path.endsWith('/kg_profiles')) {if(options.method==='PATCH'||options.method==='POST'){if(mode==='save-error')return json({message:'save failed'},503);Object.assign(profile,body);}return json(profile);}
