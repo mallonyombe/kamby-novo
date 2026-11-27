@@ -15,7 +15,8 @@ test('todas as áreas administrativas principais usam o cabeçalho com menu',()=
 
 test('o vendedor troca título, navegação e acções no mesmo cabeçalho',()=>{
   assert.match(merchant,/resumo:'Resumo',produtos:'Produtos',loja:'Loja',actividade:'Actividade'/);
-  assert.match(merchant,/backToProfile\.hidden=nested;historyBack\.hidden=!nested/);
+  assert.match(merchant,/backToProfile\.hidden=false/);
+  assert.doesNotMatch(merchant,/merchantHistoryBack|merchantHistory/);
   assert.doesNotMatch(merchant,/merchantNavigationDrawer/);
   assert.match(merchant,/productActions\.hidden=next!=='produtos'/);
 });

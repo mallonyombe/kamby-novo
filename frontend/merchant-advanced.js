@@ -2,7 +2,7 @@ import { loadAccountProfile } from './account-registration.js';
 import {sellerDraft} from './seller-draft.js';
 import {openSellerSetup as showSellerSetup} from './seller-setup.js';
 import {bindSignOut,confirmAction,el,icon,showFeedback} from './merchant-ui.js';
-import {canPrepareStore} from './merchant-domain.js';
+import {canPrepareStore,merchantOrderLabel} from './merchant-domain.js';
 import {setButtonBusy,showSpinner,showSkeleton} from "./loading.js";
 import { catalogueConfig, platform } from './platform.js';
 import { bindPasswordVisibility } from './password-visibility.js';
@@ -182,19 +182,22 @@ export function setupMerchant(hooks) {
     const button=byId('btnToggleStoreStatus');
     const status=byId('merchantOpenState');
     status.hidden=store.status!=='approved';
-    status.textContent=store.is_open?'Loja aberta':'Loja fechada';
+    status.textContent=merchantOrderLabel(store);
     status.dataset.open=String(store.is_open);
-    button.textContent=store.is_open?'Fechar loja':'Abrir loja';
+    button.textContent=store.is_open?'Pausar pedidos':'Retomar pedidos';
     button.disabled=state.busy||store.status!=='approved';
     button.removeAttribute('aria-pressed');
     setButtonBusy(button,state.busy);
     workspace.syncStoreStatus();
   }
-  const composer=setupProductComposer({getStore:()=>view.hidden?null:state.store,onPublished:async(id,storeId,{newPublication})=>{
+  const composer=setupProductComposer({getStore:()=>view.hidden?null:state.store,onPublished:async(id,storeId,{newPublication,quickEdit})=>{
     await hooks.catalogueChanged(id);
     if(view.hidden||state.store?.id!==storeId)return;
     if(newPublication)await workspace.revealProduct(id);
-    else await workspace.load();
+    else {
+      await workspace.load();
+      if(quickEdit)return workspace.restoreQuickEditFocus(id);
+    }
   },onFeedback:copy=>showFeedback(copy)});
   const workspace=setupWorkspace({state,composer,onTerms:store=>openSellerSetup(store),onChanged:hooks.catalogueChanged,onStoreChanged:store=>{state.stores=state.stores.map(s=>s.id===store.id?store:s);storeState();renderProfile();}});
   const loadMerchantData=()=>workspace.load();
@@ -244,8 +247,8 @@ export function setupMerchant(hooks) {
     if(state.busy || !state.store || state.store.status!=='approved') return;
     const store=state.store;
     const opening=!store.is_open;
-    const label=opening?'Abrir loja':'Fechar loja';
-    if(!await confirmAction(label+'?',opening?'Os clientes voltam a poder enviar pedidos.':'Os clientes podem guardar artigos no carrinho e enviar pedidos quando a loja reabrir.',label))return;
+    const label=opening?'Retomar pedidos':'Pausar pedidos';
+    if(!await confirmAction(label+'?',opening?'Os clientes voltam a poder enviar pedidos durante o teu horário.':'A montra continua visível. Os clientes podem guardar artigos no carrinho enquanto os pedidos estão pausados.',label))return;
     if(state.busy||view.hidden||state.store?.id!==store.id||state.store.is_open!==store.is_open)return;
     state.busy=true;
     storeState();
@@ -256,10 +259,10 @@ export function setupMerchant(hooks) {
       state.store=data;
       state.stores=state.stores.map(entry=>entry.id===data.id?data:entry);
       renderProfile();
-      showFeedback(data.is_open?'Loja aberta.':'Loja fechada.');
+      showFeedback(data.is_open?'Pedidos retomados.':'Pedidos pausados.');
       await hooks.catalogueChanged();
     }catch{
-      if(state.store?.id===store.id&&!view.hidden)showFeedback('Não foi possível alterar a abertura. Tenta novamente.',{tone:'error'});
+      if(state.store?.id===store.id&&!view.hidden)showFeedback('Não foi possível alterar a recepção de pedidos. Tenta novamente.',{tone:'error'});
     }finally{
       state.busy=false;
       storeState();

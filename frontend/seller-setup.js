@@ -121,12 +121,14 @@ export function openSellerSetup({platform,store,userId,isCurrent,onReady,onClose
   let result;
   try{result=await platform.rpc('kg_current_seller_terms');}catch{}
   if(!dialog.open||!isCurrent())return;
-  if(result?.error||!result?.data){
+  const terms=result?.data;
+  const valid=terms && typeof terms.accepted==='boolean' &&
+   [terms.version,terms.title,terms.body].every(value=>typeof value==='string'&&value.trim());
+  if(result?.error||!valid){
    const panel=shown('Termos de vendedor');
    panel.append(el('p','mw-muted',result&&!result.error?'Os termos de vendedor ainda não estão disponíveis.':'Não foi possível carregar os termos.'),action('Tentar novamente',loadTerms));
    return;
   }
-  const terms=result.data;
   if(terms.accepted)return store?finish(store.id):create();
   const panel=shown(terms.title,1);
   panel.append(el('p','mw-muted','Versão '+terms.version));

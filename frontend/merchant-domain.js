@@ -48,3 +48,8 @@ export function canPrepareStore(store) {
 export function storeHoursDocument(original, edited, weekly) {
   return edited ? weekly : (Array.isArray(original) ? original : []);
 }
+
+export function merchantOrderLabel(store) {
+  if (store.is_open === false) return 'Pedidos pausados';
+  return store.opening_hours?.length ? 'Pedidos seguem o horário' : 'A receber pedidos';
+}
