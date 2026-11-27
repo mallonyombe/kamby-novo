@@ -25,13 +25,12 @@ export function setupWorkspace({state,composer,onChanged,onStoreChanged,onTerms}
   <nav id="merchantSidebarNav" class="merchant-own-nav" aria-label="Navegação do lojista"></nav>
   <a class="mw-return" href="#perfil">${icon('back')}<span class="panel-sidebar-label">Voltar ao perfil</span></a>
 </aside><div class="mw-content"><p class="merchant-feedback" id="merchantFeedback" role="status" aria-live="polite" hidden></p><p class="merchant-feedback" id="merchantOffline" role="status" hidden></p><section data-mw="resumo" class="mw-summary">${summaryMarkup}</section><section data-mw="produtos" hidden><button type="button" id="btnOpenNewProductModal" class="kamby-list-icon" aria-label="Novo produto">${icon('plus')}</button><div class="mw-search-row kamby-search-panel" id="merchantSearchPanel" hidden><label class="mw-search">${icon('search')}<input id="merchantSearch" type="search" placeholder="Pesquisar no catálogo" aria-label="Pesquisar produtos por nome ou identificador" autocomplete="off"></label></div><button type="button" class="kamby-list-icon" id="merchantFilterButton" aria-label="Filtros do catálogo">${icon('filter')}</button><div class="mw-list-meta"><span id="merchantCatalogCount"></span><button type="button" id="merchantClearFilters" class="mw-text" hidden>Limpar filtros</button></div><div id="merchantProductsList" class="mw-product-list"></div><p id="merchantListSentinel" class="mw-muted" role="status"></p></section><section data-mw="actividade" hidden><button type="button" class="pdp-back-btn" id="merchantHistoryBack" aria-label="Voltar ao resumo">${icon('back')}</button><select id="merchantActivityPeriod" class="mw-secondary" aria-label="Período de actividade"><option value="7">Últimos 7 dias</option><option value="30">Últimos 30 dias</option><option value="90">Últimos 90 dias</option></select><dl id="merchantActivityList" class="mw-traffic"></dl><div id="merchantActivityChart" class="mw-chart"></div></section><section data-mw="loja" class="mw-shop-profile" hidden>
- <div class="mw-store-hero">
-   <div id="merchantStoreArtwork" class="mw-profile-photos"></div>
-   <button type="button" id="merchantEditProfile" class="mw-primary">Editar loja</button>
- </div>
  <div class="mw-profile-info">
-   <div id="merchantStoreLogo"></div>
+   <div class="mw-profile-avatar">
+     <button type="button" id="merchantStoreLogo" class="mw-profile-image" aria-label="Fotografia da loja"></button>
+   </div>
    <div class="mw-profile-copy"><h2 id="merchantStoreName"></h2><p id="merchantStoreLocation"></p><p id="merchantStoreContact" hidden></p></div>
+   <button type="button" id="merchantEditProfile" class="mw-secondary">Editar perfil</button>
  </div>
  <p id="merchantStoreDescription" class="mw-profile-description"></p>
  <div class="mw-profile-actions">
@@ -49,7 +48,7 @@ export function setupWorkspace({state,composer,onChanged,onStoreChanged,onTerms}
    <div id="merchantProfileDetails" class="mw-profile-details"></div>
  </details>
  <dialog id="merchantStoreEditor" class="mw-filter-dialog mw-store-editor" aria-labelledby="merchantStoreEditorTitle">
- <form id="merchantStoreForm"><header><h2 id="merchantStoreEditorTitle">Editar loja</h2><button type="button" id="merchantCloseStoreEditor" aria-label="Fechar editor">${icon('close')}</button></header><div class="mw-editor-photo-actions"><button type="button" class="mw-secondary" id="merchantEditCover">Foto de capa</button><button type="button" class="mw-secondary" id="merchantEditLogo">Logótipo</button></div><details class="mw-settings-group" open><summary>Identidade</summary><label>Nome da loja<input name="name" minlength="2" maxlength="80" required></label><label>Descrição<textarea name="description" rows="3" maxlength="2000"></textarea></label></details><details class="mw-settings-group"><summary>WhatsApp e localização</summary><label>WhatsApp comercial<input name="whatsapp_e164" type="tel" placeholder="+258 84 123 4567" required></label><label>Localidade<input name="location" maxlength="120" placeholder="Chongoene"></label><label>Endereço<textarea name="address" maxlength="300" rows="2"></textarea></label><label>Área de atendimento<input name="service_area" maxlength="300" placeholder="Ex.: Chongoene e arredores"></label></details><details class="mw-settings-group"><summary>Horário de atendimento</summary><p class="mw-muted">Sem horário definido, vale a abertura manual. Hora de Moçambique. Fora do horário definido, os clientes podem guardar no carrinho, mas não enviar pedidos.</p><div id="merchantOpeningHours"></div></details><p class="merchant-feedback" id="merchantStoreSaveNotice" role="status" hidden></p><footer><button id="merchantSaveStore" class="mw-primary" type="submit">Guardar perfil</button></footer></form></dialog></section></div>`;
+ <form id="merchantStoreForm"><header><h2 id="merchantStoreEditorTitle">Editar perfil</h2><button type="button" id="merchantCloseStoreEditor" aria-label="Fechar editor">${icon('close')}</button></header><details class="mw-settings-group" open><summary>Identidade</summary><label>Nome da loja<input name="name" minlength="2" maxlength="80" required></label><label>Descrição<textarea name="description" rows="3" maxlength="2000"></textarea></label></details><details class="mw-settings-group"><summary>WhatsApp e localização</summary><label>WhatsApp comercial<input name="whatsapp_e164" type="tel" placeholder="+258 84 123 4567" required></label><label>Localidade<input name="location" maxlength="120" placeholder="Chongoene"></label><label>Endereço<textarea name="address" maxlength="300" rows="2"></textarea></label><label>Área de atendimento<input name="service_area" maxlength="300" placeholder="Ex.: Chongoene e arredores"></label></details><details class="mw-settings-group"><summary>Horário de atendimento</summary><p class="mw-muted">Sem horário definido, vale a abertura manual. Hora de Moçambique. Fora do horário definido, os clientes podem guardar no carrinho, mas não enviar pedidos.</p><div id="merchantOpeningHours"></div></details><p class="merchant-feedback" id="merchantStoreSaveNotice" role="status" hidden></p><footer><button id="merchantSaveStore" class="mw-primary" type="submit">Guardar perfil</button></footer></form></dialog></section></div>`;
  bindSidebar(body, body.querySelector('.panel-sidebar-toggle'), 'lojista');
  const header=view.querySelector('.pdp-nav-content');
  const backToProfile=header.querySelector('#btnBackFromMerchant');
@@ -474,45 +473,33 @@ export function setupWorkspace({state,composer,onChanged,onStoreChanged,onTerms}
      row.append(el('span','',label),el('strong','',value));
      details.append(row);
    }
-   const artwork=$('merchantStoreArtwork');
-   const fallback=resolveStoreArtwork({id:store.id,isTest:store.is_test===true});
-   const logo=$('merchantStoreLogo');
-   artwork.replaceChildren();
-   logo.replaceChildren();
-   for(const [key,kind,label,fallbackUrl] of [
-     ['banner_path','cover','Foto de capa',fallback.cover],
-     ['logo_path','avatar','Logótipo',fallback.avatar]
-   ]){
-     const frame=el('div','mw-profile-'+kind);
-     const photo=el('button','mw-profile-image');
-     photo.type='button';
-     photo.setAttribute('aria-label',label);
-     if(kind==='avatar')photo.append(el('span','',initials(store.name)));
-     const img=el('img');
-     img.alt='';
-     img.hidden=true;
-     img.onload=()=>{
-       img.hidden=false;
-       frame.classList.add('has-photo');
-       if(kind==='cover')photo.setAttribute('aria-label',label);
-     };
-     img.onerror=()=>{
-       img.hidden=true;
-       frame.classList.remove('has-photo');
-     };
-     photo.append(img);
-     const path=store[key];
-     if(path)imageUrl(platform,path).then(url=>{if(url&&img.isConnected)img.src=url;});
-     else if(fallbackUrl){img.src=fallbackUrl;img.style.objectPosition=kind==='cover'?fallback.coverPosition:fallback.avatarPosition;}
-     const options={key,kind,label,img,path,editable};
-     const editorButton=$(kind==='cover'?'merchantEditCover':'merchantEditLogo');
-     editorButton.onclick=()=>openPhotoActions(options);
-     photo.onclick=()=>viewArtwork(options);
-     photo.disabled=true;
-     img.addEventListener('load',()=>{photo.disabled=false;});
-     img.addEventListener('error',()=>{photo.disabled=true;});
-     frame.append(photo);
-     (kind==='cover'?artwork:logo).append(frame);
+   const photo = $('merchantStoreLogo');
+   const path = store.logo_path;
+   const fallback = resolveStoreArtwork({id:store.id,isTest:store.is_test===true});
+   const img = el('img');
+   img.alt = '';
+   img.hidden = true;
+   img.onload = () => {
+     if (!photo.contains(img)) return;
+     img.hidden = false;
+     photo.disabled = storeBusy;
+   };
+   img.onerror = () => {
+     if (!photo.contains(img)) return;
+     img.hidden = true;
+     photo.disabled = !editable || storeBusy;
+   };
+   photo.replaceChildren(el('span','',initials(store.name)), img);
+   photo.disabled = !editable || storeBusy;
+   const options = {img,path,editable,label:'Fotografia da loja',kind:'avatar'};
+   photo.onclick = () => editable ? openPhotoActions(options) : viewArtwork(options);
+   if (editable) photo.setAttribute('aria-haspopup','dialog');
+   else photo.removeAttribute('aria-haspopup');
+   if (path) {
+     imageUrl(platform,path).then(url => { if (url && photo.contains(img)) img.src = url; });
+   } else if (fallback.avatar) {
+     img.style.objectPosition = fallback.avatarPosition;
+     img.src = fallback.avatar;
    }
  }
  function viewArtwork({img,label,kind}){
@@ -527,7 +514,7 @@ export function setupWorkspace({state,composer,onChanged,onStoreChanged,onTerms}
      full.src=img.currentSrc||img.src;
      viewer.showModal();
  }
- function openPhotoActions({key,kind,label,img,path,editable}){
+ function openPhotoActions({kind,label,img,path,editable}){
    if(storeBusy)return;
    const dialog=el('dialog','mw-filter-dialog mw-photo-options');
    const heading=el('h2','',label);
@@ -562,20 +549,20 @@ export function setupWorkspace({state,composer,onChanged,onStoreChanged,onTerms}
          profileNotice('Escolhe JPG, PNG ou WebP até 5 MB.');
          return;
        }
-       if(await previewPhoto(file,label,kind)&&state.store?.id===storeId)void saveArtwork(key,file);
+       if(await previewPhoto(file,label,kind)&&state.store?.id===storeId)void saveStorePhoto(file);
      };
      input.click();
    });
    if(editable&&path)action('Remover fotografia','trash',async()=>{
      const storeId=state.store.id;
-     if(await confirmAction('Remover '+label.toLocaleLowerCase('pt')+'?','A fotografia deixa de aparecer no perfil da loja.','Remover')&&state.store?.id===storeId)saveArtwork(key,null);
+     if(await confirmAction('Remover fotografia?','A fotografia deixa de aparecer no perfil da loja.','Remover')&&state.store?.id===storeId)saveStorePhoto(null);
    });
    if(dialog.children.length===1)dialog.append(el('p','mw-muted','Fotografia indisponível.'));
    dialog.onclose=()=>dialog.remove();
    document.body.append(dialog);
    dialog.showModal();
  }
- async function saveArtwork(key,file){
+ async function saveStorePhoto(file){
    const store=state.store;
    if(storeBusy||!canPrepareStore(store)||file===undefined)return;
    const extension=file&&{'image/jpeg':'jpg','image/png':'png','image/webp':'webp'}[file.type];
@@ -585,14 +572,13 @@ export function setupWorkspace({state,composer,onChanged,onStoreChanged,onTerms}
    }
    if(!navigator.onLine){profileNotice('Sem ligação. Tenta novamente quando estiveres online.');return;}
    storeBusy=true;
-   storeEditor.setAttribute('aria-busy','true');
-   const artworkButton=$(key==='banner_path'?'merchantEditCover':'merchantEditLogo');
+   const artworkButton=$('merchantStoreLogo');
    setButtonBusy(artworkButton,true);
    artworkButton.disabled=true;
    try{
      let path=null;
      if(file){
-       const image=await preparePhoto(file,key==='banner_path'?1920:768);
+       const image=await preparePhoto(file,768);
        const imageExtension={'image/webp':'webp','image/png':'png'}[image.type];
        if(!imageExtension||image.size>5242880)throw new Error('Fotografia inválida.');
        const {data:{user},error}=await platform.auth.getUser();
@@ -605,12 +591,12 @@ export function setupWorkspace({state,composer,onChanged,onStoreChanged,onTerms}
      if(state.store?.id!==store.id)return;
      const document={name:store.name,whatsapp_e164:store.whatsapp_e164,opening_hours:store.opening_hours||[]};
      for(const field of ['description','location','address','service_area','logo_path','banner_path'])document[field]=store[field]||null;
-     document[key]=path;
+     document.logo_path=path;
      const {data,error}=await platform.rpc('kg_save_store_settings',{p_store_id:store.id,p_expected_updated_at:store.updated_at,p_document:document});
      if(error)throw error;
      if(state.store?.id!==store.id)return;
      state.store=data;
-     storeAssets[key]=data[key]||null;
+     storeAssets.logo_path=data.logo_path||null;
      onStoreChanged(data);
      renderProfile();
      profileSaved(file?'Fotografia actualizada.':'Fotografia removida.');
@@ -619,8 +605,7 @@ export function setupWorkspace({state,composer,onChanged,onStoreChanged,onTerms}
      if(state.store?.id===store.id)profileNotice(error?.code==='40001'?'A loja mudou noutra sessão. Actualiza e tenta novamente.':'Não foi possível guardar a alteração da fotografia.');
    }finally{
      storeBusy=false;
-     storeEditor.removeAttribute('aria-busy');
-     artworkButton.disabled=false;
+     artworkButton.disabled=!canPrepareStore(state.store) && !artworkButton.querySelector('img:not([hidden])');
      setButtonBusy(artworkButton,false);
    }
  }
@@ -629,7 +614,7 @@ export function setupWorkspace({state,composer,onChanged,onStoreChanged,onTerms}
  $('btnOpenNewProductModal').onclick=()=>composer.open();
  function online(){const offline=!navigator.onLine;notice($('merchantOffline'),offline?'Sem ligação. Podes consultar os dados carregados; as alterações exigem ligação.':'');}window.addEventListener('offline',online);window.addEventListener('online',online);
  async function canLeave(){if(storeBusy)return false;if(!await composer.close())return false;if(storeDirty&&!await confirmAction('Sair sem guardar?','As configurações da loja ainda não foram guardadas.','Descartar'))return false;storeDirty=false;return true;}
- function reset(){generation++;catalogueRevision++;$('merchantStoreCatalogue').replaceChildren();if(storeEditor.open)storeEditor.close();summary.reset();rows=[];activityRequest++;activityPeriod.value='7';storeDirty=false;hoursDirty=false;storeBusy=false;offset=0;tab='resumo';syncHeader('resumo');body.dataset.activeTab='resumo';nav.querySelectorAll('button').forEach(b=>b.setAttribute('aria-current',b.dataset.destination==='resumo'?'page':'false'));closeMenu();$('merchantProductsList').replaceChildren();$('merchantActivityList').replaceChildren();$('merchantActivityChart').replaceChildren();$('merchantStoreArtwork').replaceChildren();$('merchantStoreLogo').replaceChildren();$('merchantOpeningHours').replaceChildren();Object.assign(filters,{q:'',status:'all',category:'',available:'all',min:'',max:'',sort:'recent'});$('merchantSearch').value='';renderFilters();form.reset();body.querySelectorAll('[data-mw]').forEach(n=>n.hidden=n.dataset.mw!=='resumo');}
+ function reset(){generation++;catalogueRevision++;$('merchantStoreCatalogue').replaceChildren();if(storeEditor.open)storeEditor.close();summary.reset();rows=[];activityRequest++;activityPeriod.value='7';storeDirty=false;hoursDirty=false;storeBusy=false;offset=0;tab='resumo';syncHeader('resumo');body.dataset.activeTab='resumo';nav.querySelectorAll('button').forEach(b=>b.setAttribute('aria-current',b.dataset.destination==='resumo'?'page':'false'));closeMenu();$('merchantProductsList').replaceChildren();$('merchantActivityList').replaceChildren();$('merchantActivityChart').replaceChildren();$('merchantStoreLogo').replaceChildren();$('merchantOpeningHours').replaceChildren();Object.assign(filters,{q:'',status:'all',category:'',available:'all',min:'',max:'',sort:'recent'});$('merchantSearch').value='';renderFilters();form.reset();body.querySelectorAll('[data-mw]').forEach(n=>n.hidden=n.dataset.mw!=='resumo');}
  window.addEventListener('beforeunload',e=>{if(!view.hidden&&(storeDirty||storeBusy)){e.preventDefault();e.returnValue='';}});
  async function revealProduct(id){
    Object.assign(filters,{q:'',status:'all',category:'',available:'all',min:'',max:'',sort:'recent'});

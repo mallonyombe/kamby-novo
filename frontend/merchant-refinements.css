@@ -216,20 +216,11 @@
 #viewMerchant .mw-search-row>.mw-icon:hover {background:var(--bg-input);}
 #viewMerchant .merchant-own-nav button[aria-current="page"] {background:transparent;color:var(--storefront-action-ink);}
 #viewMerchant .mw-shop-profile { max-width:984px; margin-inline:auto; }
-#viewMerchant .mw-profile-cover {
-  position:relative;
-  width:100%;
-  height:clamp(172px,52vw,300px);
-  border-radius:20px;
-  overflow:hidden;
-  background:var(--store-cover-background);
-}
 #viewMerchant .mw-profile-avatar {
   position:relative;
   width:78px;
   height:78px;
-  margin:-33px 0 0;
-  border:3px solid var(--ui-page);
+  flex:none;
   border-radius:50%;
   background:var(--ui-surface);
   box-shadow:0 0 0 1px var(--ui-line);
@@ -248,24 +239,9 @@
   opacity:1;
 }
 #viewMerchant .mw-profile-image img { position:absolute;inset:0;width:100%;height:100%;object-fit:cover; }
-#viewMerchant .mw-profile-avatar img { object-fit:contain;background:var(--ui-surface); }
-#viewMerchant .mw-cover-placeholder {
-  display:flex;align-items:center;gap:8px;
-  padding:8px 12px;border-radius:10px;
-  background:#371225d9;color:#fff;font-size:.8125rem;
-}
-#viewMerchant .mw-cover-placeholder svg { width:18px;height:18px; }
-#viewMerchant .mw-profile-cover.has-photo .mw-cover-placeholder,
-#viewMerchant .mw-profile-cover:not(.has-photo) .mw-photo-edit { display:none; }
-#viewMerchant .mw-photo-edit {
-  position:absolute;right:6px;bottom:6px;
-  display:grid;place-items:center;width:26px;height:26px;
-  border:1px solid var(--ui-line);border-radius:8px;
-  background:var(--ui-surface);color:var(--ui-text);pointer-events:none;
-}
-#viewMerchant .mw-photo-edit svg { width:14px;height:14px; }
-#viewMerchant .mw-profile-info { position:relative; }
-#viewMerchant .mw-profile-copy { min-width:0;padding-top:10px; }
+#viewMerchant .mw-profile-avatar img { object-fit:cover;background:var(--ui-surface); }
+#viewMerchant .mw-profile-info { display:flex;align-items:center;flex-wrap:wrap;gap:12px; }
+#viewMerchant .mw-profile-copy { flex:1;min-width:120px; }
 #viewMerchant .mw-profile-info p { margin:3px 0 0;color:var(--mw-muted);font-size:.8125rem;overflow-wrap:anywhere; }
 #viewMerchant .mw-profile-actions .btn-store-status {
   display:inline-flex;align-items:center;justify-content:center;gap:7px;
@@ -327,13 +303,7 @@
 
 
 #viewMerchant .mw-profile-info h2 { font-size:clamp(1.55rem,5.5vw,2.1rem);line-height:1.2;overflow-wrap:anywhere; }
-#viewMerchant .mw-store-hero { position:relative; }
-#viewMerchant #merchantEditProfile {
-  position:absolute;top:12px;right:12px;
-  min-height:44px;padding-inline:12px;
-  background:var(--ui-surface);color:var(--ui-text);
-  border:1px solid var(--ui-line);
-}
+#viewMerchant #merchantEditProfile { min-height:44px;padding-inline:12px; }
 #viewMerchant .mw-profile-actions { display:grid;grid-template-columns:repeat(auto-fit,minmax(114px,1fr));gap:8px; }
 #viewMerchant .mw-profile-actions > :is(button,a) {
   margin:0;justify-content:center;text-align:center;padding-inline:8px;
@@ -357,10 +327,7 @@
 }
 #viewMerchant .mw-store-details { border-top:1px solid var(--ui-line); }
 #viewMerchant .mw-store-details summary { min-height:44px;padding-block:12px;cursor:pointer;color:var(--ui-secondary); }
-@media(max-width:759px) {
-  #viewMerchant .mw-shop-profile .mw-store-hero { margin:-18px -16px 0; }
-  #viewMerchant .mw-shop-profile .mw-profile-cover { border-radius:0; }
-}
+
 
 #viewMerchant .mw-profile-actions { margin:12px 0 16px; }
 
@@ -407,9 +374,7 @@
 #viewMerchant .mw-store-state[data-open="true"]::before { color:#39a46d; }
 #viewMerchant .mw-profile-actions .btn-store-status { background:var(--ui-text);color:var(--ui-page); }
 #viewMerchant .mw-profile-actions .btn-store-status::before { content:none; }
-#viewMerchant .mw-profile-image:not(:disabled) { cursor:zoom-in; }
-#viewMerchant .mw-editor-photo-actions { display:flex;flex-wrap:wrap;gap:8px;padding:8px 0; }
-#viewMerchant .mw-editor-photo-actions button { min-height:44px; }
+#viewMerchant .mw-profile-image:not(:disabled) { cursor:pointer; }
 
 .guided-editor .editor-header {
   grid-template-columns:48px minmax(0,1fr) 48px;
