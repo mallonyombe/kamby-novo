@@ -1,3 +1,4 @@
+import {bindSidebar,sidebarToggleIcon} from './panel-sidebar.js';
 import {enableModalDismiss, requestModalDismiss, protectModalEdits} from './modal-dismiss.js';
 import {listIcon,bindListSearch,paintFilterIcon} from './list-controls.js';
 import {platform} from './platform.js';
@@ -62,9 +63,17 @@ function status(value){const n=el('span','status',storeStates[value]||({publishe
 function heading(title,action){const h=el('header','page-heading'),t=el('div');t.append(el('h1','',title));h.append(t);if(action)h.append(action);return h;}
 function button(copy,cls,fn,ico){const b=el('button',cls);b.type='button';if(ico)b.innerHTML=icon(ico);b.append(document.createTextNode(copy));b.onclick=fn;return b;}
 const mobileAreas=['overview','stores','moderation'];
+const desktop = matchMedia('(min-width: 800px)');
+desktop.addEventListener('change', event => {
+  const drawer = $('#adminDrawer');
+  if (event.matches && drawer?.open) {
+    drawer.close();
+    ($('.admin-sidebar [aria-current="page"]') || $('.panel-sidebar-toggle')).focus();
+  }
+});
 function navMarkup(destinations){
   return areas.filter(([id])=>destinations.includes(id)&&can(id+'.read')).map(([id,label,glyph])=>
-    '<a href="#'+id+'" data-area="'+id+'">'+icon(glyph)+'<span>'+(id==='overview'?'Início':label)+'</span></a>'
+    '<a href="#'+id+'" data-area="'+id+'">'+icon(glyph)+'<span class="panel-sidebar-label">'+(id==='overview'?'Início':label)+'</span></a>'
   ).join('');
 }
 
@@ -72,34 +81,50 @@ function shell(){
   const brand='<img src="icone.svg" alt="" width="32" height="32"><span>Kamby</span>';
   const primary=navMarkup(mobileAreas);
   const other=navMarkup(areas.map(([id])=>id).filter(id=>!mobileAreas.includes(id)));
+  const destinations = `
+    ${primary?'<div class="admin-nav-group">'+primary+'</div>':''}
+    ${other?'<div class="admin-nav-group">'+other+'</div>':''}`;
   root.innerHTML=`
     <div class="admin-shell">
-      <header class="admin-topbar" aria-label="Navegação da gestão">
-        <button type="button" class="icon-button admin-drawer-trigger" aria-label="Abrir menu"
-          aria-controls="adminDrawer" aria-expanded="false">${icon('menu')}</button>
-        <h1 id="adminPrimaryTitle" tabindex="-1"></h1>
-        <span id="adminPrimaryActions" class="admin-primary-actions"></span>
-      </header>
-      <dialog id="adminDrawer" class="admin-drawer" aria-labelledby="adminDrawerTitle">
-        <div class="admin-drawer-body">
-          <header class="admin-drawer-head">
-            <h2 id="adminDrawerTitle">Gestor</h2>
-            <button type="button" class="icon-button admin-drawer-close" aria-label="Fechar menu"
-              autofocus>${icon('close')}</button>
-          </header>
-          <nav class="admin-nav" aria-label="Navegação do Gestor">
-            ${primary?'<div class="admin-nav-group">'+primary+'</div>':''}
-            ${other?'<div class="admin-nav-group">'+other+'</div>':''}
-          </nav>
-          <div class="admin-drawer-footer">
-            <a href="index.html">Abrir Kamby</a>
-            <button type="button" data-signout>Terminar sessão</button>
-          </div>
+      <aside class="admin-sidebar panel-sidebar" aria-label="Gestor">
+        <div class="panel-sidebar-header">
+          <div class="panel-sidebar-brand">${brand}</div>
+          <button type="button" class="panel-sidebar-toggle" aria-controls="adminSidebarNav">${sidebarToggleIcon}</button>
         </div>
-      </dialog>
-      <div id="adminContext"></div>
-      <main id="adminMain" tabindex="-1"></main>
+        <nav id="adminSidebarNav" class="admin-nav" aria-label="Navegação do Gestor">${destinations}</nav>
+        <div class="admin-sidebar-footer">
+          <a href="index.html">${icon('store')}<span class="panel-sidebar-label">Abrir Kamby</span></a>
+          <button type="button" data-signout><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M10 4H5v16h5m4-12 4 4-4 4m-5-4h9"/></svg><span class="panel-sidebar-label">Terminar sessão</span></button>
+        </div>
+      </aside>
+      <div class="admin-panel-content">
+        <header class="admin-topbar" aria-label="Navegação da gestão">
+          <button type="button" class="icon-button admin-drawer-trigger" aria-label="Abrir menu"
+            aria-controls="adminDrawer" aria-expanded="false">${icon('menu')}</button>
+          <h1 id="adminPrimaryTitle" tabindex="-1"></h1>
+          <span id="adminPrimaryActions" class="admin-primary-actions"></span>
+        </header>
+        <dialog id="adminDrawer" class="admin-drawer" aria-labelledby="adminDrawerTitle">
+          <div class="admin-drawer-body">
+            <header class="admin-drawer-head">
+              <h2 id="adminDrawerTitle">Gestor</h2>
+              <button type="button" class="icon-button admin-drawer-close" aria-label="Fechar menu"
+                autofocus>${icon('close')}</button>
+            </header>
+            <nav class="admin-nav" aria-label="Navegação do Gestor">
+              ${destinations}
+            </nav>
+            <div class="admin-drawer-footer">
+              <a href="index.html">Abrir Kamby</a>
+              <button type="button" data-signout>Terminar sessão</button>
+            </div>
+          </div>
+        </dialog>
+        <div id="adminContext"></div>
+        <main id="adminMain" tabindex="-1"></main>
+      </div>
     </div>`;
+  bindSidebar($('.admin-shell'), $('.panel-sidebar-toggle'), 'gestor');
   const drawer=$('#adminDrawer');
   const toggle=$('.admin-drawer-trigger');
   const close=$('.admin-drawer-close');
@@ -116,19 +141,22 @@ function shell(){
     toggle.setAttribute('aria-expanded','false');
     if(toggle.getClientRects().length)toggle.focus({preventScroll:true});
   });
-  drawer.onclick=event=>{ if(event.target.closest('a'))drawer.close(); };
-  $('[data-signout]',drawer).onclick=async event=>{
-    const action=event.currentTarget;
-    action.disabled=true;
+  drawer.onclick = event => {
+    if (event.target.closest('a') && !event.ctrlKey && !event.metaKey && !event.shiftKey && !event.altKey) drawer.close();
+  };
+  const signOutButtons = root.querySelectorAll('[data-signout]');
+  async function signOut(){
+    signOutButtons.forEach(button => button.disabled = true);
     try{
       const {error}=await platform.auth.signOut({scope:'local'});
       if(error)throw error;
       if(root.contains(drawer))await start();
     }catch{
       feedback('Não foi possível terminar a sessão. Tenta novamente.');
-      action.disabled=false;
+      signOutButtons.forEach(button => button.disabled = false);
     }
-  };
+  }
+  signOutButtons.forEach(button => button.addEventListener('click', signOut));
 }
 function showRouteHeader(area,id,section){
   const context=$('#adminContext');

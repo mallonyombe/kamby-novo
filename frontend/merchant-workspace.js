@@ -1,3 +1,4 @@
+import {bindSidebar,sidebarToggleIcon} from './panel-sidebar.js';
 import {listIcon,bindListSearch,paintFilterIcon} from './list-controls.js';
 import {preparePhoto} from './prepare-photo.js';
 import {canPrepareStore,initials,storeHoursDocument} from './merchant-domain.js';
@@ -7,9 +8,23 @@ import {activityChart} from './merchant-activity-chart.js';
 import {resolveStoreArtwork} from './storefront-artwork.js';
 import {platform} from './platform.js';
 import {el,icon,money,notice,confirmAction,imageUrl,showProductThumbnail} from './merchant-ui.js';
+const merchantDestinations = [
+  ['resumo', 'summary', 'Resumo'],
+  ['produtos', 'products', 'Produtos'],
+  ['actividade', 'activity', 'Actividade'],
+  ['loja', 'store', 'Loja'],
+];
+
 export function setupWorkspace({state,composer,onChanged,onStoreChanged,onTerms}){
  const view=document.getElementById('viewMerchant'),body=view.querySelector('.merchant-body');let tab='resumo',generation=0,paging=false,hasMore=false,total=0,offset=0,rows=[],activity=null,storeDirty=false,storeBusy=false,hoursDirty=false;const filters={q:'',status:'all',category:'',available:'all',min:'',max:'',sort:'recent'};const positions={};let storeAssets={logo_path:null,banner_path:null};
- body.className='merchant-workspace';body.innerHTML=`<aside class="mw-sidebar"><div class="mw-brand">${icon('store')}<div><strong id="merchantSidebarName"></strong><span>Espaço do lojista</span></div></div><nav class="merchant-own-nav" aria-label="Navegação do lojista"></nav><a class="mw-return" href="#definicoes">Voltar ao Kamby</a></aside><div class="mw-content"><p class="merchant-feedback" id="merchantFeedback" role="status" aria-live="polite" hidden></p><p class="merchant-feedback" id="merchantOffline" role="status" hidden></p><section data-mw="resumo" class="mw-summary">${summaryMarkup}</section><section data-mw="produtos" hidden><button type="button" id="btnOpenNewProductModal" class="kamby-list-icon" aria-label="Novo produto">${icon('plus')}</button><div class="mw-search-row kamby-search-panel" id="merchantSearchPanel" hidden><label class="mw-search">${icon('search')}<input id="merchantSearch" type="search" placeholder="Pesquisar no catálogo" aria-label="Pesquisar produtos por nome ou identificador" autocomplete="off"></label></div><button type="button" class="kamby-list-icon" id="merchantFilterButton" aria-label="Filtros do catálogo">${icon('filter')}</button><div class="mw-list-meta"><span id="merchantCatalogCount"></span><button type="button" id="merchantClearFilters" class="mw-text" hidden>Limpar filtros</button></div><div id="merchantProductsList" class="mw-product-list"></div><p id="merchantListSentinel" class="mw-muted" role="status"></p></section><section data-mw="actividade" hidden><button type="button" class="pdp-back-btn" id="merchantHistoryBack" aria-label="Voltar ao resumo">${icon('back')}</button><p class="mw-period">Últimos 7 dias</p><dl id="merchantActivityList" class="mw-traffic"></dl><div id="merchantActivityChart" class="mw-chart"></div></section><section data-mw="loja" class="mw-shop-profile" hidden>
+ body.className='merchant-workspace';body.innerHTML=`<aside class="mw-sidebar panel-sidebar">
+  <div class="panel-sidebar-header">
+    <div class="mw-brand panel-sidebar-brand"><span id="merchantSidebarAvatar" aria-hidden="true"></span><strong id="merchantSidebarName"></strong></div>
+    <button type="button" class="panel-sidebar-toggle" aria-controls="merchantSidebarNav">${sidebarToggleIcon}</button>
+  </div>
+  <nav id="merchantSidebarNav" class="merchant-own-nav" aria-label="Navegação do lojista"></nav>
+  <a class="mw-return" href="#definicoes">${icon('back')}<span class="panel-sidebar-label">Voltar ao Kamby</span></a>
+</aside><div class="mw-content"><p class="merchant-feedback" id="merchantFeedback" role="status" aria-live="polite" hidden></p><p class="merchant-feedback" id="merchantOffline" role="status" hidden></p><section data-mw="resumo" class="mw-summary">${summaryMarkup}</section><section data-mw="produtos" hidden><button type="button" id="btnOpenNewProductModal" class="kamby-list-icon" aria-label="Novo produto">${icon('plus')}</button><div class="mw-search-row kamby-search-panel" id="merchantSearchPanel" hidden><label class="mw-search">${icon('search')}<input id="merchantSearch" type="search" placeholder="Pesquisar no catálogo" aria-label="Pesquisar produtos por nome ou identificador" autocomplete="off"></label></div><button type="button" class="kamby-list-icon" id="merchantFilterButton" aria-label="Filtros do catálogo">${icon('filter')}</button><div class="mw-list-meta"><span id="merchantCatalogCount"></span><button type="button" id="merchantClearFilters" class="mw-text" hidden>Limpar filtros</button></div><div id="merchantProductsList" class="mw-product-list"></div><p id="merchantListSentinel" class="mw-muted" role="status"></p></section><section data-mw="actividade" hidden><button type="button" class="pdp-back-btn" id="merchantHistoryBack" aria-label="Voltar ao resumo">${icon('back')}</button><p class="mw-period">Últimos 7 dias</p><dl id="merchantActivityList" class="mw-traffic"></dl><div id="merchantActivityChart" class="mw-chart"></div></section><section data-mw="loja" class="mw-shop-profile" hidden>
  <div id="merchantStoreArtwork" class="mw-profile-photos"></div>
  <div class="mw-profile-info"><div><h2 id="merchantStoreName"></h2><p id="merchantStoreLocation"></p><p id="merchantStoreContact" hidden></p></div><button type="button" class="btn-store-status" id="btnToggleStoreStatus">—</button></div>
  <p id="merchantStoreDescription" class="mw-profile-description"></p>
@@ -21,12 +36,13 @@ export function setupWorkspace({state,composer,onChanged,onStoreChanged,onTerms}
  <div id="merchantProfileDetails" class="mw-profile-details"></div>
  <dialog id="merchantStoreEditor" class="mw-filter-dialog mw-store-editor" aria-labelledby="merchantStoreEditorTitle">
  <form id="merchantStoreForm"><header><h2 id="merchantStoreEditorTitle">Editar perfil</h2><button type="button" id="merchantCloseStoreEditor" aria-label="Fechar editor">${icon('close')}</button></header><details class="mw-settings-group" open><summary>Identidade</summary><label>Nome da loja<input name="name" minlength="2" maxlength="80" required></label><label>Descrição<textarea name="description" rows="3" maxlength="2000"></textarea></label></details><details class="mw-settings-group"><summary>WhatsApp e localização</summary><label>WhatsApp comercial<input name="whatsapp_e164" type="tel" placeholder="+258 84 123 4567" required></label><label>Localidade<input name="location" maxlength="120" placeholder="Chongoene"></label><label>Endereço<textarea name="address" maxlength="300" rows="2"></textarea></label><label>Área de atendimento<input name="service_area" maxlength="300" placeholder="Ex.: Chongoene e arredores"></label></details><details class="mw-settings-group"><summary>Horário de atendimento</summary><p class="mw-muted">Sem horário definido, vale a abertura manual. Hora de Moçambique. Fora do horário definido, os clientes podem guardar no carrinho, mas não enviar pedidos.</p><div id="merchantOpeningHours"></div></details><p class="merchant-feedback" id="merchantStoreSaveNotice" role="status" hidden></p><footer><button id="merchantSaveStore" class="mw-primary" type="submit">Guardar perfil</button></footer></form></dialog></section></div>`;
+ bindSidebar(body, body.querySelector('.panel-sidebar-toggle'), 'lojista');
  const navigationDrawer=el('dialog','merchant-navigation-drawer');
  navigationDrawer.id='merchantNavigationDrawer';
  navigationDrawer.setAttribute('aria-label','Navegação da loja');
  const closeNavigation=el('button','mw-icon');closeNavigation.type='button';closeNavigation.setAttribute('aria-label','Fechar menu');closeNavigation.innerHTML=icon('close');closeNavigation.onclick=()=>navigationDrawer.close();
  navigationDrawer.append(closeNavigation);
- for(const [key,label,glyph] of [['resumo','Resumo','summary'],['produtos','Produtos','products'],['loja','Loja','store']]){
+ for(const [key,glyph,label] of merchantDestinations){
   const entry=el('button','store-section-link',label);entry.type='button';entry.dataset.destination=key;entry.insertAdjacentHTML('afterbegin',icon(glyph));
   entry.onclick=()=>{navigationDrawer.close();void switchTab(key);};navigationDrawer.append(entry);
  }
@@ -41,7 +57,7 @@ export function setupWorkspace({state,composer,onChanged,onStoreChanged,onTerms}
   navigationDrawer.showModal();
   menu.setAttribute('aria-expanded','true');
  };
- navigationDrawer.addEventListener('close',()=>{menu.setAttribute('aria-expanded','false');menu.focus({preventScroll:true});});
+ navigationDrawer.addEventListener('close',()=>{menu.setAttribute('aria-expanded','false');if(menu.getClientRects().length)menu.focus({preventScroll:true});});
  const header=view.querySelector('.pdp-nav-content');header.prepend(menu);
  header.querySelector('#btnBackFromMerchant').hidden=true;
  const $=id=>view.querySelector('#'+id);const set=(id,value)=>$(id).textContent=value;const feedback=copy=>notice($('merchantFeedback'),copy);
@@ -87,7 +103,16 @@ export function setupWorkspace({state,composer,onChanged,onStoreChanged,onTerms}
    }
  }
  publishButton.onclick=()=>void publishStore(publishButton);
- const nav=body.querySelector('nav');nav.setAttribute('aria-label','Navegação da loja');[['resumo','summary','Resumo'],['produtos','products','Produtos'],['loja','store','Loja']].forEach(([id,image,name])=>{const b=el('button');b.type='button';b.dataset.destination=id;b.innerHTML=icon(image);b.append(el('span','',name));b.onclick=()=>switchTab(id);nav.append(b);});
+ const nav = $('merchantSidebarNav');
+ for (const [id, glyph, label] of merchantDestinations) {
+   const entry = el('button');
+   entry.type = 'button';
+   entry.dataset.destination = id;
+   entry.innerHTML = icon(glyph);
+   entry.append(el('span','panel-sidebar-label',label));
+   entry.onclick = () => switchTab(id);
+   nav.append(entry);
+ }
  function renderFilters(){
    const active=filters.status!=='all'||filters.category||filters.available!=='all'||filters.min||filters.max||filters.sort!=='recent';
    paintFilterIcon(filterButton,active);
@@ -261,7 +286,33 @@ export function setupWorkspace({state,composer,onChanged,onStoreChanged,onTerms}
    }
  }
 
- async function load(){if(!state.store)return;const id=state.store.id;const {data,error}=await platform.from('kg_stores').select('*').eq('id',id).single();if(view.hidden||state.store?.id!==id)return;if(!error){state.store=data;onStoreChanged(data);}set('merchantSidebarName',state.store.name);summary.syncStatus();const unavailable=!canPrepareStore(state.store);$('btnOpenNewProductModal').disabled=$('merchantQuickNew').disabled=unavailable;await Promise.all([loadSummary(),loadProducts(true,tab==='produtos'),loadCategories()]);if(tab==='loja'&&!storeDirty){renderStoreForm();renderProfile();}if(tab==='actividade')loadActivity();}
+ function renderSidebarIdentity(){
+   const store = state.store;
+   const name = $('merchantSidebarName');
+   name.textContent = store.name;
+   name.title = store.name;
+   const avatar = $('merchantSidebarAvatar');
+   const identity = JSON.stringify([store.id, store.name, store.logo_path, store.is_test]);
+   if (avatar.dataset.identity === identity) return;
+   avatar.dataset.identity = identity;
+   const image = el('img');
+   image.alt = '';
+   image.hidden = true;
+   image.onload = () => image.hidden = false;
+   avatar.replaceChildren(document.createTextNode(initials(store.name)), image);
+   if (store.logo_path) {
+     imageUrl(platform, store.logo_path).then(url => {
+       if (url && image.isConnected) image.src = url;
+     });
+   } else {
+     const artwork = resolveStoreArtwork({id:store.id,isTest:store.is_test===true});
+     if (artwork.avatar) {
+       image.style.objectPosition = artwork.avatarPosition;
+       image.src = artwork.avatar;
+     }
+   }
+ }
+ async function load(){if(!state.store)return;const id=state.store.id;const {data,error}=await platform.from('kg_stores').select('*').eq('id',id).single();if(view.hidden||state.store?.id!==id)return;if(!error){state.store=data;onStoreChanged(data);}renderSidebarIdentity();summary.syncStatus();const unavailable=!canPrepareStore(state.store);$('btnOpenNewProductModal').disabled=$('merchantQuickNew').disabled=unavailable;await Promise.all([loadSummary(),loadProducts(true,tab==='produtos'),loadCategories()]);if(tab==='loja'&&!storeDirty){renderStoreForm();renderProfile();}if(tab==='actividade')loadActivity();}
  const form=$('merchantStoreForm');form.oninput=e=>{storeDirty=true;if(/^(day|open|close)-/.test(e.target.name||''))hoursDirty=true;notice($('merchantStoreSaveNotice'),'Alterações por guardar.');};
  function renderStoreForm(){const s=state.store;if(!s)return;hoursDirty=false;storeAssets={logo_path:s.logo_path||null,banner_path:s.banner_path||null};['name','description','whatsapp_e164','location','address','service_area'].forEach(key=>form.elements[key].value=s[key]||'');$('merchantPublicPreview').href='#loja/'+s.id;$('merchantPublicPreview').hidden=s.status!=='approved';const hours=$('merchantOpeningHours');hours.replaceChildren();['Segunda','Terça','Quarta','Quinta','Sexta','Sábado','Domingo'].forEach((day,index)=>{const value=s.opening_hours?.find(x=>x.day===index)||{closed:true,open:'08:00',close:'17:00'};const row=el('div','mw-hours');const label=el('label','mw-check');const check=el('input');check.type='checkbox';check.checked=!value.closed;check.name='day-'+index;label.append(check,document.createTextNode(day));const from=el('input'),to=el('input');from.type=to.type='time';from.name='open-'+index;to.name='close-'+index;from.value=value.open||'08:00';to.value=value.close||'17:00';from.setAttribute('aria-label','Abertura '+day);to.setAttribute('aria-label','Fecho '+day);from.disabled=to.disabled=value.closed||!canPrepareStore(s);check.onchange=()=>{from.disabled=to.disabled=!check.checked;storeDirty=true;hoursDirty=true;};row.append(label,from,el('span','','–'),to);hours.append(row);});form.querySelectorAll('input,textarea,button').forEach(n=>{if(!n.name?.startsWith('open-')&&!n.name?.startsWith('close-'))n.disabled=!canPrepareStore(s);});storeDirty=false;notice($('merchantStoreSaveNotice'),'');}
  const storeEditor=$('merchantStoreEditor');
@@ -284,6 +335,7 @@ export function setupWorkspace({state,composer,onChanged,onStoreChanged,onTerms}
    publishButton.hidden=!['draft','pending'].includes(state.store?.status);
    const store=state.store;
    if(!store)return;
+   renderSidebarIdentity();
    const editable=canPrepareStore(store);
    $('merchantEditProfile').hidden=!editable;
    set('merchantStoreDescription',store.description||'');
