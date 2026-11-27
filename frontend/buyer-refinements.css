@@ -1,16 +1,18 @@
 /* Buyer hierarchy: store summaries → scoped cart; identity → catalogue. */
 .cart-groups-list {max-width:680px;margin:0 auto;gap:12px;padding-bottom:24px;}
 .cart-view-count {max-width:680px;margin:0 auto 14px;font-size:12px;color:var(--text-secondary);font-weight:400;}
-.cart-store-summary {display:flex;flex-direction:column;gap:0;width:100%;padding:8px 14px 12px;background:var(--bg-surface);color:var(--text-main);border:1px solid var(--border-subtle);border-radius:14px;text-align:left;box-shadow:none;}
+.cart-store-card.cart-store-summary {display:block;padding:0;border:0;background:transparent;box-shadow:none;}
+.cart-summary-open {display:block;width:100%;padding:12px 16px;background:var(--bg-surface);color:var(--text-main);border:1px solid var(--border-subtle);border-radius:14px;text-align:start;}
+.cart-summary-open:active {background:var(--bg-input);}
 .cart-summary-heading {display:flex;justify-content:space-between;align-items:center;gap:12px;width:100%;}
 .cart-summary-heading .cart-store-name {font-size:15px;line-height:21px;font-weight:600;}
+.cart-summary-heading .cart-store-location {display:block;font-size:.75rem;color:var(--text-secondary);}
 .cart-summary-heading svg {width:17px;height:17px;flex:none;color:var(--text-muted);}
-.cart-store-summary .cart-store-location {font-size:11px;line-height:17px;margin-top:3px;font-weight:400;}
 .cart-summary-bottom {display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:10px;}
 .cart-summary-previews {display:flex;align-items:center;gap:4px;min-width:0;}
-.cart-summary-more-link {min-width:44px;min-height:44px;padding:0;border:0;background:transparent;color:var(--buyer-accent-ink);font-size:.75rem;}
 .cart-summary-thumb,.cart-summary-more {display:grid;place-items:center;width:42px;height:46px;flex:none;background:var(--bg-input);border-radius:8px;overflow:hidden;}
-.cart-summary-thumb img {width:100%;height:100%;object-fit:contain;}
+.cart-summary-thumb {position:relative;}
+.cart-summary-thumb img {position:absolute;inset:0;width:100%;height:100%;object-fit:contain;background:var(--bg-input);}
 .cart-summary-more {width:30px;font-size:11px;color:var(--text-secondary);}
 .cart-summary-total {display:grid;justify-items:end;gap:2px;white-space:nowrap;}
 .cart-summary-total>span {font-size:11px;font-weight:400;color:var(--text-secondary);}
@@ -123,10 +125,9 @@ body.is-subscreen .commerce-toast {bottom:calc(132px + var(--safe-bottom));}
 .cart-item-product-link {display:flex;align-items:center;gap:10px;min-width:0;color:inherit;text-decoration:none;border-radius:10px;}
 #viewStoreCart .cart-item-product-link .cart-item-title {font-size:.875rem;line-height:1.35;white-space:normal;overflow-wrap:anywhere;}
 .cart-unit-price {display:block;color:var(--text-secondary);font-size:.75rem;}
-.cart-summary-heading {min-height:44px;padding:0;border:0;background:transparent;color:inherit;text-align:left;border-radius:8px;}
-.cart-summary-thumb:focus-visible,.cart-item-product-link:focus-visible {outline-offset:2px;}
+.cart-summary-open:focus-visible,.cart-item-product-link:focus-visible {outline-offset:2px;}
 @media (hover:hover) {
-  .cart-item-product-link:hover .cart-item-title,.cart-summary-heading:hover .cart-store-name {text-decoration:underline;text-underline-offset:3px;}
+  .cart-item-product-link:hover .cart-item-title,.cart-summary-open:hover .cart-store-name {text-decoration:underline;text-underline-offset:3px;}
 }
 .cart-item-actions {display:flex;flex-direction:column;align-items:flex-end;gap:2px;}
 .cart-item-remove {display:grid;place-items:center;width:44px;min-width:44px;height:44px;min-height:44px;padding:0;border:0;border-radius:10px;background:transparent;color:var(--text-secondary);}
@@ -146,3 +147,7 @@ body.is-subscreen .commerce-toast {bottom:calc(132px + var(--safe-bottom));}
 #viewStoreCart .store-cart-body>h2 {margin-bottom:3px;}
 #viewStoreCart .cart-qty-ctrl {background:var(--bg-input);border-radius:12px;}
 #viewStoreCart .store-cart-footer strong {font-variant-numeric:tabular-nums;}
+
+#searchDiscovery {display:grid;gap:24px;}
+#searchDiscovery .search-section-title {font-size:.9375rem;letter-spacing:normal;text-transform:none;color:var(--ui-text);}
+#searchDiscovery .btn-clear-history {min-height:var(--ui-target);color:var(--ui-selection);}

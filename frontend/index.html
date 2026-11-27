@@ -1553,7 +1553,6 @@
       border-radius: 999px; background: var(--text-main); color: var(--bg-surface);
       font-size: 10px; line-height: 14px; text-align: center;
     }
-    #searchOverlay .search-panel { gap: 24px; }
     #searchOverlay .search-section-title { font-size: .9375rem; color: var(--text-main); text-transform: none; letter-spacing: normal; }
     #viewSearchResults .search-zero-box:not([hidden]) { background: transparent; padding: 32px 16px; }
   </style>
@@ -1627,33 +1626,6 @@
 
     </div>
   </header>
-
-  <!-- ==========================================================================
-       SEARCH OVERLAY CONTEXTUAL (SURGE AO CLICAR NA PESQUISA)
-       ========================================================================== -->
-  <div class="search-overlay" id="searchOverlay" role="region" aria-label="Sugestões de pesquisa">
-    <div class="search-panel">
-      <section id="searchLiveSuggestions" hidden><div class="search-section-header"><span class="search-section-title">Sugestões</span></div><div id="searchLiveSuggestionsList" class="search-suggestions-list"></div></section>
-      
-      <!-- Secção de Histórico Recente -->
-      <section id="searchRecentSection" hidden>
-        <div class="search-section-header">
-          <span class="search-section-title">Recentes</span>
-          <button class="btn-clear-history" id="btnClearHistory">Limpar</button>
-        </div>
-        <div class="recent-chips-wrap" id="recentChips"></div>
-      </section>
-
-      <!-- Atalhos construídos somente a partir do catálogo publicado -->
-      <section>
-        <div class="search-section-header">
-          <span class="search-section-title">Explorar categorias</span>
-        </div>
-        <div class="category-pills-grid" id="searchCategoryGrid"></div>
-      </section>
-
-    </div>
-  </div>
 
   <!-- ==========================================================================
        FEED COMERCIAL DE PRODUTOS
@@ -1786,22 +1758,37 @@
           <form id="searchResultsForm" class="search-results-form" role="search">
             <button class="search-submit-btn" type="submit" aria-label="Pesquisar"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m16 16 5 5"/></svg></button>
             <input id="searchResultsInput" class="search-input" type="search" placeholder="Pesquisar produtos e lojas" aria-label="Pesquisar produtos e lojas" enterkeyhint="search" autocomplete="off" maxlength="160" />
-            <button class="search-submit-btn" id="btnCloseSearchResults" type="button" aria-label="Limpar campo de pesquisa"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg></button>
+            <button class="search-submit-btn" id="btnCloseSearchResults" type="button" aria-label="Limpar pesquisa" hidden><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg></button>
           </form>
         </div>
       </header>
       <div class="commerce-sr-only">
-        <h2 class="search-res-title" id="searchQueryLabel">Resultados</h2>
+        <h2 class="search-res-title" id="searchQueryLabel" hidden>Resultados</h2>
         <p class="search-res-count" id="searchTotalCount" role="status" aria-live="polite" aria-atomic="true"></p>
       </div>
-      <div class="search-result-controls"><div class="search-tabs-row" role="tablist" aria-label="Tipo de resultado">
+      <div id="searchDiscovery">
+        <section id="searchRecentSection" aria-labelledby="searchRecentTitle" hidden>
+          <div class="search-section-header">
+            <h2 class="search-section-title" id="searchRecentTitle">Recentes</h2>
+            <button class="btn-clear-history" id="btnClearHistory" type="button" aria-label="Limpar pesquisas recentes">Limpar</button>
+          </div>
+          <div class="recent-chips-wrap" id="recentChips"></div>
+        </section>
+        <section aria-labelledby="searchCategoriesTitle" hidden>
+          <div class="search-section-header">
+            <h2 class="search-section-title" id="searchCategoriesTitle">Categorias</h2>
+          </div>
+          <div class="category-pills-grid" id="searchCategoryGrid"></div>
+        </section>
+      </div>
+      <div class="search-result-controls" id="searchResultControls" hidden><div class="search-tabs-row" role="tablist" aria-label="Tipo de resultado">
         <button type="button" class="search-tab-btn active" id="tabBtnProducts" role="tab" aria-controls="searchResultsProductsWrap" aria-selected="true">Produtos <span id="countProductsTab">0</span></button>
         <button type="button" class="search-tab-btn" id="tabBtnStores" role="tab" aria-controls="searchResultsStoresWrap" aria-selected="false" tabindex="-1">Lojas <span id="countStoresTab">0</span></button>
       </div>
       <div class="search-quick-filters" hidden><button type="button" id="filterAvailable" hidden></button><button type="button" id="filterStoreProducts" hidden></button></div>
       <div class="search-tools"><span id="searchSortLabel" class="commerce-sr-only">Por relevância</span><button type="button" class="search-filter-action" id="btnOpenSearchFilters" aria-label="Filtros de pesquisa"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M4 7h10m4 0h2M4 17h2m4 0h10"/><circle cx="16" cy="7" r="2"/><circle cx="8" cy="17" r="2"/></svg><span id="searchFilterCount" aria-hidden="true" hidden></span></button></div></div><div class="search-filter-applied" id="searchAppliedFilters" hidden><span id="searchFilterSummary"></span><button type="button" class="settings-text-action" id="btnClearAppliedFilters">Limpar filtros</button></div>
       <div id="searchResultsSuggestions" class="search-results-suggestions" hidden></div>
-      <div id="searchResultsProductsWrap" role="tabpanel" aria-labelledby="tabBtnProducts" tabindex="0"><div class="products-grid" id="searchProductsGrid"></div></div>
+      <div id="searchResultsProductsWrap" hidden role="tabpanel" aria-labelledby="tabBtnProducts" tabindex="0"><div class="products-grid" id="searchProductsGrid"></div></div>
       <div id="searchResultsStoresWrap" role="tabpanel" aria-labelledby="tabBtnStores" tabindex="0" hidden><div class="stores-list-container" id="searchStoresList"></div></div>
       <div id="searchZeroState" class="search-zero-box" hidden>
         <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m16 16 5 5M8 11h6"/></svg>
@@ -3398,47 +3385,56 @@
         card.className = 'cart-store-card cart-store-summary';
         const openCart = document.createElement('button');
         openCart.type = 'button';
-        openCart.className = 'cart-summary-heading';
+        openCart.className = 'cart-summary-open';
         const count = group.items.reduce((sum, {item}) => sum + item.quantity, 0);
         openCart.setAttribute('aria-label', 'Abrir carrinho de ' + group.storeName + ', ' + count + (count === 1 ? ' artigo, subtotal ' : ' artigos, subtotal ') + formatPrice(group.subtotalMinor));
+        const heading = document.createElement('span'); heading.className = 'cart-summary-heading';
         const name = document.createElement('strong'); name.className = 'cart-store-name'; name.textContent = group.storeName;
         const chevron = document.createElementNS('http://www.w3.org/2000/svg', 'svg'); chevron.setAttribute('viewBox', '0 0 24 24'); chevron.setAttribute('aria-hidden', 'true'); chevron.innerHTML = '<path d="m9 5 7 7-7 7" fill="none" stroke="currentColor" stroke-width="1.7"/>';
-        openCart.append(name, chevron); card.append(openCart);
-        if (group.storeLocation) { const location = document.createElement('span'); location.className = 'cart-store-location'; location.textContent = group.storeLocation; card.append(location); }
-        const previews = document.createElement('div'); previews.className = 'cart-summary-previews';
+        const identity = document.createElement('span');
+        identity.append(name);
+        if (group.storeLocation) {
+          const location = document.createElement('span');
+          location.className = 'cart-store-location';
+          location.textContent = group.storeLocation;
+          identity.append(location);
+        }
+        heading.append(identity, chevron);
+        openCart.append(heading);
+        const previews = document.createElement('span'); previews.className = 'cart-summary-previews';
+        previews.setAttribute('aria-hidden', 'true');
         const articles = [...new Map(group.items.map(({ item }) => [item.productId, item])).values()];
         articles.slice(0, 3).forEach(item => {
-          const link = createCartProductLink(item);
-          link.className = 'cart-summary-thumb';
-          if (item.imageUrl) {
+          const thumb = document.createElement('span');
+          thumb.className = 'cart-summary-thumb';
+          thumb.textContent = item.productTitle.trim().charAt(0);
+          if (item.imageUrl || item.imagePath) {
             const image = document.createElement('img');
             image.alt = '';
-            image.src = item.imageUrl;
-            if (item.imagePath) signProductImage(item.imagePath).then(url => { if (url) image.src = url; }).catch(() => {});
-            image.addEventListener('error', () => { image.hidden = true; }, { once: true });
+            image.hidden = true;
+            image.addEventListener('error', () => { image.hidden = true; });
             image.addEventListener('load', () => { image.hidden = false; });
-            link.append(image);
+            if (item.imageUrl) image.src = item.imageUrl;
+            if (item.imagePath) signProductImage(item.imagePath).then(url => { if (url) image.src = url; }).catch(() => {});
+            thumb.append(image);
           }
-          else link.textContent = item.productTitle.trim().charAt(0);
-          previews.append(link);
+          previews.append(thumb);
         });
         if (articles.length > 3) {
-          const more = document.createElement('button');
-          more.type = 'button';
-          more.className = 'cart-summary-more-link';
-          more.textContent = 'Mais';
-          more.setAttribute('aria-label', 'Ver todos os artigos de ' + group.storeName);
-          more.addEventListener('click', () => openStoreCart(group.storeId, true, group.storeName));
+          const more = document.createElement('span');
+          more.className = 'cart-summary-more';
+          more.textContent = '+' + (articles.length - 3);
           previews.append(more);
         }
         const total = document.createElement('span'); total.className = 'cart-summary-total';
-        const quantity = document.createElement('span'); quantity.textContent = 'Subtotal';
+        const quantity = document.createElement('span'); quantity.textContent = count + (count === 1 ? ' artigo' : ' artigos');
         const subtotal = document.createElement('strong'); subtotal.textContent = formatPrice(group.subtotalMinor);
-        const summary = document.createElement('div');
+        const summary = document.createElement('span');
         summary.className = 'cart-summary-bottom';
         total.append(quantity, subtotal);
         summary.append(previews, total);
-        card.append(summary);
+        openCart.append(summary);
+        card.append(openCart);
         openCart.onclick = () => openStoreCart(group.storeId, true, group.storeName);
         return card;
       }
@@ -4380,17 +4376,47 @@
         } finally {page.loading = false;}
       }
 
+      function resetSearchEntry() {
+        ++searchState.requestId;
+        searchObserver.disconnect();
+        searchEnd.replaceChildren();
+        Object.assign(searchState, {
+          query:'', tab:'products', availableOnly:false, withProductsOnly:false,
+          category:'all', minPrice:'', maxPrice:'', openOnly:false, productSort:'relevance',
+          storeSort:'relevance', catalogue:null, loading:false, error:false,
+          scrollPosition:0, userSelectedTab:false
+        });
+        searchInput.value = searchResultsInput.value = '';
+        btnClearSearch.classList.remove('show');
+        document.getElementById('btnCloseSearchResults').hidden = true;
+        document.getElementById('searchDiscovery').hidden = false;
+        document.getElementById('searchResultControls').hidden = true;
+        hideSearchSuggestions();
+        searchElements.label.hidden = true;
+        searchElements.total.replaceChildren();
+        for (const panel of [searchElements.productsWrap, searchElements.storesWrap,
+          searchElements.status, searchElements.zero, document.getElementById('searchAppliedFilters')]) {
+          panel.hidden = true;
+        }
+        viewSearchResults.removeAttribute('aria-busy');
+        document.title = 'Pesquisa · Kamby';
+      }
+
       function openSearchPage(updateHistory = true) {
         document.body.classList.remove('is-searching');
         document.getElementById('mainContainer').inert = false;
         floatingNavbar.inert = false;
+        const draft = !updateHistory && location.hash === '#pesquisa' ? history.state?.searchDraft : '';
+        resetSearchEntry();
         switchView('pesquisa', false);
         if (updateHistory && location.hash !== '#pesquisa') history.pushState({kambySearch:true}, '', '#pesquisa');
         searchResultsInput.focus({preventScroll:true});
-        if (!searchResultsInput.value.trim()) {
-          document.getElementById('searchZeroState').hidden = true;
-          document.getElementById('searchStatusMessage').hidden = true;
+        if (typeof draft === 'string' && draft) {
+          searchResultsInput.value = draft;
+          document.getElementById('btnCloseSearchResults').hidden = false;
+          suggest();
         }
+        if (!feedState.categories.length) loadCategoryIndex().catch(() => {});
       }
       async function executeSearch(query, options = {}) {
         const clean = String(query || '').replace(/\s+/g, ' ').trim().slice(0, 160);
@@ -4414,6 +4440,9 @@
         switchView('pesquisa', false);
         searchInput.value = clean;
         searchResultsInput.value = clean;
+        document.getElementById('btnCloseSearchResults').hidden = false;
+        document.getElementById('searchDiscovery').hidden = true;
+        document.getElementById('searchResultControls').hidden = false;
         searchResultsInput.blur();
         if (!options.restore) {
           searchState.scrollPosition = 0;
@@ -4421,12 +4450,12 @@
         }
         btnClearSearch.classList.add('show');
         searchElements.label.textContent = '“' + clean + '”';
+        searchElements.label.hidden = false;
         document.title = clean + ' · Pesquisa · Kamby';
         if (options.updateHistory !== false && window.location.hash !== searchHash()) {
           history.pushState({ kambySearch: true }, '', searchHash());
         }
-        document.getElementById('searchResultsSuggestions').hidden=true;
-        document.getElementById('searchLiveSuggestions').hidden=true;
+        hideSearchSuggestions();
         rememberSearch(clean);
         if (!feedState.categories.length) loadCategoryIndex().catch(() => {});
         const parameters = searchParameters(searchState.tab,0);
@@ -4512,9 +4541,15 @@
       document.querySelectorAll('[data-search-suggestion]').forEach(button => {
         button.addEventListener('click', () => executeSearch(button.dataset.searchSuggestion));
       });
-      document.getElementById('btnCloseSearchResults').addEventListener('click', () => {
-        searchResultsInput.value = '';
-        searchResultsInput.focus();
+      function clearSearchEntry() {
+        resetSearchEntry();
+        history.replaceState({...history.state, searchDraft:''}, '', '#pesquisa');
+        searchResultsInput.focus({preventScroll:true});
+      }
+      document.getElementById('btnCloseSearchResults').addEventListener('click', clearSearchEntry);
+      searchResultsInput.addEventListener('input', () => {
+        if (!searchResultsInput.value) clearSearchEntry();
+        else document.getElementById('btnCloseSearchResults').hidden = false;
       });
       document.getElementById('btnBackSearchResults').addEventListener('click', () => {
         if (history.state && history.state.kambySearch) history.back();
@@ -4534,9 +4569,75 @@
       function clearCurrentSearchFilters(){if(searchState.tab==='products')Object.assign(searchState,{category:'all',minPrice:'',maxPrice:'',availableOnly:false,productSort:'relevance'});else Object.assign(searchState,{withProductsOnly:false,openOnly:false,storeSort:'relevance'});refreshFilteredSearch();replaceSearchHash();}
       document.getElementById('btnClearAppliedFilters').addEventListener('click',clearCurrentSearchFilters);
       const clearZero=document.createElement('button');clearZero.type='button';clearZero.id='searchZeroClearFilters';clearZero.hidden=true;clearZero.className='settings-text-action';clearZero.textContent='Limpar filtros';clearZero.addEventListener('click',clearCurrentSearchFilters);searchElements.zero.append(clearZero);
-      let suggestionTimer=0,suggestionRequest=0;
-      async function suggest(input){const query=input.value.trim();const request=++suggestionRequest;const results=input===searchResultsInput;const wrapper=document.getElementById(results?'searchResultsSuggestions':'searchLiveSuggestions');const list=document.getElementById(results?'searchResultsSuggestions':'searchLiveSuggestionsList');if(!query){wrapper.hidden=true;return;}const catalogue={products:feedState.products,stores:storesState.stores};if(request!==suggestionRequest||input.value.trim()!==query||document.activeElement!==input)return;list.replaceChildren();wrapper.hidden=false;const matches=matchCatalogue(catalogue,query);const options=[{text:'Pesquisar “'+query+'”',sub:'Produtos e lojas',query},...matches.products.slice(0,3).map(p=>({text:p.title,sub:'Produto · '+p.storeName,query:p.title})),...matches.stores.slice(0,2).map(s=>({text:s.name,sub:'Loja · '+s.location,query:s.name,kind:'stores'}))];options.forEach((item,index)=>{const b=document.createElement('button');b.type='button';b.className='search-suggestion-button';const label=document.createElement('span');label.textContent=item.text;const sub=document.createElement('small');sub.textContent=item.sub;label.append(sub);b.append(label);b.addEventListener('click',()=>{suggestionRequest++;executeSearch(item.query,{tab:item.kind});});b.addEventListener('keydown',event=>{if(!['ArrowDown','ArrowUp','Escape'].includes(event.key))return;event.preventDefault();if(event.key==='Escape'){wrapper.hidden=true;input.focus();return;}const buttons=Array.from(list.querySelectorAll('button'));const next=index+(event.key==='ArrowDown'?1:-1);if(next<0)input.focus();else buttons[Math.min(next,buttons.length-1)].focus();});list.append(b);});}
-      for(const input of [searchInput,searchResultsInput]){input.addEventListener('input',()=>{clearTimeout(suggestionTimer);suggestionTimer=setTimeout(()=>suggest(input),150);});input.addEventListener('keydown',event=>{if(event.key==='ArrowDown'){const list=document.getElementById(input===searchResultsInput?'searchResultsSuggestions':'searchLiveSuggestionsList');const first=list.querySelector('button');if(first&&!list.hidden){event.preventDefault();first.focus();}}if(event.key==='Escape'){suggestionRequest++;document.getElementById('searchResultsSuggestions').hidden=true;document.getElementById('searchLiveSuggestions').hidden=true;if(input===searchResultsInput)input.blur();}});}
+      const searchSuggestions = document.getElementById('searchResultsSuggestions');
+      let suggestionTimer;
+      function hideSearchSuggestions() {
+        clearTimeout(suggestionTimer);
+        searchSuggestions.hidden = true;
+      }
+      function suggest() {
+        const query = searchResultsInput.value.trim();
+        if (!query || document.activeElement !== searchResultsInput) return;
+        const matches = matchCatalogue({products:feedState.products, stores:storesState.stores}, query);
+        const suggestions = [
+          ...matches.products.slice(0,3).map(product => ({
+            title:product.title, detail:'Produto' + (product.storeName ? ' · ' + product.storeName : ''),
+            open:() => openPDP(product.id, true)
+          })),
+          ...matches.stores.slice(0,2).map(store => ({
+            title:store.name, detail:'Loja' + (store.location ? ' · ' + store.location : ''),
+            open:() => openStorefront(store.id, true)
+          })),
+          {title:'Pesquisar “' + query + '”', open:() => executeSearch(query)}
+        ];
+        const buttons = suggestions.map(({title,detail,open}) => {
+          const button = document.createElement('button');
+          button.type = 'button';
+          button.className = 'search-suggestion-button';
+          const label = document.createElement('span');
+          label.textContent = title;
+          if (detail) {
+            const sub = document.createElement('small');
+            sub.textContent = detail;
+            label.append(sub);
+          }
+          button.append(label);
+          button.onclick = () => {
+            hideSearchSuggestions();
+            if (detail && location.hash === '#pesquisa') {
+              history.replaceState({...history.state, searchDraft:query}, '', '#pesquisa');
+            }
+            open();
+          };
+          return button;
+        });
+        buttons.forEach((button,index) => button.addEventListener('keydown', event => {
+          if (event.key === 'Escape') {
+            event.preventDefault();
+            hideSearchSuggestions();
+            searchResultsInput.focus();
+          } else if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+            event.preventDefault();
+            const next = index + (event.key === 'ArrowDown' ? 1 : -1);
+            (next < 0 ? searchResultsInput : buttons[Math.min(next, buttons.length - 1)]).focus();
+          }
+        }));
+        searchSuggestions.replaceChildren(...buttons);
+        searchSuggestions.hidden = false;
+      }
+      searchResultsInput.addEventListener('input', () => {
+        hideSearchSuggestions();
+        if (searchResultsInput.value.trim()) suggestionTimer = setTimeout(suggest, 150);
+      });
+      searchResultsInput.addEventListener('keydown', event => {
+        if (event.key === 'ArrowDown' && !searchSuggestions.hidden) {
+          event.preventDefault();
+          searchSuggestions.querySelector('button').focus();
+        } else if (event.key === 'Escape') {
+          if (searchSuggestions.hidden) searchResultsInput.blur();
+          else hideSearchSuggestions();
+        }
+      });
       window.addEventListener('kamby:search-history',renderRecentSearches);
 
       function setMainNavigationInert(value) {
