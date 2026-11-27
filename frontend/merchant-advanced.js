@@ -1,7 +1,7 @@
 import { loadAccountProfile } from './account-registration.js';
 import {sellerDraft} from './seller-draft.js';
 import {openSellerSetup as showSellerSetup} from './seller-setup.js';
-import {el,icon} from './merchant-ui.js';
+import {bindSignOut,confirmAction,el,icon,showFeedback} from './merchant-ui.js';
 import {canPrepareStore} from './merchant-domain.js';
 import {setButtonBusy,showSpinner,showSkeleton} from "./loading.js";
 import { catalogueConfig, platform } from './platform.js';
@@ -39,7 +39,7 @@ export function setupMerchant(hooks) {
       const action=el('button','profile-menu-item');
       action.type='button';
       action.innerHTML=icon('store');
-      action.append(el('span','profile-menu-label','Criar a minha loja'));
+      action.append(el('span','profile-menu-label','Configurar loja'));
       action.onclick=()=>openSellerSetup();
       container.append(action);
     }
@@ -162,12 +162,8 @@ export function setupMerchant(hooks) {
       googleButton.disabled = false;
     }
   });
-  byId('btnAccountSignOut').addEventListener('click',async()=>{
-    byId('btnAccountSignOut').disabled=true;setButtonBusy(byId('btnAccountSignOut'),true);
-    let error;try{({error}=await platform.auth.signOut({scope:'local'}));}catch{error=true;}finally{setButtonBusy(byId('btnAccountSignOut'),false);byId('btnAccountSignOut').disabled=false;}
-    if(error) { message('profileNotice','Não foi possível terminar a sessão. Tenta novamente.'); return; }
+  bindSignOut(() => platform.auth.signOut({scope:'local'}), () => {
     ++state.accountRequest; byId('sellerSetup')?.close();state.user=null;state.access=null;state.profile=null;state.phase='guest'; state.stores=[];settings?.clear();settings?.close(true); closeMerchant(false);purgeMerchant(); renderProfile();
-    message('profileNotice','Sessão terminada.');
   });
 
   const dialog=byId('clearLocalDataDialog');
@@ -183,9 +179,23 @@ export function setupMerchant(hooks) {
   function storeState() {
     const store=state.store;if(!store)return;
     text('merchantStoreName',store.name);text('merchantStoreLocation',store.location||'');text('merchantStoreContact',store.whatsapp_e164||'');
-    const button=byId('btnToggleStoreStatus');button.textContent=store.status==='approved'?(store.is_open?'Aberta':'Fechada'):'Indisponível';button.classList.toggle('closed',!store.is_open||store.status!=='approved');button.setAttribute('aria-pressed',String(store.is_open));button.setAttribute('aria-label',store.is_open?'Fechar loja':'Abrir loja');button.disabled=state.busy||store.status!=='approved';setButtonBusy(button,state.busy);workspace.syncStoreStatus();
+    const button=byId('btnToggleStoreStatus');
+    const status=byId('merchantOpenState');
+    status.hidden=store.status!=='approved';
+    status.textContent=store.is_open?'Loja aberta':'Loja fechada';
+    status.dataset.open=String(store.is_open);
+    button.textContent=store.is_open?'Fechar loja':'Abrir loja';
+    button.disabled=state.busy||store.status!=='approved';
+    button.removeAttribute('aria-pressed');
+    setButtonBusy(button,state.busy);
+    workspace.syncStoreStatus();
   }
-  const composer=setupProductComposer({getStore:()=>view.hidden?null:state.store,onPublished:async(id,storeId)=>{await hooks.catalogueChanged(id);if(!view.hidden&&state.store?.id===storeId)await workspace.load();},onFeedback:copy=>message('merchantFeedback',copy)});
+  const composer=setupProductComposer({getStore:()=>view.hidden?null:state.store,onPublished:async(id,storeId,{newPublication})=>{
+    await hooks.catalogueChanged(id);
+    if(view.hidden||state.store?.id!==storeId)return;
+    if(newPublication)await workspace.revealProduct(id);
+    else await workspace.load();
+  },onFeedback:copy=>showFeedback(copy)});
   const workspace=setupWorkspace({state,composer,onTerms:store=>openSellerSetup(store),onChanged:hooks.catalogueChanged,onStoreChanged:store=>{state.stores=state.stores.map(s=>s.id===store.id?store:s);storeState();renderProfile();}});
   const loadMerchantData=()=>workspace.load();
 
@@ -227,20 +237,33 @@ export function setupMerchant(hooks) {
       const fresh=state.stores.find(store=>store.id===id);
       if(!fresh || view.hidden)return;
       state.store=fresh;storeState();message('merchantFeedback','');await loadMerchantData();
-    }catch{message('merchantFeedback','Não foi possível actualizar a loja. Tenta novamente.');}
+    }catch{showFeedback('Não foi possível actualizar a loja. Tenta novamente.',{tone:'error'});}
     finally{setButtonBusy(button,false);button.disabled=false;}
   });
   byId('btnToggleStoreStatus').addEventListener('click',async()=>{
     if(state.busy || !state.store || state.store.status!=='approved') return;
-    state.busy=true;storeState();
+    const store=state.store;
+    const opening=!store.is_open;
+    const label=opening?'Abrir loja':'Fechar loja';
+    if(!await confirmAction(label+'?',opening?'Os clientes voltam a poder enviar pedidos.':'Os clientes podem guardar artigos no carrinho e enviar pedidos quando a loja reabrir.',label))return;
+    if(state.busy||view.hidden||state.store?.id!==store.id||state.store.is_open!==store.is_open)return;
+    state.busy=true;
+    storeState();
     try {
-      const {data,error}=await platform.from('kg_stores').update({is_open:!state.store.is_open}).eq('id',state.store.id).eq('updated_at',state.store.updated_at)
-        .select('*').single();
-      if(error) throw error;
-      state.store=data;state.stores=state.stores.map(store=>store.id===data.id?data:store);renderProfile();
-      await hooks.catalogueChanged(); message('merchantFeedback',data.is_open?'Loja aberta.':'Loja fechada.');
-    } catch { message('merchantFeedback','Não foi possível alterar a abertura. Actualiza o catálogo e tenta novamente.'); }
-    finally { state.busy=false;storeState(); }
+      const {data,error}=await platform.from('kg_stores').update({is_open:opening}).eq('id',store.id).eq('updated_at',store.updated_at).select('*').single();
+      if(error)throw error;
+      if(state.store?.id!==store.id||view.hidden)return;
+      state.store=data;
+      state.stores=state.stores.map(entry=>entry.id===data.id?data:entry);
+      renderProfile();
+      showFeedback(data.is_open?'Loja aberta.':'Loja fechada.');
+      await hooks.catalogueChanged();
+    }catch{
+      if(state.store?.id===store.id&&!view.hidden)showFeedback('Não foi possível alterar a abertura. Tenta novamente.',{tone:'error'});
+    }finally{
+      state.busy=false;
+      storeState();
+    }
   });
   settings=setupSettings({openSellerSetup,savedProducts:hooks.savedProducts,renderProductCard:hooks.renderProductCard,getAccount:()=>state,loadAccount,openSubscreen:hooks.openSubscreen,closeSubscreen:hooks.closeSubscreen,navigate:hooks.navigate});
   platform.auth.onAuthStateChange((event,session)=>{

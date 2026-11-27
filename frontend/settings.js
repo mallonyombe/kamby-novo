@@ -1,3 +1,4 @@
+import {showFeedback} from './merchant-ui.js';
 import { addPasswordVisibility, describeNewPassword } from './password-visibility.js';
 import { analyticsAllowed, setAnalyticsAllowed } from './analytics.js';
 import { registrationCredentials, registrationError } from './account-registration.js';
@@ -8,7 +9,7 @@ import {initials} from './merchant-domain.js';
 import {profileValues,passwordError,readTheme} from './settings-domain.js';
 import {savedPrefix, readSavedEntries, toggleGuestEntry, removeFromDevice, claimGuestEntries, sendClaimedEntries} from './guardados-locais.js';
 import {applyTheme} from './theme.js';
-import {preparePhoto} from './prepare-photo.js';
+import {preparePhoto, previewPhoto} from './prepare-photo.js';
 const paths={gear:'M10 2h4l.5 3 2 .9 2.7-1.4 2 3.5-2.3 2v2.3l2.3 2-2 3.5-2.7-1.4-2 .9-.5 3h-4l-.5-3-2-.9-2.7 1.4-2-3.5 2.3-2V10L2.8 8l2-3.5 2.7 1.4 2-.9Z M12 8.5a2.8 2.8 0 1 0 0 5.6 2.8 2.8 0 0 0 0-5.6Z',user:'M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2 M12 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8',heart:'M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1.1-1.1a5.5 5.5 0 0 0-7.8 7.8L12 21l8.8-8.6a5.5 5.5 0 0 0 0-7.8Z',bookmark:'M5 3h14v18l-7-5-7 5Z',shield:'M12 3 20 6.5v5.2c0 4-3.3 7-8 9.3-4.7-2.3-8-5.3-8-9.3V6.5L12 3Z M8.5 12l2.3 2.4 4.7-5',bell:'M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9 M10 21h4',sun:'M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8 M12 2v2m0 16v2M2 12h2m16 0h2M5 5l2 2m10 10 2 2M5 19l2-2M17 7l2-2',help:'M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20 M9 9a3 3 0 0 1 6 0c0 2-3 2-3 5m0 3v1',info:'M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20 M12 10v7m0-11v1',key:'M9 15a6 6 0 1 0-6-6 6 6 0 0 0 6 6 M13 13l8 8m-3-3 3-3',device:'M4 3h16v13H4Z M8 21h8m-4-5v5',chevron:'m9 6 6 6-6 6'};
 paths.moon = 'M20 15.5A8.5 8.5 0 0 1 8.5 4 8.5 8.5 0 1 0 20 15.5Z';
 paths.check = 'm5 12 4 4L19 6';
@@ -79,24 +80,39 @@ export function setupSettings({openSellerSetup,savedProducts,renderProductCard,g
   avatar.setAttribute('aria-hidden', 'true');
   const fallback = initials(getAccount().profile?.display_name || user.user_metadata?.display_name || user.user_metadata?.full_name || $('profileName').textContent || 'Kamby');
   paintPhoto(avatar, '', fallback);
-  const controls = node('div', undefined, 'settings-photo-actions');
+  const edit = button('', 'settings-photo-edit', () => menu.showModal());
+  edit.setAttribute('aria-haspopup', 'dialog');
+  edit.append(avatar, node('span', 'Editar foto'));
+  const menu = node('dialog', undefined, 'local-data-dialog settings-photo-menu');
+  menu.setAttribute('aria-label', 'Foto do perfil');
   const input = node('input');
   input.type = 'file';
   input.accept = allowedPhotos.join(',');
   input.hidden = true;
-  const choose = button('Adicionar foto', 'settings-text-action', () => input.click());
-  const remove = button('Remover foto', 'settings-text-action', () => changePhoto(null));
+  function pickPhoto(camera) {
+   if (camera) input.setAttribute('capture', 'user');
+   else input.removeAttribute('capture');
+   menu.close();
+   input.click();
+  }
+  const camera = button('Câmara', 'settings-text-action', () => pickPhoto(true));
+  const gallery = button('Galeria', 'settings-text-action', () => pickPhoto(false));
+  const remove = button('Remover foto do perfil', 'settings-text-action', () => {
+   menu.close();
+   confirm('Remover foto?', 'O teu perfil voltará a mostrar as tuas iniciais.', 'Remover', () => changePhoto(null));
+  });
   remove.hidden = true;
-  controls.append(choose, remove, input);
-  panel.append(avatar, controls);
+  const cancel = button('Cancelar', 'settings-text-action', () => menu.close());
+  cancel.autofocus = true;
+  menu.append(node('h2', 'Foto do perfil'), camera, gallery, remove, cancel);
+  panel.append(edit, input, menu);
   function renderPhoto(url) {
    paintPhoto(avatar, url, fallback);
-   choose.textContent = url ? 'Mudar foto' : 'Adicionar foto';
    remove.hidden = !url;
   }
   let changed = false;
   profilePhoto(user.id).then(url => { if (!changed && panel.isConnected) renderPhoto(url); });
-  input.addEventListener('change', () => {
+  input.addEventListener('change', async () => {
    const file = input.files[0];
    input.value = '';
    if (!file) return;
@@ -104,12 +120,13 @@ export function setupSettings({openSellerSetup,savedProducts,renderProductCard,g
     notice('Escolhe uma foto JPG, PNG ou WebP até 2 MB.');
     return;
    }
-   changePhoto(file);
+   if (await previewPhoto(file, 'Foto do perfil') && panel.isConnected) await changePhoto(file);
   });
   async function changePhoto(file) {
-   if (choose.disabled || getAccount().user?.id !== user.id) return;
+   if (edit.disabled || getAccount().user?.id !== user.id) return;
    changed = true;
-   choose.disabled = remove.disabled = true;
+   edit.disabled = true;
+   setButtonBusy(edit, true);
    const path = user.id + '/avatar';
    try {
     const image = file ? await preparePhoto(file, 768) : null;
@@ -126,12 +143,13 @@ export function setupSettings({openSellerSetup,savedProducts,renderProductCard,g
     paintPhoto($('profileAvatar'), url, fallback);
     if (panel.isConnected) {
      renderPhoto(url);
-     notice(file ? 'Foto actualizada.' : 'Foto removida.');
+     notice('');
     }
    } catch {
     if (panel.isConnected) notice('Não foi possível actualizar a foto. Tenta novamente.');
    } finally {
-    choose.disabled = remove.disabled = false;
+    edit.disabled = false;
+    setButtonBusy(edit, false);
    }
   }
   return panel;
@@ -200,6 +218,9 @@ export function setupSettings({openSellerSetup,savedProducts,renderProductCard,g
  async function ownedWrite(table,id,values){const update=()=>platform.from(table).update(values).eq(table==='kg_profiles'?'id':'user_id',id).select().maybeSingle();let r=await update();if(r.error)throw r.error;if(r.data)return r.data;r=await platform.from(table).insert({[table==='kg_profiles'?'id':'user_id']:id,...values}).select().single();if(r.error?.code==='23505')r=await update();if(r.error)throw r.error;return r.data;}
  function saveForm(form,copy,action){const submit=button(copy,'merchant-primary-button');submit.type='submit';form.append(submit);form.addEventListener('submit',async event=>{event.preventDefault();if(busy)return;busy=true;submit.disabled=true;setButtonBusy(submit,true);const request=generation;formError(form,'');try{await action();if(request!==generation)return;}catch(error){if(request===generation)formError(form,error.safeMessage||'Não foi possível guardar. Verifica a ligação e tenta novamente.');}finally{if(request===generation){busy=false;setButtonBusy(submit,false);submit.disabled=false;}}});return submit;}
  async function renderScreen(){const request=++generation;body.replaceChildren();notice('');$('settingsLoginPanel').hidden=screen!=='entrar';$('settingsSubscreenTitle').textContent=titles[screen];document.title=titles[screen]+' · Kamby';const a=getAccount();
+  const accountScreen=['entrar','registo','recuperacao'].includes(screen)||recovery&&screen==='palavra-passe';
+  view.classList.toggle('account-screen',accountScreen);
+  $('accountScreenBrand').hidden=!accountScreen;
   $('settingsDeviceActions').hidden = screen !== 'privacidade';
   if (screen === 'preferencias') {
    const group = node('div', undefined, 'profile-menu-list');
@@ -337,11 +358,50 @@ export function setupSettings({openSellerSetup,savedProducts,renderProductCard,g
    body.append(group);
    return;
   }
-  if(screen==='pessoais'){body.append(createPhotoEditor(a.user));const form=node('form',undefined,'settings-form');const name=field(form,'name','Nome completo',a.profile?.display_name||a.user.user_metadata?.display_name||a.user.user_metadata?.full_name||'','text',true);name.maxLength=80;name.autocomplete='name';const location=field(form,'location','Localização',a.profile?.location||'');location.maxLength=120;const phone=field(form,'phone','Telefone',a.user.phone?'+'+a.user.phone.replace(/^\+/, ''):'Não associado');phone.readOnly=true;const email=field(form,'email','Email',(/@kamby\.invalid$/i.test(a.user.email || '') ? '' : a.user.email)||'Não associado');email.readOnly=true;form.addEventListener('input',()=>{dirty=true;});body.append(form);saveForm(form,'Guardar alterações',async()=>{let values;try{values=profileValues(name.value,location.value);}catch(e){throw{safeMessage:e.message};}const id=a.user.id;await ownedWrite('kg_profiles',id,values);if(id!==getAccount().user?.id)return;dirty=false;await loadAccount();notice('Dados guardados.');});return;}
+  if(screen==='pessoais'){
+   body.append(createPhotoEditor(a.user));
+   const form=node('form',undefined,'settings-form');
+   const name=field(form,'name','Nome completo',a.profile?.display_name||a.user.user_metadata?.display_name||a.user.user_metadata?.full_name||'','text',true);
+   name.maxLength=80;
+   name.autocomplete='name';
+   const location=field(form,'location','Localização',a.profile?.location||'');
+   location.maxLength=120;
+   const contacts=node('dl',undefined,'settings-account-contact');
+   const email=/@kamby\.invalid$/i.test(a.user.email||'')?'':a.user.email;
+   const phone=a.user.phone?'+'+a.user.phone.replace(/^\+/, ''):'';
+   for(const [label,value] of [['Telefone',phone],['Email',email]]){
+    const row=node('div');
+    row.append(node('dt',label),node('dd',value||'Não associado'));
+    contacts.append(row);
+   }
+   form.append(contacts);
+   body.append(form);
+   let originalName=name.value;
+   let originalLocation=location.value;
+   const submit=saveForm(form,'Guardar alterações',async()=>{
+    let values;
+    try{values=profileValues(name.value,location.value);}catch(error){throw{safeMessage:error.message};}
+    const id=a.user.id;
+    await ownedWrite('kg_profiles',id,values);
+    if(id!==getAccount().user?.id)return;
+    originalName=name.value;
+    originalLocation=location.value;
+    dirty=false;
+    submit.hidden=true;
+    await loadAccount();
+    showFeedback('Dados guardados.');
+   });
+   submit.hidden=true;
+   form.addEventListener('input',()=>{
+    dirty=name.value!==originalName||location.value!==originalLocation;
+    submit.hidden=!dirty;
+   });
+   return;
+  }
   if(screen==='seguranca'){const g=node('div',undefined,'settings-group');g.append(row('Alterar palavra-passe',null,'key','palavra-passe'),row('Outras sessões',null,'device','sessoes'),row('Recuperar acesso',null,'help','recuperacao'),row('Encerramento da conta','Pedir análise à equipa Kamby','user','encerramento'));body.append(g);return;}
-  if(screen==='palavra-passe'){lead(null,recovery?'Define uma nova palavra-passe para concluir a recuperação.':'Confirma o acesso à conta antes de alterar a palavra-passe.');const form=node('form',undefined,'settings-form');let current=null;if(!recovery){current=field(form,'current','Palavra-passe actual','','password',true);current.autocomplete='current-password';}const next=field(form,'new','Nova palavra-passe','','password',true),repeat=field(form,'confirmation','Confirmar nova palavra-passe','','password',true);next.autocomplete=repeat.autocomplete='new-password';next.maxLength=repeat.maxLength=128;next.minLength=repeat.minLength=8;addPasswordVisibility(next);addPasswordVisibility(repeat);describeNewPassword(next);body.append(form);saveForm(form,'Actualizar palavra-passe',async()=>{const err=passwordError(next.value,repeat.value);if(err)throw{safeMessage:err};try{if(current){const identity=a.user.email?{email:a.user.email}:{phone:a.user.phone};const {error}=await platform.auth.signInWithPassword({...identity,password:current.value});if(error)throw{safeMessage:'Não foi possível confirmar a palavra-passe actual.'};}const {error}=await platform.auth.updateUser({password:next.value});if(error)throw{safeMessage:error.code==='same_password'?'Escolhe uma palavra-passe diferente.':error.code==='reauthentication_needed'?'É necessária uma nova confirmação de acesso. Volta a entrar e tenta novamente.':'Não foi possível actualizar a palavra-passe. Volta a entrar ou recupera o acesso.'};recovery=false;notice('Palavra-passe actualizada.');}finally{[current,next,repeat].filter(Boolean).forEach(i=>i.value='');}});return;}
+  if(screen==='palavra-passe'){lead(null,recovery?'Define uma nova palavra-passe para concluir a recuperação.':'Confirma o acesso à conta antes de alterar a palavra-passe.');const form=node('form',undefined,'settings-form');let current=null;if(!recovery){current=field(form,'current','Palavra-passe actual','','password',true);current.autocomplete='current-password';}const next=field(form,'new','Nova palavra-passe','','password',true),repeat=field(form,'confirmation','Confirmar nova palavra-passe','','password',true);next.autocomplete=repeat.autocomplete='new-password';next.maxLength=repeat.maxLength=128;next.minLength=repeat.minLength=8;addPasswordVisibility(next);addPasswordVisibility(repeat);describeNewPassword(next);body.append(form);saveForm(form,'Actualizar palavra-passe',async()=>{const err=passwordError(next.value,repeat.value);if(err)throw{safeMessage:err};try{if(current){const identity=a.user.email?{email:a.user.email}:{phone:a.user.phone};const {error}=await platform.auth.signInWithPassword({...identity,password:current.value});if(error)throw{safeMessage:'Não foi possível confirmar a palavra-passe actual.'};}const {error}=await platform.auth.updateUser({password:next.value});if(error)throw{safeMessage:error.code==='same_password'?'Escolhe uma palavra-passe diferente.':error.code==='reauthentication_needed'?'É necessária uma nova confirmação de acesso. Volta a entrar e tenta novamente.':'Não foi possível actualizar a palavra-passe. Volta a entrar ou recupera o acesso.'};recovery=false;showFeedback('Palavra-passe actualizada.');}finally{[current,next,repeat].filter(Boolean).forEach(i=>i.value='');}});return;}
   if(screen==='sessoes'){const g=node('div',undefined,'settings-group');g.append(row('Terminar outras sessões','Mantém a sessão deste dispositivo','device','sessoes'));g.replaceChild(g.firstChild.cloneNode(true),g.firstChild);g.firstChild.onclick=()=>confirm('Terminar outras sessões?','Os outros dispositivos terão de voltar a entrar. O acesso já emitido pode manter-se até expirar.','Terminar',async()=>{if(busy)return;busy=true;const action=g.firstChild;action.disabled=true;setButtonBusy(action,true);try{const {error}=await platform.auth.signOut({scope:'others'});notice(error?'Não foi possível terminar as outras sessões.':'As outras sessões já não podem ser renovadas.');}finally{setButtonBusy(action,false);action.disabled=false;busy=false;}});body.append(g);return;}
-  if(screen==='recuperacao'){lead('Recuperar acesso','Indica o email associado à conta para pedir uma ligação de recuperação.');const form=node('form',undefined,'settings-form'),email=field(form,'email','Email da conta',a.user?.email||'','email',true);email.autocomplete='email';body.append(form);saveForm(form,'Pedir ligação',async()=>{const {error}=await platform.auth.resetPasswordForEmail(email.value.trim(),{redirectTo:new URL('/?account=recovery',window.location.origin).href});if(error)throw{safeMessage:'Não foi possível pedir a ligação. Tenta novamente mais tarde.'};notice('Se existir uma conta com este email, receberás uma ligação de recuperação. Verifica também o spam.');});body.append(node('p','Para contas apenas com telefone, a recuperação precisa de assistência da equipa Kamby.','settings-copy'));return;}
+  if(screen==='recuperacao'){lead(null,'Indica o email associado à conta para pedir uma ligação de recuperação.');const form=node('form',undefined,'settings-form'),email=field(form,'email','Email da conta',a.user?.email||'','email',true);email.autocomplete='email';body.append(form);saveForm(form,'Pedir ligação',async()=>{const {error}=await platform.auth.resetPasswordForEmail(email.value.trim(),{redirectTo:new URL('/?account=recovery',window.location.origin).href});if(error)throw{safeMessage:'Não foi possível pedir a ligação. Tenta novamente mais tarde.'};notice('Se existir uma conta com este email, receberás uma ligação de recuperação. Verifica também o spam.');});body.append(node('p','Para contas apenas com telefone, a recuperação precisa de assistência da equipa Kamby.','settings-copy'));return;}
   if (screen === 'actividade' || screen === 'guardados') {
    const pending = node('div');
    body.append(pending);
@@ -391,7 +451,7 @@ export function setupSettings({openSellerSetup,savedProducts,renderProductCard,g
    scheduleSavedRefresh();
    return;
   }
-  if(screen==='notificacoes'){lead('Preferências de avisos','Os avisos são apresentados aqui, dentro do Kamby.');const pending=node('div');body.append(pending);showSkeleton(pending,'rows',3);const [pref,notes]=await Promise.all([platform.from('kg_user_preferences').select('catalogue_alerts,account_alerts').eq('user_id',a.user.id).maybeSingle(),platform.from('kg_notifications').select('id,title,body,read_at,created_at,action').eq('user_id',a.user.id).order('created_at',{ascending:false}).limit(50)]);if(request!==generation)return;pending.remove();if(pref.error||notes.error){empty('Não foi possível carregar','Verifica a ligação e tenta novamente.');body.append(button('Tentar novamente','settings-text-action',renderScreen));return;}let values=pref.data||{catalogue_alerts:true,account_alerts:true};const g=node('div',undefined,'settings-group');for(const [key,label,sub]of[['catalogue_alerts','Produtos guardados','Alterações de preço e disponibilidade'],['account_alerts','Pedidos da conta','Actualizações do pedido de encerramento']]){const l=node('label',undefined,'settings-choice'),copy=node('span',label),input=node('input');copy.append(node('small',sub));input.type='checkbox';input.checked=values[key];input.addEventListener('change',async()=>{const value=input.checked;input.disabled=true;const pending=node('span');l.append(pending);showSpinner(pending);try{await ownedWrite('kg_user_preferences',a.user.id,{...values,[key]:value});if(request!==generation)return;values[key]=value;notice('Preferência guardada.');}catch{if(request!==generation)return;input.checked=!value;notice('Não foi possível guardar a preferência.');}finally{pending.remove();input.disabled=false;}});l.append(copy,input);g.append(l);}body.append(g);if(!notes.data.length)empty('Sem avisos','Os novos avisos aparecem aqui.');for(const n of notes.data){const article=node('article',undefined,'settings-item'+(!n.read_at?' settings-notification-unread':'')),meta=node('div');meta.append(node('strong',n.title),node('p',n.body));article.append(meta);if(n.action==='seller_setup'&&openSellerSetup&&a.access?.sellerOnboarding){article.append(button('Configurar loja','settings-text-action',()=>{close(true);navigate('perfil');openSellerSetup();}));}if(!n.read_at){const read=button('Lido','settings-text-action',async()=>{read.disabled=true;setButtonBusy(read,true);const {error}=await platform.from('kg_notifications').update({read_at:new Date().toISOString()}).eq('id',n.id).eq('user_id',a.user.id);if(request!==generation)return;if(error){setButtonBusy(read,false);read.disabled=false;notice('Não foi possível marcar como lido.');}else{article.classList.remove('settings-notification-unread');read.remove();}});article.append(read);}body.append(article);}return;}
+  if(screen==='notificacoes'){lead('Preferências de avisos','Os avisos são apresentados aqui, dentro do Kamby.');const pending=node('div');body.append(pending);showSkeleton(pending,'rows',3);const [pref,notes]=await Promise.all([platform.from('kg_user_preferences').select('catalogue_alerts,account_alerts').eq('user_id',a.user.id).maybeSingle(),platform.from('kg_notifications').select('id,title,body,read_at,created_at,action').eq('user_id',a.user.id).order('created_at',{ascending:false}).limit(50)]);if(request!==generation)return;pending.remove();if(pref.error||notes.error){empty('Não foi possível carregar','Verifica a ligação e tenta novamente.');body.append(button('Tentar novamente','settings-text-action',renderScreen));return;}let values=pref.data||{catalogue_alerts:true,account_alerts:true};const g=node('div',undefined,'settings-group');for(const [key,label,sub]of[['catalogue_alerts','Produtos guardados','Alterações de preço e disponibilidade'],['account_alerts','Pedidos da conta','Actualizações do pedido de encerramento']]){const l=node('label',undefined,'settings-choice'),copy=node('span',label),input=node('input');copy.append(node('small',sub));input.type='checkbox';input.checked=values[key];input.addEventListener('change',async()=>{const value=input.checked;input.disabled=true;const pending=node('span');l.append(pending);showSpinner(pending);try{await ownedWrite('kg_user_preferences',a.user.id,{...values,[key]:value});if(request!==generation)return;values[key]=value;showFeedback('Preferência guardada.');}catch{if(request!==generation)return;input.checked=!value;notice('Não foi possível guardar a preferência.');}finally{pending.remove();input.disabled=false;}});l.append(copy,input);g.append(l);}body.append(g);if(!notes.data.length)empty('Sem avisos','Os novos avisos aparecem aqui.');for(const n of notes.data){const article=node('article',undefined,'settings-item'+(!n.read_at?' settings-notification-unread':'')),meta=node('div');meta.append(node('strong',n.title),node('p',n.body));article.append(meta);if(n.action==='seller_setup'&&openSellerSetup&&a.access?.sellerOnboarding){article.append(button('Configurar loja','settings-text-action',()=>{close(true);navigate('perfil');openSellerSetup();}));}if(!n.read_at){const read=button('Lido','settings-text-action',async()=>{read.disabled=true;setButtonBusy(read,true);const {error}=await platform.from('kg_notifications').update({read_at:new Date().toISOString()}).eq('id',n.id).eq('user_id',a.user.id);if(request!==generation)return;if(error){setButtonBusy(read,false);read.disabled=false;notice('Não foi possível marcar como lido.');}else{article.classList.remove('settings-notification-unread');read.remove();}});article.append(read);}body.append(article);}return;}
   if(screen==='encerramento'){const pending=node('div');body.append(pending);showSkeleton(pending,'rows',2);const {data,error}=await platform.from('kg_account_requests').select('status,created_at').eq('user_id',a.user.id).maybeSingle();if(request!==generation)return;pending.remove();if(error){empty('Não foi possível carregar','Tenta novamente mais tarde.');return;}if(data){const statuses={pending:'Pedido em análise',processing:'Pedido em tratamento',completed:'Pedido concluído pela gestão',declined:'Pedido revisto pela gestão'};empty(statuses[data.status]||'Pedido registado','O pedido não elimina a conta automaticamente.');return;}lead('Encerramento da conta','Pede à equipa Kamby a análise do encerramento da tua conta. A conta mantém-se activa enquanto o pedido é tratado.');body.append(button('Pedir encerramento','settings-text-action profile-sign-out',()=>confirm('Registar pedido de encerramento?','O pedido será enviado à gestão da plataforma. Esta acção não apaga os teus dados imediatamente.','Registar pedido',async()=>{if(busy)return;busy=true;const action=body.querySelector('button');action.disabled=true;setButtonBusy(action,true);try{const {error}=await platform.from('kg_account_requests').insert({user_id:a.user.id});if(error&&error.code!=='23505')notice('Não foi possível registar o pedido.');else renderScreen();}finally{setButtonBusy(action,false);action.disabled=false;busy=false;}})));return;}
   if(screen==='ajuda'){for(const [q,copy]of[['Como contactar uma loja?','Na página da loja, toca em Perguntar à loja. Para enviar um pedido com os teus artigos, abre o carrinho dessa loja e toca em Enviar pedido pelo WhatsApp.'],['O contacto confirma a compra?','Não. Confirma o preço, a disponibilidade, o pagamento e a entrega com a loja.'],['Como recuperar o acesso?','Usa Esqueci a palavra-passe na entrada da conta. A recuperação por email depende de um email associado.'],['Onde ficam os meus produtos?','Os produtos adicionados ficam no Carrinho deste dispositivo. Encontra os favoritos em Perfil → Guardados. Sem conta, ficam neste dispositivo.']]){const d=node('details',undefined,'settings-group'),s=node('summary',q);s.style.padding='16px';const p=node('p',copy,'settings-copy');p.style.padding='0 16px';d.append(s,p);body.append(d);}const links=node('div',undefined,'profile-menu-list');links.append(row('Sobre o Kamby',null,'info','sobre'));body.append(links);return;}
   if(screen==='sobre'){lead('Kamby · Orbion');body.append(node('p','Descobre produtos e lojas e contacta cada vendedor pelo WhatsApp.','settings-copy'));}
@@ -519,7 +579,7 @@ export function setupSettings({openSellerSetup,savedProducts,renderProductCard,g
   writes.add(id);
   paintSavedButtons();
   const stillCurrent = () => state === savedState && userId === getAccount().user?.id;
-  const feedback = detail => window.dispatchEvent(new CustomEvent('kamby:feedback', { detail }));
+  const feedback = showFeedback;
   try {
    let saved;
    if (!userId) {
@@ -557,7 +617,7 @@ export function setupSettings({openSellerSetup,savedProducts,renderProductCard,g
    }
    feedback(saved ? 'Produto removido dos guardados.' : 'Produto guardado.');
   } catch {
-   if (stillCurrent()) feedback('Não foi possível actualizar os guardados. Tenta novamente.');
+   if (stillCurrent()) feedback('Não foi possível actualizar os guardados. Tenta novamente.',{tone:'error'});
   } finally {
    writes.delete(id);
    if (stillCurrent()) paintSavedButtons();

@@ -1,21 +1,41 @@
-import {canPrepareStore} from './merchant-domain.js';
 import {platform} from './platform.js';
 import {el,icon} from './merchant-ui.js';
 import {showSkeleton} from './loading.js';
+import {activityChart} from './merchant-activity-chart.js';
 
 export const summaryMarkup=`
-  <div class="mw-summary-heading"><p id="merchantSummaryStatus" class="mw-muted" role="status"></p>
-    <button type="button" id="merchantQuickNew" class="mw-primary" disabled>${icon('plus')}Novo produto</button>
-  </div>
+  <p id="merchantSummaryStatus" class="mw-summary-status" role="status"></p>
+  <section class="mw-summary-catalogue" aria-labelledby="merchantSummaryCatalogueTitle">
+    <h3 id="merchantSummaryCatalogueTitle">Catálogo</h3>
+    <button type="button" id="merchantSummaryPublished" class="mw-summary-task mw-summary-bucket">
+      ${icon('products')}<span class="mw-summary-task-label">Produtos publicados</span>
+      <strong class="mw-summary-task-count" id="kpiProductsCount">—</strong>
+      <span class="mw-summary-chevron">${icon('next')}</span>
+    </button>
+    <section id="merchantSummaryTasks" class="mw-summary-tasks" aria-labelledby="merchantSummaryTasksTitle">
+      <h3 id="merchantSummaryTasksTitle">Pendências</h3>
+      <div id="merchantSummaryTaskList"></div>
+    </section>
+  </section>
   <section id="merchantPreparation" class="mw-preparation" hidden></section>
-  <section id="merchantSummaryTasks" class="mw-summary-tasks" aria-label="Pendências do catálogo"></section>
-  <button type="button" id="merchantHistory" class="mw-text mw-history">${icon('activity')}Histórico de actividade</button>`;
+  <section class="mw-summary-activity" aria-labelledby="merchantSummaryActivityTitle">
+    <div class="mw-summary-section-heading"><h3 id="merchantSummaryActivityTitle">Actividade</h3><span>Últimos 7 dias · inclui hoje</span></div>
+    <dl class="mw-summary-activity-values">
+      <div><dt>Visitas à loja</dt><dd id="kpiStoreViews">—</dd></div>
+      <div><dt>Cliques no WhatsApp</dt><dd id="kpiWhatsAppClicks">—</dd></div>
+    </dl>
+    <div id="merchantSummaryChart" class="mw-summary-chart"></div>
+    <button type="button" id="merchantSummaryRetry" class="mw-summary-retry" hidden>Tentar carregar os indicadores</button>
+    <button type="button" id="merchantHistory" class="mw-text mw-history">${icon('activity')}Histórico de actividade</button>
+  </section>`;
 
-export function setupMerchantSummary({root,state,onProducts,onEdit,onCreate,onStore,onPublish,onActivity}) {
+export function setupMerchantSummary({root,state,onProducts,onStore,onPublish,onActivity}) {
   const $=id=>root.querySelector('#'+id);
-  const tasks=$('merchantSummaryTasks');
+  const tasks=$('merchantSummaryTaskList');
+  const chart=$('merchantSummaryChart');
   let generation=0;
-  $('merchantQuickNew').onclick=onCreate;
+  $('merchantSummaryPublished').onclick=()=>onProducts('published');
+  $('merchantSummaryRetry').onclick=load;
   $('merchantHistory').onclick=onActivity;
 
   function syncStatus(){
@@ -25,7 +45,7 @@ export function setupMerchantSummary({root,state,onProducts,onEdit,onCreate,onSt
     $('merchantSummaryStatus').textContent=store.status==='approved'
       ? (store.is_open===false?'Pedidos pausados':'Loja visível')
       : (labels[store.status]||'Loja indisponível');
-    $('merchantQuickNew').disabled=!canPrepareStore(store);
+    $('merchantSummaryStatus').dataset.state=store.status==='approved'&&store.is_open!==false?'visible':'restricted';
     const preparation=$('merchantPreparation');
     preparation.replaceChildren();
     preparation.hidden=!['draft','pending'].includes(store.status);
@@ -33,7 +53,7 @@ export function setupMerchantSummary({root,state,onProducts,onEdit,onCreate,onSt
       preparation.append(el('h3','','Primeiros passos'));
       preparation.append(task('Completar o perfil','Descrição, fotografias e horários','edit',onStore));
       preparation.append(task('Preparar o catálogo','Podes guardar produtos em rascunho','products',()=>onProducts('draft')));
-      const button=el('button','mw-primary','Activar loja');
+      const button=el('button','mw-secondary','Activar loja');
       button.type='button';
       button.onclick=()=>void onPublish(button);
       preparation.append(button);
@@ -59,43 +79,44 @@ export function setupMerchantSummary({root,state,onProducts,onEdit,onCreate,onSt
     const request=++generation;
     syncStatus();
     root.setAttribute('aria-busy','true');
+    renderIndicators();
     showSkeleton(tasks,'rows',2);
-    const products=()=>platform.from('kg_products').select(
-      '*,variants:kg_product_variants(*),images:kg_product_images(storage_path,sort_order)',{count:'exact'}
-    ).eq('store_id',id);
+    showSkeleton(chart,'chart');
+    const products=()=>platform.from('kg_products').select('id',{count:'exact',head:true}).eq('store_id',id);
     try{
-      const [out,drafts,blocked]=await Promise.all([
-        products().eq('status','published').eq('moderation_status','allowed').eq('stock_status','out').order('updated_at',{ascending:false}).limit(3),
-        products().eq('status','draft').eq('moderation_status','allowed').order('updated_at',{ascending:false}).limit(2),
-        platform.from('kg_products').select('id',{count:'exact',head:true}).eq('store_id',id).eq('moderation_status','blocked').neq('status','archived')
+      const results=await Promise.allSettled([
+        products().eq('status','published').eq('moderation_status','allowed').eq('stock_status','out'),
+        products().eq('status','draft').eq('moderation_status','allowed'),
+        products().eq('moderation_status','blocked').neq('status','archived'),
+        products().eq('status','published').eq('moderation_status','allowed'),
+        platform.rpc('kg_merchant_activity',{p_store_id:id})
       ]);
       if(request!==generation||id!==state.store?.id)return;
-      if([out,drafts,blocked].some(result=>result.error))throw Error();
+      const [out,drafts,blocked,published,activity]=results.map(result=>
+        result.status==='fulfilled'?result.value:{error:result.reason});
+      const days=activity.error?null:activity.data?.days;
+      renderIndicators(published.count,days,true);
+      if(![out,drafts,blocked].every(result=>Number.isInteger(result.count)))throw Error();
+
       tasks.replaceChildren();
-      if(!out.count&&!drafts.count&&!blocked.count){
-        tasks.append(el('p','mw-muted','Sem pendências no catálogo.'));
-        return;
-      }
-      tasks.append(el('h3','','Pendências'));
-      const editable=canPrepareStore(state.store);
-      for(const [result,filter,detail,label,glyph] of [
-        [out,'out','Esgotado · Actualizar stock','Ver todos os esgotados','products'],
-        [drafts,'draft','Rascunho · Continuar edição','Ver todos os rascunhos','edit']
+      for(const [result,filter,label,glyph] of [
+        [out,'out','Esgotados','products'],
+        [drafts,'draft','Rascunhos','edit'],
+        [blocked,'blocked','Produtos com restrições','warning']
       ]){
-        for(const product of result.data||[]){
-          tasks.append(task(product.title,editable?detail:detail.split(' · ')[0],glyph,
-            ()=>editable?onEdit(product,filter):onProducts(filter)));
-        }
-        if(result.count>result.data?.length){
-          const more=el('button','mw-text',label);
-          more.type='button';
-          more.onclick=()=>onProducts(filter);
-          tasks.append(more);
-        }
+        if(!result.count)continue;
+        const row=el('button','mw-summary-task mw-summary-bucket');
+        row.type='button';
+        row.dataset.summaryFilter=filter;
+        row.innerHTML=icon(glyph);
+        const count=el('strong','mw-summary-task-count',result.count.toLocaleString('pt-MZ'));
+        const arrow=el('span','mw-summary-chevron');
+        arrow.innerHTML=icon('next');
+        row.append(el('span','mw-summary-task-label',label),count,arrow);
+        row.onclick=()=>onProducts(filter);
+        tasks.append(row);
       }
-      if(blocked.count){
-        tasks.append(task('Produtos com restrições',blocked.count===1?'1 produto':blocked.count+' produtos','warning',()=>onProducts('blocked')));
-      }
+      if(!tasks.childElementCount)tasks.append(el('p','mw-muted','Sem pendências no catálogo.'));
     }catch{
       if(request!==generation||id!==state.store?.id)return;
       const retry=el('button','mw-text','Tentar novamente');
@@ -107,10 +128,34 @@ export function setupMerchantSummary({root,state,onProducts,onEdit,onCreate,onSt
     }
   }
 
+  function renderIndicators(published=null,days=null,loaded=false){
+    const complete=Array.isArray(days)&&days.length===7&&days.every(day=>
+      typeof day.day==='string'&&Number.isInteger(day.views)&&Number.isInteger(day.contacts));
+    const total=key=>complete?days.reduce((sum,day)=>sum+day[key],0):null;
+    const values=[published,total('views'),total('contacts')];
+    ['kpiProductsCount','kpiStoreViews','kpiWhatsAppClicks'].forEach((id,index)=>{
+      const value=values[index];
+      $(id).textContent=Number.isFinite(value)?value.toLocaleString('pt-MZ'):'—';
+    });
+    $('merchantSummaryRetry').hidden=!loaded||values.every(Number.isFinite);
+    chart.replaceChildren();
+    if(!complete)return;
+    if(!values[1]&&!values[2]){
+      chart.append(el('p','mw-muted','Sem actividade neste período.'));
+      return;
+    }
+    const plot=activityChart(days);
+    const drawing=plot.querySelector('svg');
+    drawing.setAttribute('viewBox','-10 0 360 164');
+    drawing.setAttribute('preserveAspectRatio','none');
+    chart.append(plot);
+  }
+
   function reset(){
     generation++;
     tasks.replaceChildren();
     root.setAttribute('aria-busy','false');
+    renderIndicators();
   }
   return {load,reset,syncStatus};
 }

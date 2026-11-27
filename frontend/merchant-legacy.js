@@ -1,3 +1,4 @@
+import {bindSignOut,showFeedback} from './merchant-ui.js';
 import { loadAccountProfile } from './account-registration.js';
 import {setButtonBusy,showSpinner,showSkeleton} from "./loading.js";
 import {legacyComposerMarkup} from './merchant-legacy-markup.js';
@@ -113,12 +114,8 @@ export function setupMerchant(hooks) {
     byId('btnShowAccountPassword').setAttribute('aria-pressed',String(visible));
     byId('btnShowAccountPassword').setAttribute('aria-label',visible?'Ocultar palavra-passe':'Mostrar palavra-passe');
   });
-  byId('btnAccountSignOut').addEventListener('click',async()=>{
-    byId('btnAccountSignOut').disabled=true;setButtonBusy(byId('btnAccountSignOut'),true);
-    let error;try{({error}=await platform.auth.signOut({scope:'local'}));}catch{error=true;}finally{setButtonBusy(byId('btnAccountSignOut'),false);byId('btnAccountSignOut').disabled=false;}
-    if(error) { message('profileNotice','Não foi possível terminar a sessão. Tenta novamente.'); return; }
+  bindSignOut(() => platform.auth.signOut({scope:'local'}), () => {
     ++state.accountRequest; state.user=null;state.access=null;state.profile=null;state.phase='guest'; state.stores=[];settings?.clear();settings?.close(true); closeMerchant(false);purgeMerchant(); renderProfile();
-    message('profileNotice','Sessão terminada.');
   });
 
   const dialog=byId('clearLocalDataDialog');
@@ -212,7 +209,7 @@ export function setupMerchant(hooks) {
         const currentStore=state.store.id;
         await hooks.catalogueChanged(product.id);
         if(state.store?.id!==currentStore || view.hidden) return;
-        await loadMerchantData(); message('merchantFeedback','Alteração guardada.');
+        await loadMerchantData(); showFeedback('Alteração guardada.');
       } catch(e) {
         error.textContent=committed ? 'Alteração guardada. Não foi possível actualizar a vista; recarrega o catálogo.' : e.code==='40001'?'O artigo foi alterado noutra sessão. Actualiza o catálogo antes de guardar.':'Não foi possível guardar. A alteração não foi aplicada.';
         error.hidden=false;
@@ -278,8 +275,8 @@ export function setupMerchant(hooks) {
         .select('id,name,location,whatsapp_e164,status,is_open,updated_at').single();
       if(error) throw error;
       state.store=data;state.stores=state.stores.map(store=>store.id===data.id?data:store);renderProfile();
-      await hooks.catalogueChanged(); message('merchantFeedback',data.is_open?'Loja aberta.':'Loja fechada.');
-    } catch { message('merchantFeedback','Não foi possível alterar a abertura. Actualiza o catálogo e tenta novamente.'); }
+      await hooks.catalogueChanged(); showFeedback(data.is_open?'Loja aberta.':'Loja fechada.');
+    } catch { showFeedback('Não foi possível alterar a abertura. Tenta novamente.',{tone:'error'}); }
     finally { state.busy=false;storeState(); }
   });
   const composer=setupProductComposer({
@@ -288,7 +285,7 @@ export function setupMerchant(hooks) {
       await hooks.catalogueChanged(productId);
       if(!view.hidden && state.store?.id===storeId) await loadMerchantData();
     },
-    onFeedback:copy=>message('merchantFeedback',copy)
+    onFeedback:copy=>showFeedback(copy)
   });
   settings=setupSettings({savedProducts:hooks.savedProducts,renderProductCard:hooks.renderProductCard,getAccount:()=>state,loadAccount,openSubscreen:hooks.openSubscreen,closeSubscreen:hooks.closeSubscreen,navigate:hooks.navigate});
   platform.auth.onAuthStateChange((event,session)=>{

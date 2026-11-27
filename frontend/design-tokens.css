@@ -8,6 +8,10 @@
   --ui-selection: #a84900;
   --ui-focus: #a84900;
   --ui-target: 44px;
+  --store-cover-background:
+    radial-gradient(ellipse at 108% 0%, #f8658b 0%, transparent 57%),
+    radial-gradient(ellipse at 24% 116%, #d14776 0%, transparent 64%),
+    linear-gradient(118deg, #642b51 0%, #ab2458 62%, #e2527d 100%);
   --ui-font: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
 }
 

@@ -16,13 +16,70 @@
 .profile-edit-link {display:grid;place-items:center;width:44px;height:44px;flex:none;padding:0;border:0;background:transparent;border-radius:12px;}
 .profile-user-info {min-width:0;}
 #profileContact {overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-.settings-photo-editor {display:flex;flex-direction:column;align-items:center;gap:12px;padding:12px 0 28px;}
-.settings-photo-editor .profile-avatar {width:96px;height:96px;font-size:30px;}
-.settings-photo-actions {display:flex;justify-content:center;gap:16px;flex-wrap:wrap;}
-.settings-photo-actions button {min-height:44px;font-size:14px;}
 #viewStoreCart {overflow-anchor:none;}
 #viewStoreCart .store-cart-body {padding-top:18px;}
 #viewStoreCart #storeCartNotice:empty {display:none;}
 #viewStoreCart .store-cart-footer>button {height:48px;line-height:20px;}
 
 #viewStoreCart .store-cart-body {margin-top:0;}
+
+#viewProfile { padding-bottom:calc(88px + var(--safe-bottom)); }
+#viewProfile #profileAvatar,.settings-photo-editor .profile-avatar {
+  width:64px;height:64px;aspect-ratio:1;flex:none;overflow:hidden;
+}
+#profileAvatar img,.settings-photo-editor .profile-avatar img {
+  display:block;width:100%;height:100%;min-width:0;min-height:0;object-fit:cover;
+}
+.settings-photo-editor {
+  justify-content:center;
+  padding:8px 0 16px;margin-bottom:16px;border-bottom:1px solid var(--ui-line);
+}
+.settings-photo-edit {
+  display:grid;justify-items:center;gap:8px;padding:8px 12px;
+  color:var(--ui-text);font:inherit;border-radius:12px;
+}
+.settings-photo-edit .profile-avatar {
+  width:96px;height:96px;border-radius:50%;
+}
+.settings-photo-menu .settings-text-action {
+  display:block;width:100%;min-height:44px;padding:8px;text-align:start;
+}
+.settings-photo-menu .settings-text-action[autofocus] {
+  margin-top:8px;border-top:1px solid var(--ui-line);
+}
+.settings-account-contact {
+  margin:16px 0 4px;padding:0;border-block:1px solid var(--ui-line);
+}
+.settings-account-contact div {
+  display:grid;grid-template-columns:72px minmax(0,1fr);align-items:baseline;
+  gap:12px;padding-block:12px;font-size:.875rem;
+}
+.settings-account-contact div + div { border-top:1px solid var(--ui-line); }
+.settings-account-contact dt { color:var(--ui-secondary); }
+.settings-account-contact dd { margin:0;text-align:end;overflow-wrap:anywhere; }
+.photo-preview-frame { display:grid;place-items:center;margin-top:16px; }
+.photo-preview-frame img { display:block;width:min(160px,100%);aspect-ratio:1;border-radius:50%;object-fit:cover; }
+.photo-preview-dialog[data-framing="cover"] img { width:100%;aspect-ratio:2.35;border-radius:12px; }
+#accountSignOutError:not([hidden]) { color:var(--text-main);border-inline-start:2px solid var(--kamby-brand-primary);padding-inline-start:8px; }
+
+#viewSettingsSubscreen.account-screen .settings-subscreen-body {
+  width:min(100%,420px);margin-inline:auto;padding-inline:20px;
+}
+.account-screen-brand {
+  display:flex;align-items:center;justify-content:center;gap:8px;
+  margin:8px 0 20px;color:var(--ui-text);font-size:1.375rem;letter-spacing:-.035em;
+}
+.account-screen-brand img { display:block; }
+#viewSettingsSubscreen.account-screen .profile-login {
+  padding:0;background:transparent;border-radius:0;gap:8px;
+}
+.account-social:has(button[hidden]) { display:none; }
+.account-separator {
+  display:flex;align-items:center;gap:12px;margin:12px 0 2px;
+  color:var(--ui-secondary);font-size:.8125rem;
+}
+.account-separator::before,.account-separator::after { content:"";flex:1;border-top:1px solid var(--ui-line); }
+.account-screen .account-google-button { width:100%; }
+.account-screen #btnForgotPassword { align-self:flex-end;padding-inline:4px; }
+.account-screen #btnOpenRegistration { align-self:center; }
+.account-screen .merchant-primary-button { min-height:48px; }

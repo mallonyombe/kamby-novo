@@ -32,3 +32,69 @@ test('current verification can continue; transport rejection restores retry',asy
  for(const fail of [false,true]){const h=harness({listFactors:async()=>({data:{totp:[{id:'x',status:'verified'}]}}),challengeAndVerify:async()=>{if(fail)throw Error('offline');return{error:null};}});await h.mfa(1);await h.elements.find(e=>e.tag==='form').onsubmit({preventDefault(){}});assert.deepEqual(h.events,fail?[]:['start']);assert.equal(h.elements.find(e=>e.copy==='Confirmar acesso').disabled,false);}
 });
 test('stale top-level administration errors are ignored',()=>{assert.match(source,/catch\(e\)\{if\(version!==sessionVersion\)return;root.replaceChildren/);});
+
+function signOutHarness(signOut) {
+ const definition=source.slice(source.indexOf('function openSignOutDialog()'),source.indexOf('async function writeDialog('));
+ const calls=[];
+ const nodes=[];
+ const root={append(){}};
+ function el(tag,cls,copy){
+  const node={tag,cls,copy,children:[],append(...children){this.children.push(...children);},
+   setAttribute(){},focus(){calls.push('focus');}};
+  nodes.push(node);
+  return node;
+ }
+ const sheet=Object.assign(el('dialog'),{
+  open:false,showModal(){this.open=true;},close(){this.open=false;},
+ });
+ const button=(copy,cls,onclick)=>Object.assign(el('button',cls,copy),{onclick});
+ const make=Function('root','dialog','requestModalDismiss','el','button','setButtonBusy','platform','start',
+  `let sessionVersion=1;${definition};return {openSignOutDialog,invalidate(){sessionVersion++;}};`);
+ const admin=make(root,()=>sheet,modal=>modal.close(),el,button,
+  (submit,busy)=>{submit.busy=busy;},
+  {auth:{signOut:request=>{calls.push(request);return signOut();}}},
+  async()=>calls.push('start'));
+ admin.openSignOutDialog();
+ return {...admin,sheet,calls,nodes,form:nodes.find(n=>n.tag==='form'),
+  cancel:nodes.find(n=>n.copy==='Cancelar'),submit:nodes.find(n=>n.copy==='Terminar sessão')};
+}
+
+test('administrative sign-out asks for confirmation and cancelling keeps the session',()=>{
+ const h=signOutHarness(async()=>({error:null}));
+ assert.equal(h.sheet.open,true);
+ assert.equal(h.cancel.autofocus,true);
+ assert.deepEqual(h.calls,[]);
+ h.cancel.onclick();
+ assert.equal(h.sheet.open,false);
+ assert.deepEqual(h.calls,[]);
+});
+
+test('failed administrative sign-out stays in the dialog and can be retried once',async()=>{
+ const wait=deferred();
+ let attempts=0;
+ const h=signOutHarness(()=>++attempts===1?wait.promise:Promise.resolve({error:null}));
+ const event={preventDefault(){}};
+ const first=h.form.onsubmit(event);
+ assert.equal(h.submit.busy,true);
+ await h.form.onsubmit(event);
+ assert.equal(attempts,1);
+ wait.resolve({error:new Error('offline')});
+ await first;
+ assert.equal(h.sheet.open,true);
+ assert.equal(h.submit.disabled,false);
+ assert.match(h.nodes.find(n=>n.cls==='field-error').textContent,/Tenta novamente/);
+ await h.form.onsubmit(event);
+ assert.equal(h.sheet.open,false);
+ assert.deepEqual(h.calls,[{scope:'local'},'focus',{scope:'local'},'start']);
+});
+
+test('sign-out event prevents restarting a stale administrative session',async()=>{
+ const wait=deferred();
+ const h=signOutHarness(()=>wait.promise);
+ const pending=h.form.onsubmit({preventDefault(){}});
+ h.invalidate();
+ wait.resolve({error:null});
+ await pending;
+ assert.equal(h.sheet.open,false);
+ assert.deepEqual(h.calls,[{scope:'local'}]);
+});

@@ -34,7 +34,7 @@ export function openSellerSetup({platform,store,userId,isCurrent,onReady,onClose
   if(step){
    const progress=el('ol','seller-progress');
    progress.setAttribute('aria-label','Configuração da loja');
-   for(const [i,label] of ['Termos','Boas-vindas','A tua loja'].entries()){
+   for(const [i,label] of ['Termos','A tua loja'].entries()){
     const item=el('li','',label);
     if(i===step-1)item.setAttribute('aria-current','step');
     else if(i<step-1)item.dataset.done='true';
@@ -73,21 +73,8 @@ export function openSellerSetup({platform,store,userId,isCurrent,onReady,onClose
   dialog.close();
   onReady(id);
  }
- function welcome(){
-  const panel=shown('Bem-vindo ao Kamby',2);
-  panel.append(el('p','mw-muted','Vamos preparar a tua loja.'));
-  const steps=el('ol','seller-checklist');
-  for(const [glyph,copy] of [['store','Define o nome e o WhatsApp'],['image','Completa o perfil e prepara os produtos'],['eye','Activa a loja quando estiver pronta']]){
-   const row=el('li');
-   const mark=el('span');
-   mark.innerHTML=icon(glyph);
-   row.append(mark,el('span','',copy));
-   steps.append(row);
-  }
-  panel.append(steps,action('Começar',()=>store?finish(store.id):create()));
- }
  function create(){
-  const panel=shown('Criar a minha loja',3);
+  const panel=shown('Configurar loja',2);
   const form=el('form');
   function field(label,type,maxLength){
    const wrapper=el('label','',label),input=el('input');
@@ -140,7 +127,7 @@ export function openSellerSetup({platform,store,userId,isCurrent,onReady,onClose
    return;
   }
   const terms=result.data;
-  if(terms.accepted)return store?finish(store.id):draft.values?create():welcome();
+  if(terms.accepted)return store?finish(store.id):create();
   const panel=shown(terms.title,1);
   panel.append(el('p','mw-muted','Versão '+terms.version));
   const documentText=el('div','seller-terms-text');
@@ -155,8 +142,7 @@ export function openSellerSetup({platform,store,userId,isCurrent,onReady,onClose
    if(failure)throw failure;
    if(dialog.open&&isCurrent()){
     if(store)finish(store.id);
-    else if(draft.values)create();
-    else welcome();
+    else create();
    }
   }));
   panel.append(documentText,error,accept);

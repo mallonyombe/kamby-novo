@@ -1324,13 +1324,12 @@
       color: var(--text-secondary);
       font-weight: 700;
     }
-    .store-dir-avatar { width: 52px; height: 52px; overflow: hidden; border-radius: 12px; }
+    .store-dir-avatar { width: 52px; height: 52px; overflow: hidden; border-radius: 50%; }
     .store-dir-avatar img { width: 100%; height: 100%; display: block; }
     .store-dir-name { color: var(--text-main); font-size: 1rem; font-weight: 650; overflow-wrap: anywhere; }
     .store-dir-location { margin-top: 3px; color: var(--text-secondary); font-size: .875rem; overflow-wrap: anywhere; }
     .store-dir-chevron { width: 18px; height: 18px; color: var(--text-secondary); }
     .store-dir-skeleton-copy { display: grid; gap: 7px; min-width: 0; }
-    .store-dir-skeleton .store-dir-avatar { width: 52px; border-radius: 12px; }
     .store-dir-skeleton-copy .app-skeleton { min-height: 0; border-radius: 4px; }
     .store-dir-skeleton-copy .store-dir-skeleton-name { width: min(82%, 164px); height: 14px; }
     .store-dir-skeleton-copy .store-dir-skeleton-location { width: min(52%, 98px); height: 10px; }
@@ -1559,6 +1558,7 @@
     #viewSearchResults .search-zero-box:not([hidden]) { background: transparent; padding: 32px 16px; }
   </style>
   <link rel="stylesheet" href="merchant.css" />
+<link rel="stylesheet" href="panel-sidebar.css">
   <link rel="stylesheet" href="navigation.css" />
   <link rel="stylesheet" href="experience.css" />
   <script type="module" src="theme.js"></script>
@@ -1701,7 +1701,7 @@
         </div>
         <section id="pdpRelated" class="pdp-related" hidden><h2>Mais desta loja</h2><div class="products-grid" id="pdpRelatedProducts"></div></section>
       </div>
-      <aside class="pdp-sticky-bar" aria-label="Acções do produto"><div class="pdp-sticky-inner"><button class="btn-pdp-cart" id="btnPdpAddToCart" type="button" disabled><span>Adicionar ao carrinho</span></button><button class="btn-pdp-whatsapp" id="btnPdpDirectWhatsApp" type="button" disabled><span>WhatsApp</span></button></div></aside>
+      <aside class="pdp-sticky-bar" aria-label="Acções do produto"><div class="pdp-sticky-inner"><p id="pdpContactStatus" class="pdp-contact-status" role="status" hidden></p><button class="btn-pdp-cart" id="btnPdpAddToCart" type="button" disabled><span>Adicionar ao carrinho</span></button><button class="btn-pdp-whatsapp" id="btnPdpDirectWhatsApp" type="button" disabled><span>WhatsApp</span></button></div></aside>
     </section>
 
     <section id="viewStoreCart" class="kamby-view pdp-subscreen" hidden aria-label="Carrinho da loja"><header class="pdp-top-bar"><div class="pdp-nav-content"><button type="button" class="pdp-back-btn" id="btnBackStoreCart" aria-label="Voltar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg></button><h1 class="pdp-top-title">Carrinho da loja</h1><button type="button" class="store-cart-general-link" id="btnStoreCartGeneral" aria-label="Ver todos os carrinhos">Todos</button></div></header><div class="store-cart-body"><h2 id="storeCartName" tabindex="-1"></h2><p id="storeCartNotice" class="commerce-notice" role="status" hidden></p><div id="storeCartItems"></div></div><footer class="store-cart-footer"><div><span>Total da loja</span><strong id="storeCartTotal">0 MT</strong></div><button type="button" id="btnStoreCartWhatsApp">Continuar no WhatsApp</button></footer></section>
@@ -1753,13 +1753,18 @@
       <div class="storefront-hero">
         <button type="button" class="storefront-cover" id="storefrontCover" aria-label="Ver foto de capa da loja" disabled></button>
         <div class="storefront-profile-card">
-          <button type="button" class="storefront-avatar" id="storefrontAvatar" aria-label="Ver foto de perfil da loja" disabled></button>
-          <h1 class="storefront-name" id="storefrontName">Loja</h1>
-          <div class="storefront-meta"><p class="storefront-geo" id="storefrontGeo"></p></div>
+          <div class="storefront-identity">
+            <button type="button" class="storefront-avatar" id="storefrontAvatar" aria-label="Ver foto de perfil da loja" disabled></button>
+            <div class="storefront-identity-copy">
+              <h1 class="storefront-name" id="storefrontName">Loja</h1>
+              <p class="storefront-geo" id="storefrontGeo" hidden></p>
+            </div>
+          </div>
+          <p class="storefront-intro" id="storefrontIntro" hidden></p>
           <div class="storefront-secondary-actions">
-            <button type="button" id="btnStorefrontInfo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v6m0-10v1"/></svg>Sobre</button>
             <button class="btn-storefront-wapp" id="btnStorefrontWhatsApp" type="button" disabled><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M21 11.5a8.5 8.5 0 0 1-8.5 8.5 10 10 0 0 1-4-.9L3 21l1.8-5.5A9 9 0 1 1 21 11.5Z"/></svg><span>WhatsApp</span></button>
-            <button id="btnShareStorefront" type="button" aria-label="Partilhar loja"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M12 15V3m-4 4 4-4 4 4M5 12v8h14v-8"/></svg>Partilhar</button>
+            <button type="button" id="btnStorefrontInfo">Sobre a loja</button>
+            <button id="btnShareStorefront" type="button" aria-label="Partilhar loja"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M12 15V3m-4 4 4-4 4 4M5 12v8h14v-8"/></svg></button>
           </div>
         </div>
       </div>
@@ -1827,15 +1832,15 @@
         </nav>
       </footer>
     </section>
-    <section id="viewSettingsSubscreen" class="kamby-view pdp-subscreen" hidden aria-label="Definições da conta"><header class="pdp-top-bar"><div class="pdp-nav-content"><button type="button" class="pdp-back-btn" id="btnBackSettings" aria-label="Voltar ao Perfil"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg></button><h1 class="pdp-top-title" id="settingsSubscreenTitle" tabindex="-1">Perfil</h1></div></header><div class="settings-subscreen-body"><div id="settingsSubscreenContent"></div><div class="profile-menu-list settings-local-actions" id="settingsDeviceActions" hidden><button type="button" class="profile-menu-item" id="btnClearLocalData"><span class="profile-menu-copy"><span class="profile-menu-label">Limpar dados locais</span><span class="profile-menu-sub">Carrinho, guardados de visitante e pesquisas recentes</span></span><span aria-hidden="true">›</span></button></div><div id="settingsLoginPanel" hidden>
-      <form class="profile-login" id="profileLoginForm"><label for="accountIdentity">Telefone ou email</label><input id="accountIdentity" type="text" autocomplete="username" autocapitalize="none" spellcheck="false" enterkeyhint="next" required maxlength="254" /><label for="accountPassword">Palavra-passe</label><div class="account-password-wrap"><input id="accountPassword" type="password" autocomplete="current-password" enterkeyhint="go" aria-describedby="accountLoginError" required /><button type="button" id="btnShowAccountPassword" aria-label="Mostrar palavra-passe" aria-pressed="false"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/><path class="account-password-slash" d="m3 3 18 18" stroke-linecap="round"/></svg></button></div><p id="accountLoginError" class="field-error" role="alert" hidden></p><button class="merchant-primary-button" id="btnAccountSignIn" type="submit">Entrar</button><button type="button" class="settings-text-action" id="btnForgotPassword">Esqueci a palavra-passe</button><button class="account-google-button" id="btnGoogleSignIn" type="button" hidden>
+    <section id="viewSettingsSubscreen" class="kamby-view pdp-subscreen" hidden aria-label="Definições da conta"><header class="pdp-top-bar"><div class="pdp-nav-content"><button type="button" class="pdp-back-btn" id="btnBackSettings" aria-label="Voltar ao Perfil"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg></button><h1 class="pdp-top-title" id="settingsSubscreenTitle" tabindex="-1">Perfil</h1></div></header><div class="settings-subscreen-body"><div id="accountScreenBrand" class="account-screen-brand" hidden><img src="icone.svg" alt="" width="32" height="32"><strong>Kamby</strong></div><div id="settingsSubscreenContent"></div><div class="profile-menu-list settings-local-actions" id="settingsDeviceActions" hidden><button type="button" class="profile-menu-item" id="btnClearLocalData"><span class="profile-menu-copy"><span class="profile-menu-label">Limpar dados locais</span><span class="profile-menu-sub">Carrinho, guardados de visitante e pesquisas recentes</span></span><span aria-hidden="true">›</span></button></div><div id="settingsLoginPanel" hidden>
+      <form class="profile-login" id="profileLoginForm"><div class="account-social"><button class="account-google-button" id="btnGoogleSignIn" type="button" hidden>
         <svg viewBox="0 0 48 48" width="20" height="20" aria-hidden="true">
           <path fill="#4285F4" d="M43.6 24.5c0-1.4-.1-2.9-.4-4.3H24v8.1h11a9.4 9.4 0 0 1-4.1 6.1v5.1h6.6c3.9-3.6 6.1-8.8 6.1-15z"/>
           <path fill="#34A853" d="M24 44c5.5 0 10.1-1.8 13.5-4.5l-6.6-5.1A12.4 12.4 0 0 1 12.4 28H5.6v5.3A20 20 0 0 0 24 44z"/>
           <path fill="#FBBC05" d="M12.4 28a12 12 0 0 1 0-8v-5.3H5.6a20 20 0 0 0 0 18.6z"/>
           <path fill="#EA4335" d="M24 12c3 0 5.6 1 7.7 3l5.8-5.8A19.4 19.4 0 0 0 24 4 20 20 0 0 0 5.6 14.7l6.8 5.3A12.2 12.2 0 0 1 24 12z"/>
         </svg>Continuar com Google
-      </button><button type="button" class="settings-text-action" id="btnOpenRegistration">Criar conta</button></form>
+      </button><span class="account-separator">ou</span></div><label for="accountIdentity">Telefone ou email</label><input id="accountIdentity" type="text" autocomplete="username" autocapitalize="none" spellcheck="false" enterkeyhint="next" required maxlength="254" /><label for="accountPassword">Palavra-passe</label><div class="account-password-wrap"><input id="accountPassword" type="password" autocomplete="current-password" enterkeyhint="go" aria-describedby="accountLoginError" required /><button type="button" id="btnShowAccountPassword" aria-label="Mostrar palavra-passe" aria-pressed="false"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/><path class="account-password-slash" d="m3 3 18 18" stroke-linecap="round"/></svg></button></div><p id="accountLoginError" class="field-error" role="alert" hidden></p><button type="button" class="settings-text-action" id="btnForgotPassword">Esqueci a palavra-passe</button><button class="merchant-primary-button" id="btnAccountSignIn" type="submit">Entrar</button><button type="button" class="settings-text-action" id="btnOpenRegistration">Criar conta</button></form>
     </div><p id="settingsScreenNotice" class="profile-notice" role="status" aria-live="polite" hidden></p></div></section>
     <div class="pwa-install-invite" id="kambyInstallInvite" hidden>
       <button type="button" class="pwa-install-action" id="kambyInstallAccept">
@@ -1846,6 +1851,17 @@
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg>
       </button>
     </div>
+    <dialog id="accountSignOutDialog" class="local-data-dialog" aria-labelledby="accountSignOutTitle" aria-describedby="accountSignOutCopy">
+      <form>
+        <h2 id="accountSignOutTitle">Terminar sessão?</h2>
+        <p id="accountSignOutCopy">Vais sair da tua conta neste dispositivo.</p>
+        <p class="field-error" id="accountSignOutError" role="alert" hidden></p>
+        <div class="local-dialog-actions">
+          <button type="button" id="cancelAccountSignOut" autofocus>Cancelar</button>
+          <button type="submit" id="confirmAccountSignOut">Terminar sessão</button>
+        </div>
+      </form>
+    </dialog>
     <dialog id="settingsConfirmDialog" class="local-data-dialog" aria-labelledby="settingsConfirmTitle"><h2 id="settingsConfirmTitle"></h2><p id="settingsConfirmCopy"></p><div class="local-dialog-actions"><button type="button" id="settingsConfirmCancel" autofocus>Cancelar</button><button type="button" id="settingsConfirmAccept">Confirmar</button></div></dialog>
     <section id="viewMerchant" class="kamby-view pdp-subscreen" hidden aria-label="Espaço do Lojista">
       <header class="pdp-top-bar"><div class="pdp-nav-content">
@@ -2053,6 +2069,11 @@
       const availabilityChecks = new WeakMap();
       async function refreshContactButton(button, storeId, eligible=true) {
         const check={};availabilityChecks.set(button,check);
+        const status=button.id==='btnPdpDirectWhatsApp'?document.getElementById('pdpContactStatus'):null;
+        if(status) {
+          status.hidden=true;
+          button.hidden=!eligible;
+        }
         if(!eligible || !storeId) return;
         const label=button.querySelector('span')||button;
         try {
@@ -2061,8 +2082,16 @@
           button.disabled=button.classList.contains('is-pending');label.textContent=button.id==='btnStoreCartWhatsApp'?'Enviar pedido pelo WhatsApp':'WhatsApp';button.setAttribute('aria-label',label.textContent);
         } catch(error) {
           if(availabilityChecks.get(button)!==check)return;
-          // Remain clickable so reopening/offline recovery does not need a page reload.
-          button.disabled=button.classList.contains('is-pending');label.textContent=error.message===STORE_CLOSED_COPY?'Loja fechada':'Verificar loja';button.setAttribute('aria-label',error.message);
+          const closed=error.message===STORE_CLOSED_COPY;
+          if(status&&closed) {
+            button.hidden=true;
+            status.textContent=STORE_CLOSED_COPY;
+            status.hidden=false;
+            return;
+          }
+          button.disabled=button.classList.contains('is-pending');
+          label.textContent=closed?'Loja fechada':'Verificar loja';
+          button.setAttribute('aria-label',error.message);
         }
       }
 
@@ -2878,7 +2907,11 @@
         document.title = store.name + ' · Kamby';
         storefrontElements.headerTitle.textContent = 'Loja';
         storefrontElements.name.textContent = store.name;
-        storefrontElements.location.textContent = store.location || 'Localização não indicada';
+        storefrontElements.location.textContent = store.location;
+        storefrontElements.location.hidden = !store.location;
+        const intro = document.getElementById('storefrontIntro');
+        intro.textContent = store.description.trim();
+        intro.hidden = !intro.textContent;
         storefrontElements.whatsapp.disabled = !store.whatsapp;
         storefrontElements.whatsapp.querySelector('span').textContent = 'Perguntar à loja';
         storefrontElements.whatsapp.setAttribute('aria-label', 'Fazer uma pergunta à loja no WhatsApp');
@@ -2981,9 +3014,13 @@
           const url = whatsappURL(store.whatsapp, message);
           trackStoreEvent(store.id, 'whatsapp_click');
           window.location.assign(url);
-        } catch { showCommerceToast('Não foi possível abrir o contacto desta loja.'); }
+        } catch { showCommerceToast('Não foi possível abrir o contacto desta loja.',undefined,undefined,'error'); }
       });
 
+      let shareConfirmationTimer;
+      const storefrontShareIcon=storefrontElements.share.querySelector('path');
+      const storefrontSharePath=storefrontShareIcon.getAttribute('d');
+      const storefrontShareStatus=document.getElementById('storefrontShareStatus');
       storefrontElements.share.addEventListener('click', async function shareStorefront() {
         const store = storefrontState.store;
         if (!store) return;
@@ -3001,10 +3038,19 @@
           }
         }
         try {
-          await navigator.clipboard.writeText(window.location.href);
-          showCommerceToast('Ligação da loja copiada.');
+          await navigator.clipboard.writeText(data.url);
+          if(viewStorefront.hidden||storefrontState.store?.id!==store.id)return;
+          clearTimeout(shareConfirmationTimer);
+          storefrontShareIcon.setAttribute('d','m5 12 4 4L19 6');
+          storefrontElements.share.setAttribute('aria-label','Ligação copiada');
+          storefrontShareStatus.textContent='Ligação da loja copiada.';
+          shareConfirmationTimer=setTimeout(()=>{
+            storefrontShareIcon.setAttribute('d',storefrontSharePath);
+            storefrontElements.share.setAttribute('aria-label','Partilhar loja');
+            storefrontShareStatus.textContent='';
+          },2000);
         } catch (_error) {
-          showCommerceToast('Não foi possível copiar a ligação. Tenta novamente.');
+          showCommerceToast('Não foi possível copiar a ligação. Tenta novamente.',undefined,undefined,'error');
           // A partilha nativa continua disponível quando a cópia não é permitida.
         }
       });
@@ -3446,25 +3492,68 @@
       };
 
       const viewStoreCart=document.getElementById('viewStoreCart');
-      const scopedCart={storeId:'',name:'',originHash:'#carrinho',originScroll:0};let toastTimeout;
-      window.addEventListener('kamby:feedback',e=>showCommerceToast(e.detail));
-      function showCommerceToast(copy, action, label = 'Ver carrinho') {
-        const toast = document.getElementById('commerceToast');
-        const button = document.getElementById('commerceToastAction');
-        clearTimeout(toastTimeout);
+      const scopedCart={storeId:'',name:'',originHash:'#carrinho',originScroll:0};
+      const feedbackToast = document.getElementById('commerceToast');
+      const feedbackAction = document.getElementById('commerceToastAction');
+      const feedbackClose = document.getElementById('commerceToastClose');
+      let feedbackTimer, feedbackRevision = 0, feedbackPage = '', feedbackDialog = null;
+      const currentFeedbackPage = () => [
+        location.hash, document.body.dataset.view,
+        document.querySelector('#viewMerchant .merchant-workspace')?.dataset.activeTab
+      ].join('|');
+
+      function dismissFeedback() {
+        ++feedbackRevision;
+        clearTimeout(feedbackTimer);
+        feedbackToast.getAnimations().forEach(animation => animation.cancel());
+        feedbackToast.hidden = true;
+        feedbackAction.onclick = null;
+        if (feedbackDialog) document.body.append(feedbackToast);
+        feedbackDialog = null;
+      }
+      feedbackClose.onclick = dismissFeedback;
+      function dismissPageFeedback() {
+        if (!feedbackToast.hidden && feedbackPage !== currentFeedbackPage()) dismissFeedback();
+      }
+      window.addEventListener('hashchange', dismissPageFeedback);
+      window.addEventListener('kamby:feedback-scope', dismissPageFeedback);
+      document.addEventListener('close', event => {
+        if (event.target === feedbackDialog) dismissFeedback();
+      }, true);
+      window.addEventListener('kamby:feedback', ({detail}) => {
+        if (typeof detail === 'string') showCommerceToast(detail);
+        else if (detail?.copy) showCommerceToast(detail.copy, detail.action, detail.label, detail.tone);
+      });
+
+      function showCommerceToast(copy, action, label = 'Ver carrinho', tone = 'success') {
+        dismissFeedback();
+        const revision = feedbackRevision;
+        feedbackPage = currentFeedbackPage();
+        feedbackDialog = [...document.querySelectorAll('dialog[open]')].at(-1) || null;
+        if (feedbackDialog) feedbackDialog.append(feedbackToast);
+        feedbackToast.dataset.tone = ['success','error','info','warning'].includes(tone) ? tone : 'info';
         document.getElementById('commerceToastText').textContent = copy;
-        button.hidden = !action;
-        button.textContent = label;
-        button.onclick = () => { toast.hidden = true; action?.(); };
-        toast.hidden = false;
-        if (!matchMedia('(prefers-reduced-motion: reduce)').matches) {
-          toast.getAnimations().forEach(animation => animation.cancel());
-          toast.animate([
-            { opacity: 0, transform: 'translate(-50%, 6px)' },
-            { opacity: 1, transform: 'translate(-50%, 0)' }
-          ], { duration: 180, easing: 'ease-out' });
-        }
-        toastTimeout = setTimeout(() => { toast.hidden = true; }, action ? 5500 : 3200);
+        feedbackAction.hidden = !action;
+        feedbackAction.textContent = label;
+        feedbackAction.onclick = () => { dismissFeedback(); action?.(); };
+        feedbackToast.hidden = false;
+        const motion = !matchMedia('(prefers-reduced-motion: reduce)').matches;
+        if (motion) feedbackToast.animate([
+          {opacity:0,transform:'translate(-50%,8px)'},{opacity:1,transform:'translate(-50%,0)'}
+        ],{duration:160,easing:'ease-out'});
+        const expire = async () => {
+          if (revision !== feedbackRevision) return;
+          if (action && document.activeElement === feedbackAction) {
+            feedbackTimer = setTimeout(expire,1000);
+            return;
+          }
+          if (motion) {
+            await feedbackToast.animate([{opacity:1},{opacity:0}],{duration:140,fill:'forwards'}).finished.catch(()=>{});
+          }
+          if (revision === feedbackRevision) dismissFeedback();
+        };
+        const lifetime = action ? (label === 'Desfazer' ? 5500 : 6500) : tone === 'error' ? 5000 : 3200;
+        feedbackTimer = setTimeout(expire,lifetime);
       }
       function updateScopedCartBadges(){
         for(const [buttonId,badgeId,storeId]of[['btnPdpStoreCart','pdpStoreCartCount',currentPDP.product?.storeId],['btnStorefrontCart','storefrontCartCount',storefrontState.store?.id]]){
@@ -3629,7 +3718,14 @@
         viewPDP.scrollTo({ top: 0, behavior: 'auto' });
       }
 
+      let cartConfirmationTimer;
+      function resetCartConfirmation(){
+        clearTimeout(cartConfirmationTimer);
+        pdpElements.addCart.querySelector('span').textContent='Adicionar ao carrinho';
+      }
+
       function renderPDPLoading() {
+        resetCartConfirmation();
         document.getElementById('btnPdpSaveProduct').kambyPreview=null;document.getElementById('btnPdpSaveProduct').disabled=true;document.getElementById('btnPdpStoreCart').disabled=true;document.getElementById('btnPdpVisitStore').disabled=true;document.getElementById('pdpRelated').hidden=true;document.getElementById('pdpPreviousPrice').hidden=true;document.getElementById('pdpDiscount').hidden=true;
         window.dispatchEvent(new Event('kamby:product-loading'));
         const slide = document.createElement('div');
@@ -3653,6 +3749,8 @@
         pdpElements.share.disabled = true;
         pdpElements.addCart.disabled = true;
         pdpElements.whatsapp.disabled = true;
+        availabilityChecks.delete(pdpElements.whatsapp);
+        document.getElementById('pdpContactStatus').hidden=true;
       }
 
       function renderPDPError(unavailable = true) {
@@ -3687,6 +3785,8 @@
         pdpElements.share.disabled = true;
         pdpElements.addCart.disabled = true;
         pdpElements.whatsapp.disabled = true;
+        availabilityChecks.delete(pdpElements.whatsapp);
+        document.getElementById('pdpContactStatus').hidden=true;
       }
 
       const photoViewer = document.getElementById('productPhotoViewer');
@@ -4011,7 +4111,20 @@
           if(!option?.inStock)throw Error('Esta opção já não está disponível. Escolhe outra opção ou volta mais tarde.');
           if(option.priceMinor!==variant.priceMinor){currentPDP.product=fresh;currentPDP.activeVariant=option;renderPDPVariants();updatePDPCalculations();productAction.refresh();throw Error('A loja actualizou o preço. Confere o novo total antes de continuar.');}
           if(quantity>quantityLimit(fresh,option,mode,readCart()))throw Error('A quantidade disponível mudou. Reduz a quantidade e tenta novamente.');
-          if(mode==='cart'){kambyCart=addCartLine(readCart(),fresh,option,quantity);saveCart();trackAnalytics('add_to_cart');showCommerceToast('Adicionado ao carrinho da loja.',()=>openStoreCart(fresh.storeId,true,fresh.storeName));return true;}
+          if(mode==='cart'){
+            if(currentPDP.product?.id!==fresh.id||viewPDP.hidden||!productAction.isOpen())return false;
+            kambyCart=addCartLine(readCart(),fresh,option,quantity);
+            saveCart();
+            trackAnalytics('add_to_cart');
+            document.getElementById('productActionSheet').addEventListener('close',()=>{
+              if(currentPDP.product?.id!==fresh.id||viewPDP.hidden)return;
+              resetCartConfirmation();
+              pdpElements.addCart.querySelector('span').textContent='Adicionado';
+              document.getElementById('cartQuantityStatus').textContent='Adicionado ao carrinho da loja.';
+              cartConfirmationTimer=setTimeout(resetCartConfirmation,2000);
+            },{once:true});
+            return true;
+          }
           await requireStoreOpen(catalogueRequest,fresh.storeId);
           if (currentPDP.product?.id !== fresh.id || viewPDP.hidden) return false;
           const message='Olá, encontrei este produto no Kamby:\n\n'+fresh.title+(option.id?'\nOpção: '+option.name:'')+'\nQuantidade: '+quantity+'\nTotal estimado: '+formatPrice(option.priceMinor*quantity)+'\n\nGostaria de confirmar o pedido e combinar a entrega.';
@@ -4052,7 +4165,7 @@
           await navigator.clipboard.writeText(window.location.href);
           showCommerceToast('Ligação do produto copiada.');
         } catch (_error) {
-          showCommerceToast('Não foi possível copiar a ligação. Tenta novamente.');
+          showCommerceToast('Não foi possível copiar a ligação. Tenta novamente.',undefined,undefined,'error');
           // A partilha nativa continua disponível quando a cópia não é permitida.
         }
       });
@@ -4667,6 +4780,7 @@
 
     })();
   </script>
+  <p id="storefrontShareStatus" class="commerce-sr-only" role="status"></p>
   <p id="cartQuantityStatus" class="commerce-sr-only" role="status"></p>
   <dialog id="storefrontInfoDialog" class="commerce-action-sheet storefront-info-sheet" aria-labelledby="storefrontInfoTitle"><header><h2 id="storefrontInfoTitle">Sobre a loja</h2><button type="button" id="btnCloseStorefrontInfo" aria-label="Fechar informações da loja"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="m6 6 12 12M6 18 18 6"/></svg></button></header><div id="storefrontInfoContent"></div></dialog>
   <dialog id="testContactDialog" class="search-filter-sheet" aria-labelledby="testContactTitle"><header class="subscreen-bar"><span></span><h2 class="subscreen-title" id="testContactTitle">Resumo do pedido</h2><button type="button" class="header-btn" id="btnCloseTestContact" aria-label="Fechar resumo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m6 6 12 12M6 18 18 6"/></svg></button></header><div class="test-contact-body"><h3 id="testContactStore"></h3><p>O contacto desta loja ainda não está disponível. Podes copiar o resumo do pedido.</p><label for="testContactMessage">Mensagem do pedido</label><textarea id="testContactMessage" rows="9"></textarea><p id="testContactStatus" role="status"></p></div><footer class="search-filter-footer"><button type="button" class="settings-text-action" id="btnCopyTestContact">Copiar mensagem</button><button type="button" class="merchant-primary-button" id="btnFinishTestContact">Concluir</button></footer></dialog>
@@ -4681,7 +4795,7 @@
     </div>
     <img id="storeArtworkFull" alt="">
   </dialog>
-  <div class="commerce-toast" id="commerceToast" role="status" aria-live="polite" hidden><span id="commerceToastText"></span><button type="button" id="commerceToastAction" hidden>Ver carrinho</button></div>
+  <div class="commerce-toast" id="commerceToast" hidden><span id="commerceToastText" role="status" aria-live="polite"></span><button type="button" id="commerceToastAction" hidden>Ver carrinho</button><button type="button" id="commerceToastClose" aria-label="Fechar aviso"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m6 6 12 12M6 18 18 6"/></svg></button></div>
 
   <dialog id="modalNewProduct" class="merchant-editor" aria-labelledby="modalNewProdTitle"></dialog>
 

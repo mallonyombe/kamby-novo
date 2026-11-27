@@ -1,3 +1,4 @@
+import {bindSidebar,sidebarToggleIcon} from './panel-sidebar.js';
 import {enableModalDismiss, requestModalDismiss, protectModalEdits} from './modal-dismiss.js';
 import {listIcon,bindListSearch,paintFilterIcon} from './list-controls.js';
 import {platform} from './platform.js';
@@ -62,9 +63,17 @@ function status(value){const n=el('span','status',storeStates[value]||({publishe
 function heading(title,action){const h=el('header','page-heading'),t=el('div');t.append(el('h1','',title));h.append(t);if(action)h.append(action);return h;}
 function button(copy,cls,fn,ico){const b=el('button',cls);b.type='button';if(ico)b.innerHTML=icon(ico);b.append(document.createTextNode(copy));b.onclick=fn;return b;}
 const mobileAreas=['overview','stores','moderation'];
+const desktop = matchMedia('(min-width: 800px)');
+desktop.addEventListener('change', event => {
+  const drawer = $('#adminDrawer');
+  if (event.matches && drawer?.open) {
+    drawer.close();
+    ($('.admin-sidebar [aria-current="page"]') || $('.panel-sidebar-toggle')).focus();
+  }
+});
 function navMarkup(destinations){
   return areas.filter(([id])=>destinations.includes(id)&&can(id+'.read')).map(([id,label,glyph])=>
-    '<a href="#'+id+'" data-area="'+id+'">'+icon(glyph)+'<span>'+(id==='overview'?'Início':label)+'</span></a>'
+    '<a href="#'+id+'" data-area="'+id+'">'+icon(glyph)+'<span class="panel-sidebar-label">'+(id==='overview'?'Início':label)+'</span></a>'
   ).join('');
 }
 
@@ -72,34 +81,50 @@ function shell(){
   const brand='<img src="icone.svg" alt="" width="32" height="32"><span>Kamby</span>';
   const primary=navMarkup(mobileAreas);
   const other=navMarkup(areas.map(([id])=>id).filter(id=>!mobileAreas.includes(id)));
+  const destinations = `
+    ${primary?'<div class="admin-nav-group">'+primary+'</div>':''}
+    ${other?'<div class="admin-nav-group">'+other+'</div>':''}`;
   root.innerHTML=`
     <div class="admin-shell">
-      <header class="admin-topbar" aria-label="Navegação da gestão">
-        <button type="button" class="icon-button admin-drawer-trigger" aria-label="Abrir menu"
-          aria-controls="adminDrawer" aria-expanded="false">${icon('menu')}</button>
-        <h1 id="adminPrimaryTitle" tabindex="-1"></h1>
-        <span id="adminPrimaryActions" class="admin-primary-actions"></span>
-      </header>
-      <dialog id="adminDrawer" class="admin-drawer" aria-labelledby="adminDrawerTitle">
-        <div class="admin-drawer-body">
-          <header class="admin-drawer-head">
-            <h2 id="adminDrawerTitle">Gestor</h2>
-            <button type="button" class="icon-button admin-drawer-close" aria-label="Fechar menu"
-              autofocus>${icon('close')}</button>
-          </header>
-          <nav class="admin-nav" aria-label="Navegação do Gestor">
-            ${primary?'<div class="admin-nav-group">'+primary+'</div>':''}
-            ${other?'<div class="admin-nav-group">'+other+'</div>':''}
-          </nav>
-          <div class="admin-drawer-footer">
-            <a href="index.html">Abrir Kamby</a>
-            <button type="button" data-signout>Terminar sessão</button>
-          </div>
+      <aside class="admin-sidebar panel-sidebar" aria-label="Gestor">
+        <div class="panel-sidebar-header">
+          <div class="panel-sidebar-brand">${brand}</div>
+          <button type="button" class="panel-sidebar-toggle" aria-controls="adminSidebarNav">${sidebarToggleIcon}</button>
         </div>
-      </dialog>
-      <div id="adminContext"></div>
-      <main id="adminMain" tabindex="-1"></main>
+        <nav id="adminSidebarNav" class="admin-nav" aria-label="Navegação do Gestor">${destinations}</nav>
+        <div class="admin-sidebar-footer">
+          <a href="index.html">${icon('store')}<span class="panel-sidebar-label">Abrir Kamby</span></a>
+          <button type="button" data-signout><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M10 4H5v16h5m4-12 4 4-4 4m-5-4h9"/></svg><span class="panel-sidebar-label">Terminar sessão</span></button>
+        </div>
+      </aside>
+      <div class="admin-panel-content">
+        <header class="admin-topbar" aria-label="Navegação da gestão">
+          <button type="button" class="icon-button admin-drawer-trigger" aria-label="Abrir menu"
+            aria-controls="adminDrawer" aria-expanded="false">${icon('menu')}</button>
+          <h1 id="adminPrimaryTitle" tabindex="-1"></h1>
+          <span id="adminPrimaryActions" class="admin-primary-actions"></span>
+        </header>
+        <dialog id="adminDrawer" class="admin-drawer" aria-labelledby="adminDrawerTitle">
+          <div class="admin-drawer-body">
+            <header class="admin-drawer-head">
+              <h2 id="adminDrawerTitle">Gestor</h2>
+              <button type="button" class="icon-button admin-drawer-close" aria-label="Fechar menu"
+                autofocus>${icon('close')}</button>
+            </header>
+            <nav class="admin-nav" aria-label="Navegação do Gestor">
+              ${destinations}
+            </nav>
+            <div class="admin-drawer-footer">
+              <a href="index.html">Abrir Kamby</a>
+              <button type="button" data-signout>Terminar sessão</button>
+            </div>
+          </div>
+        </dialog>
+        <div id="adminContext"></div>
+        <main id="adminMain" tabindex="-1"></main>
+      </div>
     </div>`;
+  bindSidebar($('.admin-shell'), $('.panel-sidebar-toggle'), 'gestor');
   const drawer=$('#adminDrawer');
   const toggle=$('.admin-drawer-trigger');
   const close=$('.admin-drawer-close');
@@ -116,19 +141,12 @@ function shell(){
     toggle.setAttribute('aria-expanded','false');
     if(toggle.getClientRects().length)toggle.focus({preventScroll:true});
   });
-  drawer.onclick=event=>{ if(event.target.closest('a'))drawer.close(); };
-  $('[data-signout]',drawer).onclick=async event=>{
-    const action=event.currentTarget;
-    action.disabled=true;
-    try{
-      const {error}=await platform.auth.signOut({scope:'local'});
-      if(error)throw error;
-      if(root.contains(drawer))await start();
-    }catch{
-      feedback('Não foi possível terminar a sessão. Tenta novamente.');
-      action.disabled=false;
-    }
+  drawer.onclick = event => {
+    if (event.target.closest('a') && !event.ctrlKey && !event.metaKey && !event.shiftKey && !event.altKey) drawer.close();
   };
+  root.querySelectorAll('[data-signout]').forEach(button => {
+    button.addEventListener('click', openSignOutDialog);
+  });
 }
 function showRouteHeader(area,id,section){
   const context=$('#adminContext');
@@ -793,6 +811,52 @@ function openProduct(product){
 }
 
 function dialog(title,copy){const d=el('dialog','admin-dialog'),h=el('h2','',title);h.id='adminDialogTitle';d.setAttribute('aria-labelledby',h.id);d.append(h);if(copy)d.append(el('p','dialog-impact',copy));d.addEventListener('close',()=>d.remove());document.body.append(d);return d;}
+function openSignOutDialog(){
+ const version=sessionVersion;
+ const sheet=dialog('Terminar sessão?','Vais sair da tua conta neste dispositivo.');
+ root.append(sheet);
+ const form=el('form');
+ const error=el('p','field-error');
+ error.setAttribute('role','alert');
+ error.hidden=true;
+ const actions=el('div','dialog-actions');
+ const cancel=button('Cancelar','secondary',()=>requestModalDismiss(sheet));
+ cancel.autofocus=true;
+ const submit=button('Terminar sessão','primary');
+ submit.type='submit';
+ actions.append(cancel,submit);
+ form.append(error,actions);
+ sheet.append(form);
+ form.onsubmit=async event=>{
+  event.preventDefault();
+  if(submit.disabled||!sheet.open||version!==sessionVersion)return;
+  error.hidden=true;
+  submit.disabled=cancel.disabled=true;
+  setButtonBusy(submit,true);
+  try{
+   const {error:failure}=await platform.auth.signOut({scope:'local'});
+   if(version!==sessionVersion){
+    if(sheet.open)sheet.close();
+    return;
+   }
+   if(failure)throw failure;
+   sheet.close();
+   await start();
+  }catch{
+   if(version!==sessionVersion){
+    if(sheet.open)sheet.close();
+    return;
+   }
+   error.textContent='Não foi possível terminar a sessão. Tenta novamente.';
+   error.hidden=false;
+  }finally{
+   submit.disabled=cancel.disabled=false;
+   setButtonBusy(submit,false);
+   if(!error.hidden&&sheet.open)submit.focus();
+  }
+ };
+ sheet.showModal();
+}
 async function writeDialog(store,operation,document,title,copy){
  const sheet=dialog(title,copy),form=el('form');
  protectModalEdits(sheet, form, confirmDiscard);
@@ -971,7 +1035,7 @@ async function analytics(main,request){let days=7;const select=el('select','filt
  content.append(graph);const table=el('table');table.innerHTML='<caption class="caption">Eventos registados · dias em Maputo</caption><thead><tr><th scope="col">Dia</th><th scope="col">Visitas</th><th scope="col">Cliques WhatsApp</th></tr></thead>';const tbody=el('tbody');for(const day of data.rows){const tr=el('tr');for(const value of [day.day,day.views,day.contacts])tr.append(el('td','',value));tbody.append(tr);}table.append(tbody);const values=el('details','audit-details');
  values.append(el('summary','','Consultar valores diários'),table);
  content.append(values);await renderAudience(content,days,request);}catch(e){if(version===n)state(content,'Não foi possível actualizar',adminError(e),load);}finally{if(version===n)finish();}}select.onchange=()=>{days=Number(select.value);load();};await load();}
-async function start(){const version=++sessionVersion;permissions=[];++revision;readCache.clear();renderedRoute=null;root.replaceChildren();const pending=el('div','auth-shell');root.append(pending);const finish=beginAdminLoad(pending,'account');try{const {data:{session}}=await platform.auth.getSession();if(version!==sessionVersion)return;if(!session){login();return;}const context=await rpc('kg_admin_context');if(version!==sessionVersion)return;if(context.mfa_required){await mfa(version);return;}permissions=context.permissions;shell();await route();}catch(e){if(version!==sessionVersion)return;root.replaceChildren();const wrap=el('div','auth-shell');state(wrap,e.code==='42501'?'Sem acesso':'Administração indisponível',adminError(e),start);wrap.append(button('Terminar sessão','quiet',async()=>{await platform.auth.signOut({scope:'local'});start();}));root.append(wrap);}finally{finish();}}
+async function start(){const version=++sessionVersion;permissions=[];++revision;readCache.clear();renderedRoute=null;root.replaceChildren();const pending=el('div','auth-shell');root.append(pending);const finish=beginAdminLoad(pending,'account');try{const {data:{session}}=await platform.auth.getSession();if(version!==sessionVersion)return;if(!session){login();return;}const context=await rpc('kg_admin_context');if(version!==sessionVersion)return;if(context.mfa_required){await mfa(version);return;}permissions=context.permissions;shell();await route();}catch(e){if(version!==sessionVersion)return;root.replaceChildren();const wrap=el('div','auth-shell');state(wrap,e.code==='42501'?'Sem acesso':'Administração indisponível',adminError(e),start);wrap.append(button('Terminar sessão','quiet',openSignOutDialog));root.append(wrap);}finally{finish();}}
 function authWrap(title,copy){const wrap=el('main','auth-shell');wrap.innerHTML='<div class="auth-brand"><img src="icone.svg" alt="">Kamby</div>';wrap.append(el('h1','',title),el('p','muted',copy));root.replaceChildren(wrap);return wrap;}
 function login(){const wrap=authWrap('Administração','Usa a mesma conta do Kamby. O acesso administrativo exige autorização e confirmação de segurança.'),link=el('a','primary','Entrar no Kamby');link.href='index.html#definicoes/entrar';wrap.append(link);}
 window.addEventListener('beforeunload',event=>{if(formDirty){event.preventDefault();event.returnValue='';}});
@@ -1036,7 +1100,7 @@ async function mfa(version){
    finally{code.value='';if(current()){submit.disabled=false;setButtonBusy(submit,false);}}
   };
  }
- wrap.append(button('Terminar sessão','quiet',async()=>{if(!current())return;await platform.auth.signOut({scope:'local'});if(current())start();}));
+ wrap.append(button('Terminar sessão','quiet',()=>{if(current())openSignOutDialog();}));
 }
 
 window.addEventListener('hashchange',()=>route());platform.auth.onAuthStateChange((event)=>{if(event==='SIGNED_OUT'){++sessionVersion;permissions=[];++revision;readCache.clear();storeNames.clear();listPositions.clear();listSettings.clear();renderedRoute=null;formDirty=false;root.replaceChildren();login();}});start();

@@ -131,11 +131,13 @@ export function setupStorefrontDiscovery({ renderCard, createEmpty }) {
     section('Localização', [store.location, store.address].filter(Boolean).join('\n'));
     section('Área de atendimento', store.serviceArea);
     section('Horário · Maputo', formatOpeningHours(store.openingHours));
+    $('btnStorefrontInfo').hidden = !body.childElementCount;
   }
   function renderArtwork() {
     const artwork = resolveStoreArtwork(store);
     const cover = $('storefrontCover'), avatar = $('storefrontAvatar');
     cover.replaceChildren(); avatar.replaceChildren();
+    cover.removeAttribute('data-photo');
     cover.disabled = avatar.disabled = true;
     cover.onclick = avatar.onclick = null;
     const storeName = store.name;
@@ -173,7 +175,11 @@ export function setupStorefrontDiscovery({ renderCard, createEmpty }) {
     if (artwork.cover) {
       const image = document.createElement('img'); image.src = artwork.cover; image.alt = '';
       image.decoding = 'async'; image.fetchPriority = 'high'; image.style.objectPosition = artwork.coverPosition;
-      image.onload = () => { if (image.parentElement === cover) cover.disabled = false; };
+      image.onload = () => {
+        if (image.parentElement !== cover) return;
+        cover.disabled = false;
+        cover.setAttribute('data-photo', '');
+      };
       image.onerror = () => { if (image.parentElement === cover) cover.disabled = true; image.remove(); };
       cover.onclick = () => openArtwork(image, 'Foto de capa', 'cover');
       cover.append(image);

@@ -116,7 +116,16 @@ const fixture = function () {
       own.is_open=body.is_open;own.updated_at=now();return json(own);
     }
     if(path.endsWith('/kg_store_events')) {events.push(body);return new Response(null,{status:201});}
-    if(path.endsWith('/kg_stores')){if(url.searchParams.has('id'))return json({...own,products:products.filter(p=>p.store_id===own.id)});return json([own,other].map(s=>({...s,products:products.filter(p=>p.store_id===s.id)})));}
+    if(path.endsWith('/kg_stores')){
+      const rows=[own,other].map(store=>({...store,products:products.filter(product=>product.store_id===store.id)}));
+      const filter=url.searchParams.get('id');
+      if(filter?.startsWith('eq.'))return json(rows.find(store=>store.id===filter.slice(3))||null);
+      if(filter?.startsWith('in.(')){
+        const ids=filter.slice(4,-1).split(',');
+        return json(rows.filter(store=>ids.includes(store.id)));
+      }
+      return json(rows);
+    }
     if(path.endsWith('/kg_products')) {
       if(mode==='baseline'&&url.searchParams.get('select')==='moderation_status')return json({code:'42703',message:'column moderation_status does not exist'},400);
       let rows=products;

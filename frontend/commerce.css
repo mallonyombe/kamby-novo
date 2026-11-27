@@ -209,3 +209,33 @@
 .cart-item-details {min-width:0;}
 /* The main price reflects the selected option; chips only name the choice. */
 .pdp-var-price {display:none;}
+
+
+.pdp-contact-status {
+  grid-column:1/-1;margin:0;font-size:.8125rem;line-height:1.4;color:var(--ui-secondary);
+}
+.pdp-sticky-inner:has(.btn-pdp-whatsapp[hidden]) { grid-template-columns:minmax(0,1fr); }
+#viewPDP:has(#pdpContactStatus:not([hidden])) .pdp-layout { padding-bottom:calc(120px + var(--safe-bottom)); }
+.pdp-gallery-viewport .pdp-photo-open { overflow:hidden; }
+.pdp-gallery-viewport .pdp-photo-open img { display:block;object-fit:contain; }
+
+.commerce-toast {
+  --feedback-background:#1b392e;
+  --feedback-ink:#f0fff6;
+  --feedback-accent:#7fdaa9;
+  display:flex;gap:8px;align-items:center;
+  min-height:48px;max-width:min(420px,calc(100% - 24px));padding:4px 5px 4px 12px;
+  background:var(--feedback-background);color:var(--feedback-ink);
+  border:1px solid var(--feedback-accent);
+  box-shadow:0 8px 24px #0005;font-size:.8125rem;
+}
+.commerce-toast[data-tone="error"] { --feedback-background:#501d28;--feedback-ink:#fff1f2;--feedback-accent:#ff9caa; }
+.commerce-toast[data-tone="info"] { --feedback-background:#24384c;--feedback-ink:#f3f9ff;--feedback-accent:#9acbff; }
+.commerce-toast[data-tone="warning"] { --feedback-background:#4b3518;--feedback-ink:#fff6e7;--feedback-accent:#ffcc85; }
+.commerce-toast button { min-height:44px;padding-inline:6px; }
+.commerce-toast button:focus-visible { outline-color:var(--feedback-accent); }
+#commerceToastText { min-width:0;overflow-wrap:anywhere; }
+#commerceToastClose { display:grid;place-items:center;flex:0 0 44px;text-decoration:none;border-radius:8px; }
+#commerceToastClose svg { width:17px;height:17px; }
+body.is-subscreen:has(#viewMerchant:not([hidden])) .commerce-toast { bottom:calc(78px + var(--safe-bottom)); }
+body.is-subscreen dialog > .commerce-toast { bottom:calc(18px + var(--safe-bottom)); }

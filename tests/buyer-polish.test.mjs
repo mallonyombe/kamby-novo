@@ -23,3 +23,41 @@ test('cart accessible labels distinguish singular and plural',()=>{
  assert.ok(html.includes("count === 1 ? ' artigo, subtotal ' : ' artigos, subtotal '"));
  assert.ok(html.includes("count===1?' artigo':' artigos'"));
 });
+
+test('brief feedback expires even when the touch browser retains hover',async()=>{
+ const [success,error]=await Promise.all([feedbackHarness(),feedbackHarness({tone:'error'})]);
+ assert.equal(success.timer.delay,3200);
+ assert.equal(error.timer.delay,5000);
+ await success.timer.run();
+ await error.timer.run();
+ assert.equal(success.toast.hidden,true);
+ assert.equal(error.toast.hidden,true);
+});
+
+test('undo lasts 5.5 seconds and stays available while its action has focus',async()=>{
+ const h=await feedbackHarness({action:()=>{},label:'Desfazer'});
+ assert.equal(h.timer.delay,5500);
+ h.document.activeElement=h.action;
+ await h.timer.run();
+ assert.equal(h.toast.hidden,false);
+ assert.equal(h.timer.delay,1000);
+ h.document.activeElement=null;
+ await h.timer.run();
+ assert.equal(h.toast.hidden,true);
+});
+
+function feedbackHarness({action,label,tone}={}){
+ const definition=html.slice(html.indexOf('      function showCommerceToast('),html.indexOf('      function updateScopedCartBadges('));
+ const toast={hidden:true,dataset:{},matches:()=>true};
+ const button={};
+ const document={activeElement:null,querySelectorAll:()=>[],getElementById:()=>({})};
+ const h={toast,action:button,document};
+ const run=Function('feedbackToast','feedbackAction','document','matchMedia','setTimeout','currentFeedbackPage',
+  `let feedbackRevision=0, feedbackPage, feedbackDialog, feedbackTimer;
+   function dismissFeedback(){feedbackRevision++;feedbackToast.hidden=true;}
+   ${definition}
+   return showCommerceToast;`)(toast,button,document,()=>({matches:true}),
+    (run,delay)=>{h.timer={run,delay};},()=> '#carrinho');
+ run('Artigo removido.',action,label,tone);
+ return h;
+}
