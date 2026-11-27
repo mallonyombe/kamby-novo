@@ -28,6 +28,7 @@ export function setupWorkspace({state,composer,onChanged,onStoreChanged,onTerms}
  <div class="mw-profile-info">
    <div class="mw-profile-avatar">
      <button type="button" id="merchantStoreLogo" class="mw-profile-image" aria-label="Fotografia da loja"></button>
+     <input type="file" id="merchantStorePhotoFile" accept="image/jpeg,image/png,image/webp" hidden>
    </div>
    <div class="mw-profile-copy"><h2 id="merchantStoreName"></h2><p id="merchantStoreLocation"></p><p id="merchantStoreContact" hidden></p></div>
    <button type="button" id="merchantEditProfile" class="mw-secondary">Editar perfil</button>
@@ -482,15 +483,15 @@ export function setupWorkspace({state,composer,onChanged,onStoreChanged,onTerms}
    img.onload = () => {
      if (!photo.contains(img)) return;
      img.hidden = false;
-     photo.disabled = storeBusy;
+     syncStorePhotoButton();
    };
    img.onerror = () => {
      if (!photo.contains(img)) return;
      img.hidden = true;
-     photo.disabled = !editable || storeBusy;
+     syncStorePhotoButton();
    };
    photo.replaceChildren(el('span','',initials(store.name)), img);
-   photo.disabled = !editable || storeBusy;
+   syncStorePhotoButton();
    const options = {img,path,editable,label:'Fotografia da loja',kind:'avatar'};
    photo.onclick = () => editable ? openPhotoActions(options) : viewArtwork(options);
    if (editable) photo.setAttribute('aria-haspopup','dialog');
@@ -501,6 +502,10 @@ export function setupWorkspace({state,composer,onChanged,onStoreChanged,onTerms}
      img.style.objectPosition = fallback.avatarPosition;
      img.src = fallback.avatar;
    }
+ }
+ function syncStorePhotoButton(){
+   const button=$('merchantStoreLogo');
+   button.disabled=storeBusy||(!canPrepareStore(state.store)&&!button.querySelector('img:not([hidden])'));
  }
  function viewArtwork({img,label,kind}){
    if(!img.naturalWidth||img.hidden||!state.store)return;
@@ -538,9 +543,8 @@ export function setupWorkspace({state,composer,onChanged,onStoreChanged,onTerms}
    }
    if(!img.hidden&&img.naturalWidth)action('Ver fotografia','eye',()=>viewArtwork({img,label,kind}));
    if(editable)action(path||!img.hidden?'Alterar fotografia':'Adicionar fotografia','image',()=>{
-     const input=el('input');
-     input.type='file';
-     input.accept='image/jpeg,image/png,image/webp';
+     const input=$('merchantStorePhotoFile');
+     input.value='';
      const storeId=state.store.id;
      input.onchange=async()=>{
        const file=input.files[0];
@@ -605,12 +609,17 @@ export function setupWorkspace({state,composer,onChanged,onStoreChanged,onTerms}
      if(state.store?.id===store.id)profileNotice(error?.code==='40001'?'A loja mudou noutra sessão. Actualiza e tenta novamente.':'Não foi possível guardar a alteração da fotografia.');
    }finally{
      storeBusy=false;
-     artworkButton.disabled=!canPrepareStore(state.store) && !artworkButton.querySelector('img:not([hidden])');
+     syncStorePhotoButton();
      setButtonBusy(artworkButton,false);
    }
  }
  form.addEventListener('invalid',event=>{const group=event.target.closest('details');if(group)group.open=true;},true);
- form.onsubmit=async e=>{e.preventDefault();if(storeBusy||!canPrepareStore(state.store))return;if(!navigator.onLine){notice($('merchantStoreSaveNotice'),'Sem ligação. As alterações continuam aqui.');return;}const doc=Object.fromEntries(new FormData(form));const document={...Object.fromEntries(['name','description','whatsapp_e164','location','address','service_area'].map(key=>[key,doc[key]||''])),logo_path:storeAssets.logo_path||null,banner_path:storeAssets.banner_path||null,opening_hours:storeHoursDocument(state.store.opening_hours,hoursDirty,Array.from({length:7},(_,day)=>({day,closed:!form.elements['day-'+day].checked,open:form.elements['open-'+day].value,close:form.elements['close-'+day].value})))};document.whatsapp_e164='+'+document.whatsapp_e164.replace(/\D/g,'');storeBusy=true;$('merchantSaveStore').disabled=true;setButtonBusy($('merchantSaveStore'),true);showSpinner($('merchantStoreSaveNotice'));try{const {data,error}=await platform.rpc('kg_save_store_settings',{p_store_id:state.store.id,p_expected_updated_at:state.store.updated_at,p_document:document});if(error)throw error;state.store=data;renderSidebarIdentity();onStoreChanged(data);storeDirty=false;hoursDirty=false;storeEditor.close();renderProfile();profileSaved('Loja actualizada.');await onChanged();}catch(error){notice($('merchantStoreSaveNotice'),error.code==='40001'?'A loja mudou noutra sessão. Copia as tuas alterações antes de actualizar.':'Não foi possível confirmar a gravação. Os dados continuam aqui. Actualiza a loja antes de tentar novamente.');}finally{storeBusy=false;setButtonBusy($('merchantSaveStore'),false);$('merchantSaveStore').disabled=false;}};
+ form.onsubmit=async e=>{e.preventDefault();if(storeBusy||!canPrepareStore(state.store))return;if(!navigator.onLine){notice($('merchantStoreSaveNotice'),'Sem ligação. As alterações continuam aqui.');return;}const doc=Object.fromEntries(new FormData(form));const document={...Object.fromEntries(['name','description','whatsapp_e164','location','address','service_area'].map(key=>[key,doc[key]||''])),logo_path:storeAssets.logo_path||null,banner_path:storeAssets.banner_path||null,opening_hours:storeHoursDocument(state.store.opening_hours,hoursDirty,Array.from({length:7},(_,day)=>({day,closed:!form.elements['day-'+day].checked,open:form.elements['open-'+day].value,close:form.elements['close-'+day].value})))};document.whatsapp_e164='+'+document.whatsapp_e164.replace(/\D/g,'');storeBusy=true;$('merchantSaveStore').disabled=true;setButtonBusy($('merchantSaveStore'),true);showSpinner($('merchantStoreSaveNotice'));try{const {data,error}=await platform.rpc('kg_save_store_settings',{p_store_id:state.store.id,p_expected_updated_at:state.store.updated_at,p_document:document});if(error)throw error;state.store=data;renderSidebarIdentity();onStoreChanged(data);storeDirty=false;hoursDirty=false;storeEditor.close();renderProfile();profileSaved('Loja actualizada.');await onChanged();}catch(error){notice($('merchantStoreSaveNotice'),error.code==='40001'?'A loja mudou noutra sessão. Copia as tuas alterações antes de actualizar.':'Não foi possível confirmar a gravação. Os dados continuam aqui. Actualiza a loja antes de tentar novamente.');}finally{
+   storeBusy=false;
+   syncStorePhotoButton();
+   setButtonBusy($('merchantSaveStore'),false);
+   $('merchantSaveStore').disabled=false;
+ }};
  $('btnOpenNewProductModal').onclick=()=>composer.open();
  function online(){const offline=!navigator.onLine;notice($('merchantOffline'),offline?'Sem ligação. Podes consultar os dados carregados; as alterações exigem ligação.':'');}window.addEventListener('offline',online);window.addEventListener('online',online);
  async function canLeave(){if(storeBusy)return false;if(!await composer.close())return false;if(storeDirty&&!await confirmAction('Sair sem guardar?','As configurações da loja ainda não foram guardadas.','Descartar'))return false;storeDirty=false;return true;}
