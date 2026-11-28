@@ -56,7 +56,15 @@ document.querySelector('#start').onclick=async e=>{
    await load('pesquisa?q=Arroz&aba=products','&failStores=1');
    await until(()=>q('#searchProductsGrid .product-card-title')?.textContent==='Arroz do ensaio','pesquisa não encontrou arroz');
  });
- await scenario('Pesquisa recente e limpar resultados',async()=>{
+ await scenario('Pesquisa recente só após autorização e limpar resultados',async()=>{
+   await load('pesquisa','&run=pesquisa-sem-historico');
+   await until(()=>!q('#searchDiscovery').hidden,'a pesquisa inicial não abriu');
+   check(q('#recentChips').childElementCount===0,'pesquisa recente guardada sem autorização');
+   await load('definicoes/privacidade','&run=activar-pesquisa-recente');
+   await until(()=>!![...doc().querySelectorAll('label.settings-choice')].find(label=>label.textContent.includes('Guardar pesquisas recentes')),'preferência indisponível');
+   [...doc().querySelectorAll('label.settings-choice')].find(label=>label.textContent.includes('Guardar pesquisas recentes')).querySelector('input').click();
+   await load('pesquisa?q=Arroz&aba=products','&run=pesquisar-com-autorizacao');
+   await until(()=>q('#searchProductsGrid .product-card-title')?.textContent==='Arroz do ensaio','pesquisa com histórico não encontrou arroz');
    await load('pesquisa','&run=pesquisa-recente');
    await until(()=>[...doc().querySelectorAll('#recentChips button')].some(b=>b.textContent==='Arroz'),'pesquisa recente escondida');
    check(!q('#searchDiscovery').hidden && q('#searchResultControls').hidden,'controlos de resultados aparecem antes da pesquisa');
