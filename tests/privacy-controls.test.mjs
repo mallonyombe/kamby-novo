@@ -43,7 +43,8 @@ test('excluded catalogue artwork cannot fall through to a legacy storage image',
 
 test('public policy and registration require the same privacy document version', async () => {
   const document = await readFile(new URL('../frontend/legal.html', import.meta.url), 'utf8');
-  const migration = await readFile(new URL('../supabase/migrations/20261127210000_registration_and_privacy_rights.sql', import.meta.url), 'utf8');
+  const migration = await readFile(new URL('../supabase/migrations/20261128170000_public_legal_documents.sql', import.meta.url), 'utf8');
   assert.ok(document.includes('Versão ' + privacyPolicyVersion));
+  assert.ok(document.includes('id="privacy-2026-11-27.1"'));
   assert.ok(migration.includes("values ('" + privacyPolicyVersion + "')"));
 });

@@ -15,13 +15,14 @@ export function registrationCredentials({ name, email, password, confirmation },
   };
 }
 
-export const privacyPolicyVersion = '2026-11-27.1';
+export const privacyPolicyVersion = '2026-11-28.1';
+export const isAvailablePrivacyVersion = version => [privacyPolicyVersion, '2026-11-27.1'].includes(version);
 
 export function registrationEvidence({adult, accepted, marketing}, documents) {
   if (adult !== 'yes') throw new Error('A criação de conta está disponível para maiores de 18 anos.');
   if (accepted !== true) throw new Error('Aceita os Termos de utilização e a Política de privacidade.');
-  if (documents?.privacy_version !== privacyPolicyVersion || !documents.terms_version) {
-    throw new Error('Os documentos foram actualizados. Reabre o cadastro para os consultar.');
+  if (!isAvailablePrivacyVersion(documents?.privacy_version) || !documents.terms_version) {
+    throw new Error('Os documentos foram actualizados. Reabre o registo para os consultar.');
   }
   return {
     adult_declared: true,
@@ -41,7 +42,7 @@ export function registrationError(error) {
       return 'Aguarda alguns minutos antes de pedir outro e-mail.';
     case 'hook_forbidden':
     case 'hook_timeout':
-      return 'Não foi possível validar o cadastro. Reabre o formulário e confirma os documentos.';
+      return 'Não foi possível validar o registo. Reabre o formulário e confirma os documentos.';
     case 'signup_disabled':
       return 'A criação de contas está temporariamente indisponível.';
     case 'weak_password':

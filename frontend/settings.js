@@ -2,7 +2,7 @@ import {loadAccountTerms, showAccountTerms} from './account-terms.js';
 import {showFeedback} from './merchant-ui.js';
 import { addPasswordVisibility, describeNewPassword } from './password-visibility.js';
 import { analyticsAllowed, setAnalyticsAllowed } from './analytics.js';
-import { privacyPolicyVersion, registrationCredentials, registrationError, registrationEvidence } from './account-registration.js';
+import { isAvailablePrivacyVersion, registrationCredentials, registrationError, registrationEvidence } from './account-registration.js';
 import {setButtonBusy,showSpinner,showSkeleton} from "./loading.js";
 import {platform} from './platform.js';
 import {canShowAdminEntry} from './account-access.js';
@@ -207,8 +207,8 @@ export function setupSettings({openSellerSetup,savedProducts,renderProductCard,g
   publicMenu.nextElementSibling?.classList.contains('profile-information') && publicMenu.nextElementSibling.remove();
   const information=node('div',undefined,'profile-menu-list profile-information');
   information.append(row('Sobre o Kamby',null,'info','sobre'));
-  for (const [label,href] of [['Termos de utilização','./legal.html#termos'],['Política de privacidade','./legal.html#privacidade'],['Contacto e denúncias','mailto:kambyoficial@gmail.com']]) {
-   if (href.includes('legal.html')) {
+  for (const [label,href] of [['Termos de utilização','./legal.html#termos'],['Política de privacidade','./legal.html#privacidade'],['Denúncias','./legal.html#denuncias']]) {
+   if (!href.endsWith('#denuncias')) {
     information.append(row(label,null,href.includes('#termos')?'info':'shield',href.includes('#termos')?'termos':'politica'));
    } else {
     const link=node('a',undefined,'profile-menu-item');link.href=href;
@@ -270,9 +270,7 @@ export function setupSettings({openSellerSetup,savedProducts,renderProductCard,g
      notice('Não foi possível guardar a preferência.');
     }
    });
-   lead('Dados da conta', 'O Kamby usa o teu nome, contacto e dados de conta para autenticar a sessão, guardar preferências e disponibilizar as funcionalidades do teu perfil. Podes actualizar os dados em Perfil e solicitar o encerramento em Segurança e acesso.');
-   lead('Dados neste dispositivo', 'O dispositivo guarda a sessão, o carrinho, os guardados de visitante e as preferências. Podes limpar os dados locais nesta página.');
-   const measurement = privacyToggle('Medição opcional', 'Controla a medição pelo Kamby e pelo Google Analytics. Se iniciares sessão, os contactos com lojas podem aparecer na tua actividade. Os cookies de medição têm duração configurada de até 30 dias.', analyticsAllowed(), input => {
+   const measurement = privacyToggle('Medição opcional', 'Permite ao Kamby e ao Google Analytics medir como utilizas o catálogo.', analyticsAllowed(), input => {
     try { setAnalyticsAllowed(input.checked); }
     catch {
      input.checked = analyticsAllowed();
@@ -471,9 +469,10 @@ export function setupSettings({openSellerSetup,savedProducts,renderProductCard,g
     try{
      const {data,error}=await documentRequest;
      if(request!==generation)return;
-     if(error||data?.privacy_version!==privacyPolicyVersion||!data.terms_version)throw error||new Error();
+     if(error||!isAvailablePrivacyVersion(data?.privacy_version)||!data.terms_version)throw error||new Error();
      documents=data;
      termsLink.href='./legal.html?versao='+encodeURIComponent(data.terms_version)+'#termos';
+     privacyLink.href='./legal.html?versao='+encodeURIComponent(data.privacy_version)+'#privacidade';
      documentStatus.hidden=true;
     }catch{
      if(request!==generation)return;
@@ -679,11 +678,9 @@ export function setupSettings({openSellerSetup,savedProducts,renderProductCard,g
   }
   if(screen==='notificacoes'){lead('Preferências de avisos','Os avisos são apresentados aqui, dentro do Kamby.');const pending=node('div');body.append(pending);showSkeleton(pending,'rows',3);const [pref,notes]=await Promise.all([platform.from('kg_user_preferences').select('catalogue_alerts,account_alerts').eq('user_id',a.user.id).maybeSingle(),platform.from('kg_notifications').select('id,title,body,read_at,created_at,action').eq('user_id',a.user.id).order('created_at',{ascending:false}).limit(50)]);if(request!==generation)return;pending.remove();if(pref.error||notes.error){empty('Não foi possível carregar','Verifica a ligação e tenta novamente.');body.append(button('Tentar novamente','settings-text-action',renderScreen));return;}let values=pref.data||{catalogue_alerts:true,account_alerts:true};const g=node('div',undefined,'settings-group');for(const [key,label,sub]of[['catalogue_alerts','Produtos guardados','Alterações de preço e disponibilidade'],['account_alerts','Pedidos da conta','Actualizações do pedido de encerramento']]){const l=node('label',undefined,'settings-choice'),copy=node('span',label),input=node('input');copy.append(node('small',sub));input.type='checkbox';input.checked=values[key];input.addEventListener('change',async()=>{const value=input.checked;input.disabled=true;const pending=node('span');l.append(pending);showSpinner(pending);try{await ownedWrite('kg_user_preferences',a.user.id,{...values,[key]:value});if(request!==generation)return;values[key]=value;showFeedback('Preferência guardada.');}catch{if(request!==generation)return;input.checked=!value;notice('Não foi possível guardar a preferência.');}finally{pending.remove();input.disabled=false;}});l.append(copy,input);g.append(l);}body.append(g);if(!notes.data.length)empty('Sem avisos','Os novos avisos aparecem aqui.');for(const n of notes.data){const article=node('article',undefined,'settings-item'+(!n.read_at?' settings-notification-unread':'')),meta=node('div');meta.append(node('strong',n.title),node('p',n.body));article.append(meta);if(n.action==='seller_setup'&&openSellerSetup&&a.access?.sellerOnboarding){article.append(button('Configurar loja','settings-text-action',()=>{close(true);navigate('perfil');openSellerSetup();}));}if(!n.read_at){const read=button('Lido','settings-text-action',async()=>{read.disabled=true;setButtonBusy(read,true);const {error}=await platform.from('kg_notifications').update({read_at:new Date().toISOString()}).eq('id',n.id).eq('user_id',a.user.id);if(request!==generation)return;if(error){setButtonBusy(read,false);read.disabled=false;notice('Não foi possível marcar como lido.');}else{article.classList.remove('settings-notification-unread');read.remove();}});article.append(read);}body.append(article);}return;}
   if(screen==='encerramento'){const pending=node('div');body.append(pending);showSkeleton(pending,'rows',2);const {data,error}=await platform.from('kg_account_requests').select('status,created_at').eq('user_id',a.user.id).maybeSingle();if(request!==generation)return;pending.remove();if(error){empty('Não foi possível carregar','Tenta novamente mais tarde.');return;}if(data){const statuses={pending:'Pedido em análise',processing:'Pedido em tratamento',completed:'Pedido concluído pela gestão',declined:'Pedido revisto pela gestão'};empty(statuses[data.status]||'Pedido registado','O pedido não elimina a conta automaticamente.');return;}lead('Encerramento da conta','Pede gratuitamente a eliminação dos teus dados à equipa Kamby. A conta mantém-se activa enquanto o pedido é analisado.');body.append(button('Pedir eliminação','settings-text-action profile-sign-out',()=>confirm('Registar pedido de encerramento?','O pedido será enviado à gestão da plataforma. Esta acção não apaga os teus dados imediatamente.','Registar pedido',async()=>{if(busy)return;busy=true;const action=body.querySelector('button');action.disabled=true;setButtonBusy(action,true);try{const {error}=await platform.from('kg_account_requests').insert({user_id:a.user.id});if(error&&error.code!=='23505')notice('Não foi possível registar o pedido.');else renderScreen();}finally{setButtonBusy(action,false);action.disabled=false;busy=false;}})));return;}
-  if(screen==='ajuda'){for(const [q,copy]of[['Como contactar uma loja?','Na página da loja, toca em Perguntar à loja. Para enviar um pedido com os teus artigos, abre o carrinho dessa loja e toca em Enviar pedido pelo WhatsApp.'],['O contacto confirma a compra?','Não. Confirma o preço, a disponibilidade, o pagamento e a entrega com a loja.'],['Como recuperar o acesso?','Usa Esqueci a palavra-passe na entrada da conta. A recuperação por email depende de um email associado.'],['Onde ficam os meus produtos?','Os produtos adicionados ficam no Carrinho deste dispositivo. Encontra os favoritos em Perfil → Guardados. Sem conta, ficam neste dispositivo.']]){const d=node('details',undefined,'settings-group'),s=node('summary',q);s.style.padding='16px';const p=node('p',copy,'settings-copy');p.style.padding='0 16px';d.append(s,p);body.append(d);}const contact=node('a','kambyoficial@gmail.com','settings-text-action');contact.href='mailto:kambyoficial@gmail.com';body.append(contact);return;}
+  if(screen==='ajuda'){for(const [q,copy]of[['Como contactar uma loja?','Na página da loja, toca em Perguntar à loja. Para enviar um pedido com os teus artigos, abre o carrinho dessa loja e toca em Enviar pedido pelo WhatsApp.'],['Como confirmar uma compra?','Acorda directamente com a loja a disponibilidade, o preço total, o pagamento e a entrega.'],['Como recuperar o acesso?','Usa Esqueci a palavra-passe na entrada da conta. A recuperação por email depende de um email associado.'],['Onde ficam os meus produtos?','Os produtos adicionados ficam no Carrinho deste dispositivo. Encontra os favoritos em Perfil → Guardados. Sem conta, ficam neste dispositivo.']]){const d=node('details',undefined,'settings-group'),s=node('summary',q);s.style.padding='16px';const p=node('p',copy,'settings-copy');p.style.padding='0 16px';d.append(s,p);body.append(d);}const contact=node('a','kambyoficial@gmail.com','settings-text-action');contact.href='mailto:kambyoficial@gmail.com';body.append(contact);return;}
   if(screen==='sobre'){
-   lead('Kamby','Produtos e lojas de Chongoene.');
-   lead('Como funciona','Consulta o catálogo, escolhe as opções e guarda os artigos no carrinho de cada loja. O pedido segue para o WhatsApp da loja, onde confirmas a disponibilidade, o total, o pagamento e a entrega.');
-   lead('A tua conta','Guarda produtos e gere as tuas preferências no Perfil. Podes consultar o catálogo e preparar o carrinho como visitante.');
+   lead(null,'O Kamby reúne produtos de lojas de Chongoene. Consulta o catálogo e contacta a loja pelo WhatsApp quando tiveres uma dúvida ou quiseres fazer um pedido.');
 
   }
  }
