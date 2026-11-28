@@ -614,10 +614,10 @@ async function storeDetail(main,id,request,section){
     content.append(navigation);
     if(can('stores.decide')){
      const operation=store.deleted_at?'restore':'trash';
-     const action=button(store.deleted_at?'Restaurar loja':'Eliminar loja','secondary',async()=>{
-      if(!await confirmAction(store.deleted_at?'Restaurar loja?':'Eliminar loja?','A loja e os produtos ficam guardados na lixeira. A reposição mantém a loja encerrada até à reactivação.','Confirmar'))return;
+     const action=button(store.deleted_at?'Restaurar loja':'Mover para a lixeira','secondary',async()=>{
+      if(!await confirmAction(store.deleted_at?'Restaurar loja?':'Mover loja para a lixeira?',store.deleted_at?'A loja volta encerrada até ser reactivada.':'A loja sai do catálogo público e pode ser restaurada.','Confirmar'))return;
       action.disabled=true;
-      try{await rpc('kg_admin_store_bin',{p_store_id:id,p_action:operation,p_name:store.name,p_expected_updated_at:store.updated_at});readCache.clear();feedback('Estado actualizado.');await route();}
+      try{await rpc('kg_admin_store_bin',{p_store_id:id,p_action:operation,p_name:store.name,p_expected_updated_at:store.updated_at});readCache.clear();feedback(store.deleted_at?'Loja restaurada.':'Loja movida para a lixeira.');await route();}
       catch(error){feedback(adminError(error));}finally{action.disabled=false;}
      });
      content.append(action);
