@@ -15,6 +15,23 @@ export function registrationCredentials({ name, email, password, confirmation },
   };
 }
 
+export const privacyPolicyVersion = '2026-11-27.1';
+
+export function registrationEvidence({adult, accepted, marketing}, documents) {
+  if (adult !== 'yes') throw new Error('A criação de conta está disponível para maiores de 18 anos.');
+  if (accepted !== true) throw new Error('Aceita os Termos de utilização e a Política de privacidade.');
+  if (documents?.privacy_version !== privacyPolicyVersion || !documents.terms_version) {
+    throw new Error('Os documentos foram actualizados. Reabre o cadastro para os consultar.');
+  }
+  return {
+    adult_declared: true,
+    legal_accepted: true,
+    terms_version: documents.terms_version,
+    privacy_version: documents.privacy_version,
+    email_marketing: marketing === true
+  };
+}
+
 export function registrationError(error) {
   switch (error?.code) {
     case 'email_address_not_authorized':
@@ -22,6 +39,9 @@ export function registrationError(error) {
     case 'over_email_send_rate_limit':
     case 'over_request_rate_limit':
       return 'Aguarda alguns minutos antes de pedir outro e-mail.';
+    case 'hook_forbidden':
+    case 'hook_timeout':
+      return 'Não foi possível validar o cadastro. Reabre o formulário e confirma os documentos.';
     case 'signup_disabled':
       return 'A criação de contas está temporariamente indisponível.';
     case 'weak_password':

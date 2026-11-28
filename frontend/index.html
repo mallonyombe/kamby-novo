@@ -1553,7 +1553,6 @@
       border-radius: 999px; background: var(--text-main); color: var(--bg-surface);
       font-size: 10px; line-height: 14px; text-align: center;
     }
-    #searchOverlay .search-panel { gap: 24px; }
     #searchOverlay .search-section-title { font-size: .9375rem; color: var(--text-main); text-transform: none; letter-spacing: normal; }
     #viewSearchResults .search-zero-box:not([hidden]) { background: transparent; padding: 32px 16px; }
   </style>
@@ -1573,6 +1572,7 @@
 <link rel="stylesheet" href="./screen-refinements.css">
   <link rel="stylesheet" href="./seller-setup.css">
 <link rel="stylesheet" href="./design-tokens.css">
+  <link rel="stylesheet" href="legal.css">
 </head>
 <body>
   <a class="buyer-skip-link" href="#mainContainer">Saltar para o conteúdo</a>
@@ -1629,36 +1629,18 @@
   </header>
 
   <!-- ==========================================================================
-       SEARCH OVERLAY CONTEXTUAL (SURGE AO CLICAR NA PESQUISA)
-       ========================================================================== -->
-  <div class="search-overlay" id="searchOverlay" role="region" aria-label="Sugestões de pesquisa">
-    <div class="search-panel">
-      <section id="searchLiveSuggestions" hidden><div class="search-section-header"><span class="search-section-title">Sugestões</span></div><div id="searchLiveSuggestionsList" class="search-suggestions-list"></div></section>
-      
-      <!-- Secção de Histórico Recente -->
-      <section id="searchRecentSection" hidden>
-        <div class="search-section-header">
-          <span class="search-section-title">Recentes</span>
-          <button class="btn-clear-history" id="btnClearHistory">Limpar</button>
-        </div>
-        <div class="recent-chips-wrap" id="recentChips"></div>
-      </section>
-
-      <!-- Atalhos construídos somente a partir do catálogo publicado -->
-      <section>
-        <div class="search-section-header">
-          <span class="search-section-title">Explorar categorias</span>
-        </div>
-        <div class="category-pills-grid" id="searchCategoryGrid"></div>
-      </section>
-
-    </div>
-  </div>
-
-  <!-- ==========================================================================
        FEED COMERCIAL DE PRODUTOS
        ========================================================================== -->
   <main class="feed-container" id="mainContainer" tabindex="-1">
+    <section class="measurement-banner" id="measurementBanner" aria-labelledby="measurementTitle" hidden>
+      <h2 id="measurementTitle">Medição opcional</h2>
+      <p>Com a tua autorização, o Kamby e o Google Analytics medem a utilização do catálogo. <a href="./legal.html#privacidade">Política de privacidade</a></p>
+      <div class="measurement-actions">
+        <button type="button" class="settings-text-action" id="rejectMeasurement">Recusar todos os opcionais</button>
+        <button type="button" class="settings-text-action" id="allowMeasurement">Aceitar medição</button>
+      </div>
+      <p role="status" id="measurementStatus"></p>
+    </section>
     <section id="viewHome" class="kamby-view active" aria-label="Produtos">
       <div class="category-scroll-wrap" role="region" aria-label="Categorias de produtos">
         <div class="category-track" id="categoryTrack"></div>
@@ -1697,6 +1679,7 @@
           <section class="pdp-product-information" aria-label="Informações do produto"><h1 class="pdp-title" id="pdpTitle">Produto</h1><div class="pdp-price-row"><span class="pdp-main-price" id="pdpPrice">—</span><del id="pdpPreviousPrice" class="product-previous-price" hidden></del><span id="pdpDiscount" class="product-discount" hidden></span><span class="pdp-unit-info" id="pdpUnit" hidden></span></div><span id="pdpStockTag" hidden></span></section>
           <section class="pdp-variants-section" id="pdpVariantsWrap" hidden><h2 class="pdp-section-label">Opções</h2><div class="pdp-variants-grid" id="pdpVariantsGrid" role="radiogroup" aria-label="Opções do produto"></div></section>
           <button type="button" class="pdp-store-row" id="btnPdpVisitStore"><span class="pdp-store-avatar" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="m3 9 2-6h14l2 6M4 13v8h16v-8M3 9c0 4 6 4 6 0 0 4 6 4 6 0 0 4 6 4 6 0M9 21v-6h6v6"/></svg></span><span class="pdp-store-copy"><strong id="pdpStoreName">Loja</strong><span>Visitar loja</span></span><span class="pdp-store-chevron" aria-hidden="true">›</span></button>
+          <button id="btnPdpReport" class="settings-text-action" type="button" disabled>Denunciar produto</button>
           <section class="pdp-desc-card" id="pdpDescriptionSection"><h2 class="pdp-desc-title">Descrição</h2><p class="pdp-desc-text" id="pdpDesc"></p></section>
         </div>
         <section id="pdpRelated" class="pdp-related" hidden><h2>Mais desta loja</h2><div class="products-grid" id="pdpRelatedProducts"></div></section>
@@ -1704,7 +1687,7 @@
       <aside class="pdp-sticky-bar" aria-label="Acções do produto"><div class="pdp-sticky-inner"><p id="pdpContactStatus" class="pdp-contact-status" role="status" hidden></p><button class="btn-pdp-cart" id="btnPdpAddToCart" type="button" disabled><span>Adicionar ao carrinho</span></button><button class="btn-pdp-whatsapp" id="btnPdpDirectWhatsApp" type="button" disabled><span>WhatsApp</span></button></div></aside>
     </section>
 
-    <section id="viewStoreCart" class="kamby-view pdp-subscreen" hidden aria-label="Carrinho da loja"><header class="pdp-top-bar"><div class="pdp-nav-content"><button type="button" class="pdp-back-btn" id="btnBackStoreCart" aria-label="Voltar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg></button><h1 class="pdp-top-title">Carrinho da loja</h1><button type="button" class="store-cart-general-link" id="btnStoreCartGeneral" aria-label="Ver todos os carrinhos">Todos</button></div></header><div class="store-cart-body"><h2 id="storeCartName" tabindex="-1"></h2><p id="storeCartNotice" class="commerce-notice" role="status" hidden></p><div id="storeCartItems"></div></div><footer class="store-cart-footer"><div><span>Total da loja</span><strong id="storeCartTotal">0 MT</strong></div><button type="button" id="btnStoreCartWhatsApp">Continuar no WhatsApp</button></footer></section>
+    <section id="viewStoreCart" class="kamby-view pdp-subscreen" hidden aria-label="Carrinho da loja"><header class="pdp-top-bar"><div class="pdp-nav-content"><button type="button" class="pdp-back-btn" id="btnBackStoreCart" aria-label="Voltar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg></button><h1 class="pdp-top-title">Carrinho da loja</h1><button type="button" class="store-cart-general-link" id="btnStoreCartGeneral" aria-label="Ver todos os carrinhos">Todos</button></div></header><div class="store-cart-body"><h2 id="storeCartName" tabindex="-1"></h2><p id="storeCartNotice" class="commerce-notice" role="status" hidden></p><div id="storeCartItems"></div><p>Confirma o total e o custo de entrega com a loja antes de pagar.</p></div><footer class="store-cart-footer"><div><span>Subtotal dos artigos</span><strong id="storeCartTotal">0 MT</strong></div><button type="button" id="btnStoreCartWhatsApp">Continuar no WhatsApp</button></footer></section>
 
     <section id="viewStores" class="kamby-view" hidden aria-label="Diretório de lojas">
       <header class="page-header" aria-label="Navegação das lojas">
@@ -1786,22 +1769,37 @@
           <form id="searchResultsForm" class="search-results-form" role="search">
             <button class="search-submit-btn" type="submit" aria-label="Pesquisar"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m16 16 5 5"/></svg></button>
             <input id="searchResultsInput" class="search-input" type="search" placeholder="Pesquisar produtos e lojas" aria-label="Pesquisar produtos e lojas" enterkeyhint="search" autocomplete="off" maxlength="160" />
-            <button class="search-submit-btn" id="btnCloseSearchResults" type="button" aria-label="Limpar campo de pesquisa"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg></button>
+            <button class="search-submit-btn" id="btnCloseSearchResults" type="button" aria-label="Limpar pesquisa" hidden><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg></button>
           </form>
         </div>
       </header>
       <div class="commerce-sr-only">
-        <h2 class="search-res-title" id="searchQueryLabel">Resultados</h2>
+        <h2 class="search-res-title" id="searchQueryLabel" hidden>Resultados</h2>
         <p class="search-res-count" id="searchTotalCount" role="status" aria-live="polite" aria-atomic="true"></p>
       </div>
-      <div class="search-result-controls"><div class="search-tabs-row" role="tablist" aria-label="Tipo de resultado">
+      <div id="searchDiscovery">
+        <section id="searchRecentSection" aria-labelledby="searchRecentTitle" hidden>
+          <div class="search-section-header">
+            <h2 class="search-section-title" id="searchRecentTitle">Recentes</h2>
+            <button class="btn-clear-history" id="btnClearHistory" type="button" aria-label="Limpar pesquisas recentes">Limpar</button>
+          </div>
+          <div class="recent-chips-wrap" id="recentChips"></div>
+        </section>
+        <section aria-labelledby="searchCategoriesTitle" hidden>
+          <div class="search-section-header">
+            <h2 class="search-section-title" id="searchCategoriesTitle">Categorias</h2>
+          </div>
+          <div class="category-pills-grid" id="searchCategoryGrid"></div>
+        </section>
+      </div>
+      <div class="search-result-controls" id="searchResultControls" hidden><div class="search-tabs-row" role="tablist" aria-label="Tipo de resultado">
         <button type="button" class="search-tab-btn active" id="tabBtnProducts" role="tab" aria-controls="searchResultsProductsWrap" aria-selected="true">Produtos <span id="countProductsTab">0</span></button>
         <button type="button" class="search-tab-btn" id="tabBtnStores" role="tab" aria-controls="searchResultsStoresWrap" aria-selected="false" tabindex="-1">Lojas <span id="countStoresTab">0</span></button>
       </div>
       <div class="search-quick-filters" hidden><button type="button" id="filterAvailable" hidden></button><button type="button" id="filterStoreProducts" hidden></button></div>
       <div class="search-tools"><span id="searchSortLabel" class="commerce-sr-only">Por relevância</span><button type="button" class="search-filter-action" id="btnOpenSearchFilters" aria-label="Filtros de pesquisa"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M4 7h10m4 0h2M4 17h2m4 0h10"/><circle cx="16" cy="7" r="2"/><circle cx="8" cy="17" r="2"/></svg><span id="searchFilterCount" aria-hidden="true" hidden></span></button></div></div><div class="search-filter-applied" id="searchAppliedFilters" hidden><span id="searchFilterSummary"></span><button type="button" class="settings-text-action" id="btnClearAppliedFilters">Limpar filtros</button></div>
       <div id="searchResultsSuggestions" class="search-results-suggestions" hidden></div>
-      <div id="searchResultsProductsWrap" role="tabpanel" aria-labelledby="tabBtnProducts" tabindex="0"><div class="products-grid" id="searchProductsGrid"></div></div>
+      <div id="searchResultsProductsWrap" hidden role="tabpanel" aria-labelledby="tabBtnProducts" tabindex="0"><div class="products-grid" id="searchProductsGrid"></div></div>
       <div id="searchResultsStoresWrap" role="tabpanel" aria-labelledby="tabBtnStores" tabindex="0" hidden><div class="stores-list-container" id="searchStoresList"></div></div>
       <div id="searchZeroState" class="search-zero-box" hidden>
         <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m16 16 5 5M8 11h6"/></svg>
@@ -1825,12 +1823,6 @@
       <div id="profileWorkMenu" class="profile-menu-list" hidden></div><div class="profile-menu-list" id="settingsPublicMenu"></div>
       <div class="profile-menu-list settings-local-actions"><button type="button" class="profile-menu-item profile-sign-out" id="btnAccountSignOut" hidden><span class="profile-menu-label">Terminar sessão</span></button></div>
       <span id="profileCartCountSub" hidden></span>
-      <footer class="profile-footer">
-        <nav aria-label="Informações legais">
-          <a href="#definicoes/privacidade" data-settings-target="privacidade">Privacidade</a>
-          <a href="#definicoes/termos" data-settings-target="termos">Termos</a>
-        </nav>
-      </footer>
     </section>
     <section id="viewSettingsSubscreen" class="kamby-view pdp-subscreen" hidden aria-label="Definições da conta"><header class="pdp-top-bar"><div class="pdp-nav-content"><button type="button" class="pdp-back-btn" id="btnBackSettings" aria-label="Voltar ao Perfil"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg></button><h1 class="pdp-top-title" id="settingsSubscreenTitle" tabindex="-1">Perfil</h1></div></header><div class="settings-subscreen-body"><div id="accountScreenBrand" class="account-screen-brand" hidden><img src="icone.svg" alt="" width="32" height="32"><strong>Kamby</strong></div><div id="settingsSubscreenContent"></div><div class="profile-menu-list settings-local-actions" id="settingsDeviceActions" hidden><button type="button" class="profile-menu-item" id="btnClearLocalData"><span class="profile-menu-copy"><span class="profile-menu-label">Limpar dados locais</span><span class="profile-menu-sub">Carrinho, guardados de visitante e pesquisas recentes</span></span><span aria-hidden="true">›</span></button></div><div id="settingsLoginPanel" hidden>
       <form class="profile-login" id="profileLoginForm"><div class="account-social"><button class="account-google-button" id="btnGoogleSignIn" type="button" hidden>
@@ -1882,6 +1874,12 @@
       </div>
     </section>
     <dialog id="clearLocalDataDialog" class="local-data-dialog" aria-labelledby="clearLocalDataTitle"><h2 id="clearLocalDataTitle">Limpar dados locais?</h2><p>O carrinho, os guardados de visitante e as pesquisas recentes serão removidos deste dispositivo. A tua conta mantém a sessão iniciada.</p><div class="local-dialog-actions"><button type="button" id="btnCancelLocalClear" autofocus>Cancelar</button><button type="button" id="btnConfirmLocalClear">Limpar dados</button></div></dialog>
+    <footer class="legal-footer kamby-legal-footer" aria-label="Informações legais">
+      <a href="./legal.html#termos">Termos de utilização</a>
+      <a href="./legal.html#privacidade">Política de privacidade</a>
+      <a href="#definicoes/privacidade">Definições de privacidade</a>
+      <a href="./legal.html#denuncias">Denúncias</a>
+    </footer>
   </main>
 
   <!-- ==========================================================================
@@ -1940,7 +1938,8 @@
     import {enableModalDismiss} from './modal-dismiss.js';
     import { setupMerchant } from "./merchant.js";
     import { listenForNavigation } from "./navigation.js";
-    import { startAnalytics, trackAnalytics } from './analytics.js';
+    import { showFeedback } from './merchant-ui.js';
+    import { startAnalytics, trackAnalytics, bindMeasurementChoice } from './analytics.js';
     import { platform, catalogueConfig, trackStoreEvent } from "./platform.js";
     (async function initKambyApp() {
       'use strict';
@@ -1962,9 +1961,10 @@
       const header = document.getElementById('kambyHeader');
       enableModalDismiss();
       startAnalytics();
+      bindMeasurementChoice(document.getElementById('measurementBanner'));
       let merchantController = null;
       function cleanProductDescription(row){return String(row.description || '');}
-      function displayStoreName(store){return String(store?.name || '').replace(/\s*[·–-]\s*Teste$/i, '');}
+      function displayStoreName(store){const name = String(store?.name || '').replace(/\s*[·–-]\s*(?:Teste|Demonstração)$/i, ''); return store?.is_test === true ? name + ' · Demonstração' : name;}
 
       const btnSearchCompact = document.getElementById('btnSearchCompact');
       const searchContainer = header.querySelector('.search-container');
@@ -2099,9 +2099,17 @@
         if (!value) return '';
         try {
           const parsed = new URL(value, window.location.origin);
-          if (parsed.hostname === 'kamby-novo-orbion.mallonyombe123.chatgpt.site' && /^\/catalogue-[a-z-]+\.jpg$/.test(parsed.pathname)) return window.location.origin + parsed.pathname;
-          if (parsed.protocol !== 'https:' && parsed.protocol !== 'http:') return '';
-          return parsed.href;
+          const excluded = /^\/catalogue-(?:oleo|acucar)\.jpg$/i.test(parsed.pathname);
+          if (excluded) return '';
+          const local = /^\/catalogue-[a-z-]+\.jpg$/.test(parsed.pathname)
+            && [location.hostname, 'kamby-novo-orbion.mallonyombe123.chatgpt.site'].includes(parsed.hostname);
+          if (local) return location.origin + parsed.pathname;
+          if (parsed.origin === new URL(KAMBY_CATALOG.supabaseUrl).origin
+              && parsed.pathname.startsWith('/storage/v1/object/')) {
+            const path = storagePathFromSignedUrl(parsed.href, KAMBY_CATALOG.supabaseUrl, KAMBY_CATALOG.imageBucket);
+            return cataloguePhoto(path) === '' ? '' : parsed.href;
+          }
+          return '';
         } catch (_error) {
           return '';
         }
@@ -2110,7 +2118,7 @@
       async function signProductImage(storagePath) {
         if (!storagePath) return '';
         const replacement = cataloguePhoto(storagePath);
-        if (replacement) return replacement;
+        if (replacement !== undefined) return replacement;
         const cached=signedImageCache.get(storagePath);if(cached?.expiresAt>Date.now())return cached.url;
 
         const encodedPath = storagePath
@@ -3398,47 +3406,56 @@
         card.className = 'cart-store-card cart-store-summary';
         const openCart = document.createElement('button');
         openCart.type = 'button';
-        openCart.className = 'cart-summary-heading';
+        openCart.className = 'cart-summary-open';
         const count = group.items.reduce((sum, {item}) => sum + item.quantity, 0);
         openCart.setAttribute('aria-label', 'Abrir carrinho de ' + group.storeName + ', ' + count + (count === 1 ? ' artigo, subtotal ' : ' artigos, subtotal ') + formatPrice(group.subtotalMinor));
+        const heading = document.createElement('span'); heading.className = 'cart-summary-heading';
         const name = document.createElement('strong'); name.className = 'cart-store-name'; name.textContent = group.storeName;
         const chevron = document.createElementNS('http://www.w3.org/2000/svg', 'svg'); chevron.setAttribute('viewBox', '0 0 24 24'); chevron.setAttribute('aria-hidden', 'true'); chevron.innerHTML = '<path d="m9 5 7 7-7 7" fill="none" stroke="currentColor" stroke-width="1.7"/>';
-        openCart.append(name, chevron); card.append(openCart);
-        if (group.storeLocation) { const location = document.createElement('span'); location.className = 'cart-store-location'; location.textContent = group.storeLocation; card.append(location); }
-        const previews = document.createElement('div'); previews.className = 'cart-summary-previews';
+        const identity = document.createElement('span');
+        identity.append(name);
+        if (group.storeLocation) {
+          const location = document.createElement('span');
+          location.className = 'cart-store-location';
+          location.textContent = group.storeLocation;
+          identity.append(location);
+        }
+        heading.append(identity, chevron);
+        openCart.append(heading);
+        const previews = document.createElement('span'); previews.className = 'cart-summary-previews';
+        previews.setAttribute('aria-hidden', 'true');
         const articles = [...new Map(group.items.map(({ item }) => [item.productId, item])).values()];
         articles.slice(0, 3).forEach(item => {
-          const link = createCartProductLink(item);
-          link.className = 'cart-summary-thumb';
-          if (item.imageUrl) {
+          const thumb = document.createElement('span');
+          thumb.className = 'cart-summary-thumb';
+          thumb.textContent = item.productTitle.trim().charAt(0);
+          if (item.imageUrl || item.imagePath) {
             const image = document.createElement('img');
             image.alt = '';
-            image.src = item.imageUrl;
-            if (item.imagePath) signProductImage(item.imagePath).then(url => { if (url) image.src = url; }).catch(() => {});
-            image.addEventListener('error', () => { image.hidden = true; }, { once: true });
+            image.hidden = true;
+            image.addEventListener('error', () => { image.hidden = true; });
             image.addEventListener('load', () => { image.hidden = false; });
-            link.append(image);
+            if (item.imageUrl) image.src = item.imageUrl;
+            if (item.imagePath) signProductImage(item.imagePath).then(url => { if (url) image.src = url; }).catch(() => {});
+            thumb.append(image);
           }
-          else link.textContent = item.productTitle.trim().charAt(0);
-          previews.append(link);
+          previews.append(thumb);
         });
         if (articles.length > 3) {
-          const more = document.createElement('button');
-          more.type = 'button';
-          more.className = 'cart-summary-more-link';
-          more.textContent = 'Mais';
-          more.setAttribute('aria-label', 'Ver todos os artigos de ' + group.storeName);
-          more.addEventListener('click', () => openStoreCart(group.storeId, true, group.storeName));
+          const more = document.createElement('span');
+          more.className = 'cart-summary-more';
+          more.textContent = '+' + (articles.length - 3);
           previews.append(more);
         }
         const total = document.createElement('span'); total.className = 'cart-summary-total';
-        const quantity = document.createElement('span'); quantity.textContent = 'Subtotal';
+        const quantity = document.createElement('span'); quantity.textContent = count + (count === 1 ? ' artigo' : ' artigos');
         const subtotal = document.createElement('strong'); subtotal.textContent = formatPrice(group.subtotalMinor);
-        const summary = document.createElement('div');
+        const summary = document.createElement('span');
         summary.className = 'cart-summary-bottom';
         total.append(quantity, subtotal);
         summary.append(previews, total);
-        card.append(summary);
+        openCart.append(summary);
+        card.append(openCart);
         openCart.onclick = () => openStoreCart(group.storeId, true, group.storeName);
         return card;
       }
@@ -3726,7 +3743,7 @@
 
       function renderPDPLoading() {
         resetCartConfirmation();
-        document.getElementById('btnPdpSaveProduct').kambyPreview=null;document.getElementById('btnPdpSaveProduct').disabled=true;document.getElementById('btnPdpStoreCart').disabled=true;document.getElementById('btnPdpVisitStore').disabled=true;document.getElementById('pdpRelated').hidden=true;document.getElementById('pdpPreviousPrice').hidden=true;document.getElementById('pdpDiscount').hidden=true;
+        document.getElementById('btnPdpSaveProduct').kambyPreview=null;document.getElementById('btnPdpSaveProduct').disabled=true;document.getElementById('btnPdpStoreCart').disabled=true;document.getElementById('btnPdpVisitStore').disabled=true;document.getElementById('btnPdpReport').disabled=true;document.getElementById('pdpRelated').hidden=true;document.getElementById('pdpPreviousPrice').hidden=true;document.getElementById('pdpDiscount').hidden=true;
         window.dispatchEvent(new Event('kamby:product-loading'));
         const slide = document.createElement('div');
         slide.className = 'pdp-slide';
@@ -3973,7 +3990,7 @@
         document.getElementById('btnPdpSaveProduct').kambyPreview = preview;
         window.dispatchEvent(new CustomEvent('kamby:product-ready',{detail:{id:product.id, preview}}));
         pdpElements.storeName.textContent = product.storeName;
-        pdpElements.stockTag.textContent = '';document.getElementById('btnPdpVisitStore').disabled=false;document.getElementById('btnPdpStoreCart').disabled=false;
+        pdpElements.stockTag.textContent = '';document.getElementById('btnPdpVisitStore').disabled=false;document.getElementById('btnPdpReport').disabled=Boolean(product.isTest);document.getElementById('btnPdpStoreCart').disabled=false;
         pdpElements.stockTag.classList.toggle('out', !anyInStock);
         pdpElements.description.textContent = product.description;document.getElementById('pdpDescriptionSection').hidden=!product.description;
         pdpElements.share.disabled = false;
@@ -4127,7 +4144,7 @@
           }
           await requireStoreOpen(catalogueRequest,fresh.storeId);
           if (currentPDP.product?.id !== fresh.id || viewPDP.hidden) return false;
-          const message='Olá, encontrei este produto no Kamby:\n\n'+fresh.title+(option.id?'\nOpção: '+option.name:'')+'\nQuantidade: '+quantity+'\nTotal estimado: '+formatPrice(option.priceMinor*quantity)+'\n\nGostaria de confirmar o pedido e combinar a entrega.';
+          const message='Olá, encontrei este produto no Kamby:\n\n'+fresh.title+(option.id?'\nOpção: '+option.name:'')+'\nQuantidade: '+quantity+'\nSubtotal dos artigos: '+formatPrice(option.priceMinor*quantity)+'\n\nGostaria de confirmar o pedido e combinar a entrega.';
           if (isTestContact(fresh.isTest, fresh.storePhone)) {
             productAction.close(true);
             openTestContact(true, fresh.storePhone, fresh.storeName, message);
@@ -4143,6 +4160,61 @@
       pdpElements.whatsapp.addEventListener('click',()=>productAction.open('whatsapp'));
       document.getElementById('btnPdpStoreCart').onclick=()=>{if(currentPDP.product)openStoreCart(currentPDP.product.storeId,true,currentPDP.product.storeName);};
       document.getElementById('btnStorefrontCart').onclick=()=>{if(storefrontState.store)openStoreCart(storefrontState.store.id,true,storefrontState.store.name);};
+      const reportDialog = document.getElementById('productReport');
+      const reportButton = document.getElementById('btnPdpReport');
+      const reportForm = document.getElementById('productReportForm');
+      const reportFields = document.getElementById('productReportFields');
+      const reportNotice = document.getElementById('productReportNotice');
+      const sendReport = document.getElementById('sendProductReport');
+      const reportGuest = document.getElementById('productReportGuest');
+      document.getElementById('cancelProductReport').onclick = () => reportDialog.close();
+      reportGuest.querySelector('a').onclick = () => reportDialog.close();
+      let reportRevision = 0;
+      reportDialog.addEventListener('close', () => { reportRevision++; });
+      reportButton.onclick = async () => {
+        if (!currentPDP.product || currentPDP.product.isTest || reportButton.disabled) return;
+        reportButton.disabled = true;
+        const id = currentPDP.product.id;
+        try {
+          const {data, error} = await platform.auth.getSession();
+          if (error) throw error;
+          if (id !== currentPDP.product?.id) return;
+          reportForm.reset();
+          reportNotice.hidden = true;
+          reportGuest.hidden = Boolean(data.session);
+          sendReport.hidden = reportFields.disabled = reportFields.hidden = !data.session;
+          sendReport.disabled = false;
+          reportDialog.showModal();
+        } catch {
+          if (id === currentPDP.product?.id) showFeedback('Não foi possível abrir a denúncia.', {tone: 'error'});
+        } finally {
+          if (id === currentPDP.product?.id) reportButton.disabled = false;
+        }
+      };
+      reportForm.onsubmit = async event => {
+        event.preventDefault();
+        if (sendReport.disabled || sendReport.hidden || !currentPDP.product) return;
+        const revision = reportRevision;
+        sendReport.disabled = true;
+        reportNotice.hidden = true;
+        try {
+          const {error} = await platform.rpc('kg_submit_product_report', {
+            p_product: currentPDP.product.id,
+            p_kind: document.getElementById('productReportKind').value,
+            p_details: document.getElementById('productReportDetails').value
+          });
+          if (error) throw error;
+          if (revision !== reportRevision) return;
+          reportDialog.close();
+          showFeedback('Denúncia enviada.');
+        } catch (error) {
+          if (revision !== reportRevision) return;
+          reportNotice.textContent = error.code === '54000' ? 'Aguarda antes de enviar outra denúncia.' : 'Não foi possível enviar. Verifica o texto e tenta novamente.';
+          reportNotice.hidden = false;
+        } finally {
+          if (revision === reportRevision) sendReport.disabled = false;
+        }
+      };
       document.getElementById('btnPdpVisitStore').onclick=()=>{if(currentPDP.product){const id=currentPDP.product.storeId;closePDP(false);openStorefront(id,true);}};
 
       pdpElements.share.addEventListener('click', async function sharePDP() {
@@ -4207,7 +4279,7 @@
 
       function readRecentSearches() {
         try {
-          if(localStorage.getItem('kamby:search-history')==='off')return [];
+          if(localStorage.getItem('kamby:search-history')!=='on')return [];
           const value = JSON.parse(localStorage.getItem('kamby:recent-searches') || '[]');
           return Array.isArray(value) ? value.filter(item => typeof item === 'string' && item.trim()).slice(0, 6).map(item => item.slice(0, 160)) : [];
         } catch (_error) { return []; }
@@ -4229,7 +4301,7 @@
       }
 
       function rememberSearch(query) {
-        try{if(localStorage.getItem('kamby:search-history')==='off')return;}catch{}
+        try{if(localStorage.getItem('kamby:search-history')!=='on')return;}catch{}
         const recent = [query].concat(readRecentSearches().filter(item => normaliseSearch(item) !== normaliseSearch(query))).slice(0, 6);
         try { localStorage.setItem('kamby:recent-searches', JSON.stringify(recent)); } catch (_error) { /* Search works without persistent storage. */ }
         renderRecentSearches();
@@ -4380,17 +4452,47 @@
         } finally {page.loading = false;}
       }
 
+      function resetSearchEntry() {
+        ++searchState.requestId;
+        searchObserver.disconnect();
+        searchEnd.replaceChildren();
+        Object.assign(searchState, {
+          query:'', tab:'products', availableOnly:false, withProductsOnly:false,
+          category:'all', minPrice:'', maxPrice:'', openOnly:false, productSort:'relevance',
+          storeSort:'relevance', catalogue:null, loading:false, error:false,
+          scrollPosition:0, userSelectedTab:false
+        });
+        searchInput.value = searchResultsInput.value = '';
+        btnClearSearch.classList.remove('show');
+        document.getElementById('btnCloseSearchResults').hidden = true;
+        document.getElementById('searchDiscovery').hidden = false;
+        document.getElementById('searchResultControls').hidden = true;
+        hideSearchSuggestions();
+        searchElements.label.hidden = true;
+        searchElements.total.replaceChildren();
+        for (const panel of [searchElements.productsWrap, searchElements.storesWrap,
+          searchElements.status, searchElements.zero, document.getElementById('searchAppliedFilters')]) {
+          panel.hidden = true;
+        }
+        viewSearchResults.removeAttribute('aria-busy');
+        document.title = 'Pesquisa · Kamby';
+      }
+
       function openSearchPage(updateHistory = true) {
         document.body.classList.remove('is-searching');
         document.getElementById('mainContainer').inert = false;
         floatingNavbar.inert = false;
+        const draft = !updateHistory && location.hash === '#pesquisa' ? history.state?.searchDraft : '';
+        resetSearchEntry();
         switchView('pesquisa', false);
         if (updateHistory && location.hash !== '#pesquisa') history.pushState({kambySearch:true}, '', '#pesquisa');
         searchResultsInput.focus({preventScroll:true});
-        if (!searchResultsInput.value.trim()) {
-          document.getElementById('searchZeroState').hidden = true;
-          document.getElementById('searchStatusMessage').hidden = true;
+        if (typeof draft === 'string' && draft) {
+          searchResultsInput.value = draft;
+          document.getElementById('btnCloseSearchResults').hidden = false;
+          suggest();
         }
+        if (!feedState.categories.length) loadCategoryIndex().catch(() => {});
       }
       async function executeSearch(query, options = {}) {
         const clean = String(query || '').replace(/\s+/g, ' ').trim().slice(0, 160);
@@ -4414,6 +4516,9 @@
         switchView('pesquisa', false);
         searchInput.value = clean;
         searchResultsInput.value = clean;
+        document.getElementById('btnCloseSearchResults').hidden = false;
+        document.getElementById('searchDiscovery').hidden = true;
+        document.getElementById('searchResultControls').hidden = false;
         searchResultsInput.blur();
         if (!options.restore) {
           searchState.scrollPosition = 0;
@@ -4421,12 +4526,12 @@
         }
         btnClearSearch.classList.add('show');
         searchElements.label.textContent = '“' + clean + '”';
+        searchElements.label.hidden = false;
         document.title = clean + ' · Pesquisa · Kamby';
         if (options.updateHistory !== false && window.location.hash !== searchHash()) {
           history.pushState({ kambySearch: true }, '', searchHash());
         }
-        document.getElementById('searchResultsSuggestions').hidden=true;
-        document.getElementById('searchLiveSuggestions').hidden=true;
+        hideSearchSuggestions();
         rememberSearch(clean);
         if (!feedState.categories.length) loadCategoryIndex().catch(() => {});
         const parameters = searchParameters(searchState.tab,0);
@@ -4512,9 +4617,15 @@
       document.querySelectorAll('[data-search-suggestion]').forEach(button => {
         button.addEventListener('click', () => executeSearch(button.dataset.searchSuggestion));
       });
-      document.getElementById('btnCloseSearchResults').addEventListener('click', () => {
-        searchResultsInput.value = '';
-        searchResultsInput.focus();
+      function clearSearchEntry() {
+        resetSearchEntry();
+        history.replaceState({...history.state, searchDraft:''}, '', '#pesquisa');
+        searchResultsInput.focus({preventScroll:true});
+      }
+      document.getElementById('btnCloseSearchResults').addEventListener('click', clearSearchEntry);
+      searchResultsInput.addEventListener('input', () => {
+        if (!searchResultsInput.value) clearSearchEntry();
+        else document.getElementById('btnCloseSearchResults').hidden = false;
       });
       document.getElementById('btnBackSearchResults').addEventListener('click', () => {
         if (history.state && history.state.kambySearch) history.back();
@@ -4534,9 +4645,75 @@
       function clearCurrentSearchFilters(){if(searchState.tab==='products')Object.assign(searchState,{category:'all',minPrice:'',maxPrice:'',availableOnly:false,productSort:'relevance'});else Object.assign(searchState,{withProductsOnly:false,openOnly:false,storeSort:'relevance'});refreshFilteredSearch();replaceSearchHash();}
       document.getElementById('btnClearAppliedFilters').addEventListener('click',clearCurrentSearchFilters);
       const clearZero=document.createElement('button');clearZero.type='button';clearZero.id='searchZeroClearFilters';clearZero.hidden=true;clearZero.className='settings-text-action';clearZero.textContent='Limpar filtros';clearZero.addEventListener('click',clearCurrentSearchFilters);searchElements.zero.append(clearZero);
-      let suggestionTimer=0,suggestionRequest=0;
-      async function suggest(input){const query=input.value.trim();const request=++suggestionRequest;const results=input===searchResultsInput;const wrapper=document.getElementById(results?'searchResultsSuggestions':'searchLiveSuggestions');const list=document.getElementById(results?'searchResultsSuggestions':'searchLiveSuggestionsList');if(!query){wrapper.hidden=true;return;}const catalogue={products:feedState.products,stores:storesState.stores};if(request!==suggestionRequest||input.value.trim()!==query||document.activeElement!==input)return;list.replaceChildren();wrapper.hidden=false;const matches=matchCatalogue(catalogue,query);const options=[{text:'Pesquisar “'+query+'”',sub:'Produtos e lojas',query},...matches.products.slice(0,3).map(p=>({text:p.title,sub:'Produto · '+p.storeName,query:p.title})),...matches.stores.slice(0,2).map(s=>({text:s.name,sub:'Loja · '+s.location,query:s.name,kind:'stores'}))];options.forEach((item,index)=>{const b=document.createElement('button');b.type='button';b.className='search-suggestion-button';const label=document.createElement('span');label.textContent=item.text;const sub=document.createElement('small');sub.textContent=item.sub;label.append(sub);b.append(label);b.addEventListener('click',()=>{suggestionRequest++;executeSearch(item.query,{tab:item.kind});});b.addEventListener('keydown',event=>{if(!['ArrowDown','ArrowUp','Escape'].includes(event.key))return;event.preventDefault();if(event.key==='Escape'){wrapper.hidden=true;input.focus();return;}const buttons=Array.from(list.querySelectorAll('button'));const next=index+(event.key==='ArrowDown'?1:-1);if(next<0)input.focus();else buttons[Math.min(next,buttons.length-1)].focus();});list.append(b);});}
-      for(const input of [searchInput,searchResultsInput]){input.addEventListener('input',()=>{clearTimeout(suggestionTimer);suggestionTimer=setTimeout(()=>suggest(input),150);});input.addEventListener('keydown',event=>{if(event.key==='ArrowDown'){const list=document.getElementById(input===searchResultsInput?'searchResultsSuggestions':'searchLiveSuggestionsList');const first=list.querySelector('button');if(first&&!list.hidden){event.preventDefault();first.focus();}}if(event.key==='Escape'){suggestionRequest++;document.getElementById('searchResultsSuggestions').hidden=true;document.getElementById('searchLiveSuggestions').hidden=true;if(input===searchResultsInput)input.blur();}});}
+      const searchSuggestions = document.getElementById('searchResultsSuggestions');
+      let suggestionTimer;
+      function hideSearchSuggestions() {
+        clearTimeout(suggestionTimer);
+        searchSuggestions.hidden = true;
+      }
+      function suggest() {
+        const query = searchResultsInput.value.trim();
+        if (!query || document.activeElement !== searchResultsInput) return;
+        const matches = matchCatalogue({products:feedState.products, stores:storesState.stores}, query);
+        const suggestions = [
+          ...matches.products.slice(0,3).map(product => ({
+            title:product.title, detail:'Produto' + (product.storeName ? ' · ' + product.storeName : ''),
+            open:() => openPDP(product.id, true)
+          })),
+          ...matches.stores.slice(0,2).map(store => ({
+            title:store.name, detail:'Loja' + (store.location ? ' · ' + store.location : ''),
+            open:() => openStorefront(store.id, true)
+          })),
+          {title:'Pesquisar “' + query + '”', open:() => executeSearch(query)}
+        ];
+        const buttons = suggestions.map(({title,detail,open}) => {
+          const button = document.createElement('button');
+          button.type = 'button';
+          button.className = 'search-suggestion-button';
+          const label = document.createElement('span');
+          label.textContent = title;
+          if (detail) {
+            const sub = document.createElement('small');
+            sub.textContent = detail;
+            label.append(sub);
+          }
+          button.append(label);
+          button.onclick = () => {
+            hideSearchSuggestions();
+            if (detail && location.hash === '#pesquisa') {
+              history.replaceState({...history.state, searchDraft:query}, '', '#pesquisa');
+            }
+            open();
+          };
+          return button;
+        });
+        buttons.forEach((button,index) => button.addEventListener('keydown', event => {
+          if (event.key === 'Escape') {
+            event.preventDefault();
+            hideSearchSuggestions();
+            searchResultsInput.focus();
+          } else if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+            event.preventDefault();
+            const next = index + (event.key === 'ArrowDown' ? 1 : -1);
+            (next < 0 ? searchResultsInput : buttons[Math.min(next, buttons.length - 1)]).focus();
+          }
+        }));
+        searchSuggestions.replaceChildren(...buttons);
+        searchSuggestions.hidden = false;
+      }
+      searchResultsInput.addEventListener('input', () => {
+        hideSearchSuggestions();
+        if (searchResultsInput.value.trim()) suggestionTimer = setTimeout(suggest, 150);
+      });
+      searchResultsInput.addEventListener('keydown', event => {
+        if (event.key === 'ArrowDown' && !searchSuggestions.hidden) {
+          event.preventDefault();
+          searchSuggestions.querySelector('button').focus();
+        } else if (event.key === 'Escape') {
+          if (searchSuggestions.hidden) searchResultsInput.blur();
+          else hideSearchSuggestions();
+        }
+      });
       window.addEventListener('kamby:search-history',renderRecentSearches);
 
       function setMainNavigationInert(value) {
@@ -4783,6 +4960,25 @@
   <p id="storefrontShareStatus" class="commerce-sr-only" role="status"></p>
   <p id="cartQuantityStatus" class="commerce-sr-only" role="status"></p>
   <dialog id="storefrontInfoDialog" class="commerce-action-sheet storefront-info-sheet" aria-labelledby="storefrontInfoTitle"><header><h2 id="storefrontInfoTitle">Sobre a loja</h2><button type="button" id="btnCloseStorefrontInfo" aria-label="Fechar informações da loja"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="m6 6 12 12M6 18 18 6"/></svg></button></header><div id="storefrontInfoContent"></div></dialog>
+  <dialog id="productReport" class="local-data-dialog" aria-labelledby="productReportTitle">
+    <form id="productReportForm" class="settings-form">
+      <h2 id="productReportTitle">Denunciar produto</h2>
+      <p id="productReportGuest" hidden><a href="#definicoes/entrar">Inicia sessão</a> para enviar uma denúncia pelo Kamby.</p>
+      <fieldset id="productReportFields" class="registration-fields">
+        <label class="settings-field">Motivo
+          <select id="productReportKind"><option value="content">Conteúdo do anúncio</option><option value="copyright">Direitos de autor</option></select>
+        </label>
+        <label class="settings-field">O que devemos rever?
+          <textarea id="productReportDetails" rows="4" minlength="10" maxlength="1900" required></textarea>
+        </label>
+      </fieldset>
+      <p id="productReportNotice" role="status" hidden></p>
+      <div class="local-dialog-actions">
+        <button type="button" id="cancelProductReport">Fechar</button>
+        <button type="submit" id="sendProductReport">Enviar denúncia</button>
+      </div>
+    </form>
+  </dialog>
   <dialog id="testContactDialog" class="search-filter-sheet" aria-labelledby="testContactTitle"><header class="subscreen-bar"><span></span><h2 class="subscreen-title" id="testContactTitle">Resumo do pedido</h2><button type="button" class="header-btn" id="btnCloseTestContact" aria-label="Fechar resumo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m6 6 12 12M6 18 18 6"/></svg></button></header><div class="test-contact-body"><h3 id="testContactStore"></h3><p>O contacto desta loja ainda não está disponível. Podes copiar o resumo do pedido.</p><label for="testContactMessage">Mensagem do pedido</label><textarea id="testContactMessage" rows="9"></textarea><p id="testContactStatus" role="status"></p></div><footer class="search-filter-footer"><button type="button" class="settings-text-action" id="btnCopyTestContact">Copiar mensagem</button><button type="button" class="merchant-primary-button" id="btnFinishTestContact">Concluir</button></footer></dialog>
   <dialog id="searchFiltersDialog" class="search-filter-sheet" aria-labelledby="searchFiltersTitle"><form id="searchFiltersForm"><header class="subscreen-bar"><span></span><h2 class="subscreen-title" id="searchFiltersTitle">Filtros</h2><button type="button" class="header-btn" id="btnCloseSearchFilters" aria-label="Fechar filtros"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m6 6 12 12M6 18 18 6"/></svg></button></header><div class="search-filter-fields"><div id="searchProductFilterFields"><label>Categoria<select id="searchFilterCategory"><option value="all">Todas</option></select></label><div class="search-price-fields"><label>Preço mínimo (MT)<input type="number" id="searchFilterMin" min="0" step="0.01" inputmode="decimal" placeholder="0" /></label><label>Preço máximo (MT)<input type="number" id="searchFilterMax" min="0" step="0.01" inputmode="decimal" placeholder="Sem limite" /></label></div><label class="search-filter-check"><input type="checkbox" id="searchFilterAvailable" />Só produtos disponíveis</label></div><div id="searchStoreFilterFields" hidden><label class="search-filter-check"><input type="checkbox" id="searchFilterWithProducts" />Só lojas com produtos</label><label class="search-filter-check"><input type="checkbox" id="searchFilterOpen" />Só lojas abertas</label></div><label>Ordenar<select id="searchFilterSort"></select></label><p class="field-error" id="searchFiltersError" role="alert" hidden></p></div><footer class="search-filter-footer"><button type="button" class="settings-text-action" id="btnResetSearchDraft">Repor</button><button type="submit" class="merchant-primary-button">Aplicar filtros</button></footer></form></dialog>
 

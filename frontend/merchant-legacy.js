@@ -1,3 +1,4 @@
+import {ensureAccountTerms} from './account-terms.js';
 import {bindSignOut,showFeedback} from './merchant-ui.js';
 import { loadAccountProfile } from './account-registration.js';
 import {setButtonBusy,showSpinner,showSkeleton} from "./loading.js";
@@ -65,6 +66,17 @@ export function setupMerchant(hooks) {
       }
       const {data:{user},error}=await platform.auth.getUser();
       if(error) throw error;
+      if (!user || request!==state.accountRequest) return;
+      const accepted=await ensureAccountTerms(platform, async()=>{
+        const result=await platform.auth.signOut({scope:'local'});
+        if(result.error)throw result.error;
+      }, {isCurrent:()=>request===state.accountRequest});
+      if(request!==state.accountRequest)return;
+      if(!accepted){
+        state.user=null;state.access=null;state.profile=null;state.phase='guest';state.stores=[];
+        renderProfile();
+        return;
+      }
       const [profileResult,accountResult]=await Promise.all([
         loadAccountProfile(platform, user),
         loadAccountAccess(platform,user.id)

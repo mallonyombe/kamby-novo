@@ -24,36 +24,32 @@ export function setupWorkspace({state,composer,onChanged,onStoreChanged,onTerms}
   </div>
   <nav id="merchantSidebarNav" class="merchant-own-nav" aria-label="Navegação do lojista"></nav>
   <a class="mw-return" href="#perfil">${icon('back')}<span class="panel-sidebar-label">Voltar ao perfil</span></a>
-</aside><div class="mw-content"><p class="merchant-feedback" id="merchantFeedback" role="status" aria-live="polite" hidden></p><p class="merchant-feedback" id="merchantOffline" role="status" hidden></p><section data-mw="resumo" class="mw-summary">${summaryMarkup}</section><section data-mw="produtos" hidden><button type="button" id="btnOpenNewProductModal" class="kamby-list-icon" aria-label="Novo produto">${icon('plus')}</button><div class="mw-search-row kamby-search-panel" id="merchantSearchPanel" hidden><label class="mw-search">${icon('search')}<input id="merchantSearch" type="search" placeholder="Pesquisar no catálogo" aria-label="Pesquisar produtos por nome ou identificador" autocomplete="off"></label></div><button type="button" class="kamby-list-icon" id="merchantFilterButton" aria-label="Filtros do catálogo">${icon('filter')}</button><div class="mw-list-meta"><span id="merchantCatalogCount"></span><button type="button" id="merchantClearFilters" class="mw-text" hidden>Limpar filtros</button></div><div id="merchantProductsList" class="mw-product-list"></div><p id="merchantListSentinel" class="mw-muted" role="status"></p></section><section data-mw="actividade" hidden><button type="button" class="pdp-back-btn" id="merchantHistoryBack" aria-label="Voltar ao resumo">${icon('back')}</button><select id="merchantActivityPeriod" class="mw-secondary" aria-label="Período de actividade"><option value="7">Últimos 7 dias</option><option value="30">Últimos 30 dias</option><option value="90">Últimos 90 dias</option></select><dl id="merchantActivityList" class="mw-traffic"></dl><div id="merchantActivityChart" class="mw-chart"></div></section><section data-mw="loja" class="mw-shop-profile" hidden>
+</aside><div class="mw-content"><p class="merchant-feedback" id="merchantFeedback" role="status" aria-live="polite" hidden></p><p class="merchant-feedback" id="merchantOffline" role="status" hidden></p><section data-mw="resumo" class="mw-summary">${summaryMarkup}</section><section data-mw="produtos" hidden><button type="button" id="btnOpenNewProductModal" class="kamby-list-icon" aria-label="Novo produto">${icon('plus')}</button><div class="mw-search-row kamby-search-panel" id="merchantSearchPanel" hidden><label class="mw-search">${icon('search')}<input id="merchantSearch" type="search" placeholder="Pesquisar no catálogo" aria-label="Pesquisar produtos por nome ou identificador" autocomplete="off"></label></div><button type="button" class="kamby-list-icon" id="merchantFilterButton" aria-label="Filtros do catálogo">${icon('filter')}</button><div class="mw-list-meta"><span id="merchantCatalogCount" role="status"></span><span id="merchantAppliedFilters" class="mw-muted" hidden></span><button type="button" id="merchantClearFilters" class="mw-text" hidden>Limpar filtros</button></div><div id="merchantProductsList" class="mw-product-list"></div><p id="merchantListSentinel" class="mw-muted" role="status"></p></section><section data-mw="actividade" hidden><select id="merchantActivityPeriod" class="mw-secondary" aria-label="Período de actividade"><option value="7">Últimos 7 dias</option><option value="30">Últimos 30 dias</option><option value="90">Últimos 90 dias</option></select><dl id="merchantActivityList" class="mw-traffic"></dl><div id="merchantActivityChart" class="mw-chart"></div></section><section data-mw="loja" class="mw-shop-profile" hidden>
  <div class="mw-profile-info">
    <div class="mw-profile-avatar">
      <button type="button" id="merchantStoreLogo" class="mw-profile-image" aria-label="Fotografia da loja"></button>
+     <input type="file" id="merchantStorePhotoFile" accept="image/jpeg,image/png,image/webp" hidden>
    </div>
    <div class="mw-profile-copy"><h2 id="merchantStoreName"></h2><p id="merchantStoreLocation"></p><p id="merchantStoreContact" hidden></p></div>
-   <button type="button" id="merchantEditProfile" class="mw-secondary">Editar perfil</button>
+   <button type="button" id="merchantEditProfile" class="mw-secondary">Editar loja</button>
  </div>
  <p id="merchantStoreDescription" class="mw-profile-description"></p>
  <div class="mw-profile-actions">
-   <span class="mw-store-state" id="merchantOpenState" hidden></span>
+   <span class="mw-store-state" id="merchantOpenState" role="status" hidden></span>
    <button type="button" class="btn-store-status" id="btnToggleStoreStatus">—</button>
-   <a id="merchantPublicPreview" class="mw-text mw-profile-preview">Ver loja pública ${icon('next')}</a>
-   <button type="button" id="merchantPublishStore" class="mw-primary" hidden>Activar loja</button>
+   <a id="merchantPublicPreview" class="mw-text mw-profile-preview">Ver montra pública ${icon('next')}</a>
+
  </div>
- <section class="mw-store-catalogue" aria-labelledby="merchantStoreCatalogueTitle">
-   <header><h3 id="merchantStoreCatalogueTitle">Catálogo</h3><button type="button" id="merchantGoToProducts" class="mw-text">Gerir produtos ${icon('next')}</button></header>
-   <div id="merchantStoreCatalogue" class="mw-store-catalogue-items" aria-live="polite"></div>
- </section>
  <details class="mw-store-details">
    <summary>Informações da loja</summary>
    <div id="merchantProfileDetails" class="mw-profile-details"></div>
  </details>
  <dialog id="merchantStoreEditor" class="mw-filter-dialog mw-store-editor" aria-labelledby="merchantStoreEditorTitle">
- <form id="merchantStoreForm"><header><h2 id="merchantStoreEditorTitle">Editar perfil</h2><button type="button" id="merchantCloseStoreEditor" aria-label="Fechar editor">${icon('close')}</button></header><details class="mw-settings-group" open><summary>Identidade</summary><label>Nome da loja<input name="name" minlength="2" maxlength="80" required></label><label>Descrição<textarea name="description" rows="3" maxlength="2000"></textarea></label></details><details class="mw-settings-group"><summary>WhatsApp e localização</summary><label>WhatsApp comercial<input name="whatsapp_e164" type="tel" placeholder="+258 84 123 4567" required></label><label>Localidade<input name="location" maxlength="120" placeholder="Chongoene"></label><label>Endereço<textarea name="address" maxlength="300" rows="2"></textarea></label><label>Área de atendimento<input name="service_area" maxlength="300" placeholder="Ex.: Chongoene e arredores"></label></details><details class="mw-settings-group"><summary>Horário de atendimento</summary><p class="mw-muted">Sem horário definido, vale a abertura manual. Hora de Moçambique. Fora do horário definido, os clientes podem guardar no carrinho, mas não enviar pedidos.</p><div id="merchantOpeningHours"></div></details><p class="merchant-feedback" id="merchantStoreSaveNotice" role="status" hidden></p><footer><button id="merchantSaveStore" class="mw-primary" type="submit">Guardar perfil</button></footer></form></dialog></section></div>`;
+ <form id="merchantStoreForm"><header><h2 id="merchantStoreEditorTitle">Editar loja</h2><button type="button" id="merchantCloseStoreEditor" aria-label="Fechar editor">${icon('close')}</button></header><details class="mw-settings-group" open><summary>Identidade</summary><label>Nome da loja<input name="name" minlength="2" maxlength="80" required></label><label>Descrição<textarea name="description" rows="3" maxlength="2000"></textarea></label></details><details class="mw-settings-group"><summary>WhatsApp e localização</summary><label>WhatsApp comercial<input name="whatsapp_e164" type="tel" placeholder="+258 84 123 4567" required></label><label>Localidade<input name="location" maxlength="120" placeholder="Chongoene"></label><label>Endereço<textarea name="address" maxlength="300" rows="2"></textarea></label><label>Área de atendimento<input name="service_area" maxlength="300" placeholder="Ex.: Chongoene e arredores"></label></details><details class="mw-settings-group"><summary>Horário de atendimento</summary><p class="mw-muted">Hora de Moçambique. Com horário definido, os pedidos só estão disponíveis nos períodos indicados e quando não estiverem pausados.</p><div id="merchantOpeningHours"></div></details><p class="merchant-feedback" id="merchantStoreSaveNotice" role="status" hidden></p><footer><button id="merchantSaveStore" class="mw-primary" type="submit">Guardar perfil</button></footer></form></dialog></section></div>`;
  bindSidebar(body, body.querySelector('.panel-sidebar-toggle'), 'lojista');
  const header=view.querySelector('.pdp-nav-content');
  const backToProfile=header.querySelector('#btnBackFromMerchant');
  const $=id=>view.querySelector('#'+id);const set=(id,value)=>$(id).textContent=value;const feedback=(copy,tone='error')=>showFeedback(copy,{tone});
- const historyBack=$('merchantHistoryBack');header.prepend(historyBack);historyBack.hidden=true;
  const searchPanel=$('merchantSearchPanel');
  const searchButton=listIcon('search','Pesquisar produtos');
  const filterButton=$('merchantFilterButton');
@@ -64,11 +60,10 @@ export function setupWorkspace({state,composer,onChanged,onStoreChanged,onTerms}
  header.append(productActions);
  bindListSearch(searchButton,searchPanel,$('merchantSearch'));
  filterButton.setAttribute('aria-haspopup','dialog');
- const publishButton=$('merchantPublishStore');
  async function publishStore(button){
    const store=state.store;
    if(!['draft','pending'].includes(store?.status)||storeBusy||button.disabled)return;
-   if(!await confirmAction('Activar loja?','A loja ficará visível no Kamby. Os produtos em rascunho podem ser publicados no catálogo.','Activar loja'))return;
+   if(!await confirmAction('Publicar loja?','A montra fica pública. Podes publicar os teus produtos a partir do catálogo.','Publicar loja'))return;
    if(state.store?.id!==store.id||storeBusy||view.hidden)return;
    storeBusy=true;
    button.disabled=true;
@@ -82,19 +77,19 @@ export function setupWorkspace({state,composer,onChanged,onStoreChanged,onTerms}
      state.store=updated;
      onStoreChanged(updated);
      renderProfile();
-     showFeedback('Loja activada.');
+     showFeedback('Loja publicada.');
+     void loadSummary();
      await onChanged();
    }catch(error){
      if(state.store?.id!==store.id||view.hidden)return;
      if(error?.details==='seller_terms_required')onTerms(store);
-     else feedback('Não foi possível activar a loja. Tenta novamente.');
+     else feedback('Não foi possível publicar a loja. Tenta novamente.');
    }finally{
      storeBusy=false;
      button.disabled=false;
      setButtonBusy(button,false);
    }
  }
- publishButton.onclick=()=>void publishStore(publishButton);
  const nav = $('merchantSidebarNav');
  for (const [id, glyph, label] of merchantDestinations) {
    const entry = el('button');
@@ -105,30 +100,47 @@ export function setupWorkspace({state,composer,onChanged,onStoreChanged,onTerms}
    entry.onclick = () => switchTab(id);
    nav.append(entry);
  }
+ function restoreQuickEditFocus(id){
+   if(view.hidden||tab!=='produtos')return false;
+   const restored=$('merchantProductsList').querySelector('[data-product-id="'+CSS.escape(id)+'"] .mw-row-stock');
+   (restored||($('merchantClearFilters').hidden?filterButton:$('merchantClearFilters'))).focus({preventScroll:true});
+   return !restored&&!$('merchantClearFilters').hidden;
+ }
  function renderFilters(){
    const active=filters.status!=='all'||filters.category||filters.available!=='all'||filters.min||filters.max||filters.sort!=='recent';
    paintFilterIcon(filterButton,active);
    $('merchantClearFilters').hidden=!active;
+   const category = filterDialog.querySelector('[name="category"]');
+   const labels = [
+     {published:'Publicados',draft:'Rascunhos',archived:'Arquivados',blocked:'Com restrições',out:'Esgotados'}[filters.status],
+     filters.status!=='out' && {available:'Disponíveis',out:'Esgotados'}[filters.available],
+     filters.category && Array.from(category.options).find(option=>option.value===filters.category)?.textContent,
+     filters.min && 'Desde '+money(Math.round(Number(filters.min)*100)),
+     filters.max && 'Até '+money(Math.round(Number(filters.max)*100)),
+     {name:'Nome A–Z',low:'Menor preço',high:'Maior preço'}[filters.sort]
+   ].filter(Boolean);
+   const summary=$('merchantAppliedFilters');
+   summary.textContent=labels.join(' · ');
+   summary.hidden=!labels.length;
  }
  function syncHeader(next){
    $('merchantHeaderTitle').textContent={resumo:'Resumo',produtos:'Produtos',loja:'Loja',actividade:'Actividade'}[next]||'Loja';
-   const nested=next==='actividade';
-   backToProfile.hidden=nested;historyBack.hidden=!nested;
+   backToProfile.hidden=false;
    productActions.hidden=next!=='produtos';
    $('btnRefreshMerchant').hidden=true;
  }
- async function switchTab(next){if(storeBusy||next===tab&&body.dataset.activeTab===tab)return;if(tab==='loja'&&next!=='loja'&&storeDirty&&!await confirmAction('Sair sem guardar?','As configurações da loja ainda não foram guardadas.','Descartar'))return;storeDirty=false;positions[tab]=view.scrollTop;tab=next;syncHeader(next);body.querySelectorAll('[data-mw]').forEach(s=>s.hidden=s.dataset.mw!==tab);body.dataset.activeTab=tab;nav.querySelectorAll('button').forEach(button=>{
+ async function switchTab(next,loadCatalogue=true){if(storeBusy||next===tab&&body.dataset.activeTab===tab)return;if(tab==='loja'&&next!=='loja'&&storeDirty&&!await confirmAction('Sair sem guardar?','As configurações da loja ainda não foram guardadas.','Descartar'))return;storeDirty=false;positions[tab]=view.scrollTop;tab=next;syncHeader(next);body.querySelectorAll('[data-mw]').forEach(s=>s.hidden=s.dataset.mw!==tab);body.dataset.activeTab=tab;nav.querySelectorAll('button').forEach(button=>{
      if(button.dataset.destination===tab)button.setAttribute('aria-current','page');
      else button.removeAttribute('aria-current');
-   });window.dispatchEvent(new Event('kamby:feedback-scope'));view.scrollTop=positions[tab]||0;if(tab==='actividade')loadActivity();if(tab==='loja'){renderStoreForm();renderProfile();void renderStoreCatalogue();}if(tab==='produtos'&&!rows.length)await loadProducts(true);}
+   });window.dispatchEvent(new Event('kamby:feedback-scope'));view.scrollTop=positions[tab]||0;if(tab==='actividade')loadActivity();if(tab==='loja'){renderStoreForm();renderProfile();}if(loadCatalogue&&tab==='produtos'&&!rows.length)await loadProducts(true);}
  let debounce; $('merchantSearch').oninput=()=>{clearTimeout(debounce);filters.q=$('merchantSearch').value.trim();debounce=setTimeout(()=>{renderFilters();loadProducts(true);},220);};
  $('merchantClearFilters').onclick=()=>{Object.assign(filters,{status:'all',category:'',available:'all',min:'',max:'',sort:'recent'});renderFilters();loadProducts(true);};
  const filterDialog=el('dialog','mw-filter-dialog');filterDialog.innerHTML='<form><header><h2>Filtros do catálogo</h2><button type="button" aria-label="Fechar filtros">'+icon('close')+'</button></header><label>Categoria<select name="category"><option value="">Todas as categorias</option></select></label><label>Disponibilidade<select name="available"><option value="all">Todas</option><option value="available">Disponíveis</option><option value="out">Esgotados</option></select></label><label>Estado<select name="status"><option value="all">Todos</option><option value="published">Publicados</option><option value="draft">Rascunhos</option><option value="archived">Arquivados</option><option value="blocked">Bloqueados pela administração</option></select></label><details class="mw-filter-extra"><summary>Preço e ordenação</summary><div class="editor-two-columns"><label>Preço mínimo (MT)<input name="min" type="number" min="0" step="0.01"></label><label>Preço máximo (MT)<input name="max" type="number" min="0" step="0.01"></label></div><label>Ordenação<select name="sort"><option value="recent">Mais recentes</option><option value="name">Nome A–Z</option><option value="low">Menor preço</option><option value="high">Maior preço</option></select></label></details><p class="field-error" role="alert" hidden></p><footer><button type="submit" class="mw-primary">Aplicar filtros</button></footer></form>';filterDialog.querySelector('h2').id='merchantFilterTitle';filterDialog.setAttribute('aria-labelledby','merchantFilterTitle');document.body.append(filterDialog);filterDialog.querySelector('header button').onclick=()=>filterDialog.close();
  $('merchantFilterButton').onclick=()=>{for(const key of Object.keys(filters)){const field=filterDialog.querySelector('[name="'+key+'"]');if(field)field.value=key==='status'&&filters.status==='out'?'published':key==='available'&&filters.status==='out'?'out':filters[key];}filterDialog.showModal();};
  filterDialog.querySelector('form').onsubmit=e=>{e.preventDefault();const data=Object.fromEntries(new FormData(e.target));if(data.min&&data.max&&Number(data.min)>Number(data.max)){notice(filterDialog.querySelector('[role="alert"]'),'O preço máximo deve ser superior ao mínimo.');return;}Object.assign(filters,data);filterDialog.close();renderFilters();loadProducts(true);};
- async function loadCategories(){const {data,error}=await platform.from('kg_store_categories').select('category:kg_categories(id,name,is_active)').eq('store_id',state.store.id);if(error)return;const cats=(data||[]).map(x=>Array.isArray(x.category)?x.category[0]:x.category).filter(x=>x?.is_active);const select=filterDialog.querySelector('[name="category"]');select.replaceChildren(new Option('Todas as categorias',''));cats.forEach(c=>select.append(new Option(c.name,c.id)));}
+ async function loadCategories(){const {data,error}=await platform.from('kg_store_categories').select('category:kg_categories(id,name,is_active)').eq('store_id',state.store.id);if(error)return;const cats=(data||[]).map(x=>Array.isArray(x.category)?x.category[0]:x.category).filter(x=>x?.is_active);const select=filterDialog.querySelector('[name="category"]');select.replaceChildren(new Option('Todas as categorias',''));cats.forEach(c=>select.append(new Option(c.name,c.id)));renderFilters();}
  function queryProducts(pageSize=30){let query=platform.from('kg_products').select('*,category:kg_categories(name),variants:kg_product_variants(*),images:kg_product_images(storage_path,sort_order)',{count:'exact'}).eq('store_id',state.store.id);if(filters.q){if(/^[a-f0-9]{8}-(?:[a-f0-9]{4}-){3}[a-f0-9]{12}$/i.test(filters.q))query=query.eq('id',filters.q);else query=query.ilike('title','%'+filters.q.replace(/[\\%_]/g,'\\$&')+'%');}if(['published','draft','archived'].includes(filters.status))query=query.eq('status',filters.status);if(['published','draft'].includes(filters.status))query=query.eq('moderation_status','allowed');else if(filters.status==='all')query=query.neq('status','archived');if(filters.status==='blocked')query=query.eq('moderation_status','blocked').neq('status','archived');if(filters.status==='out')query=query.eq('stock_status','out').eq('status','published').eq('moderation_status','allowed');else if(filters.available==='out')query=query.eq('stock_status','out');if(filters.available==='available')query=query.neq('stock_status','out');if(filters.category)query=query.eq('category_id',filters.category);if(filters.min)query=query.gte('price_minor',Math.round(Number(filters.min)*100));if(filters.max)query=query.lte('price_minor',Math.round(Number(filters.max)*100));const sort={recent:['created_at',false],name:['title',true],low:['price_minor',true],high:['price_minor',false]}[filters.sort]||['created_at',false];return query.order(sort[0],{ascending:sort[1]}).order('id').range(offset,offset+pageSize-1);}
- async function loadProducts(reset=false, preserve=false){if(view.hidden||!state.store)return;const visibleCount=preserve?Math.max(30,rows.length):30;const scrollTop=view.scrollTop;if(reset){generation++;offset=0;rows=[];hasMore=true;paging=false;if(!preserve)$('merchantProductsList').replaceChildren(...Array.from({length:3},()=>el('div','mw-product-skeleton')));}if(paging||!hasMore)return;const request=generation,storeId=state.store.id;paging=true;showSpinner($('merchantListSentinel'));try{const {data,count,error}=await queryProducts(visibleCount);if(error)throw error;if(request!==generation||storeId!==state.store?.id)return;rows.push(...data);offset+=data.length;total=count??rows.length;hasMore=offset<total;renderProducts();if(preserve&&tab==='produtos')view.scrollTop=scrollTop;set('merchantListSentinel','');set('merchantCatalogCount',total+' '+(total===1?'produto encontrado':'produtos encontrados'));}catch{if(request!==generation)return;if(!rows.length)$('merchantProductsList').replaceChildren(el('p','mw-empty','Não foi possível carregar o catálogo.'));set('merchantListSentinel','');const retry=el('button','mw-secondary','Tentar novamente');retry.type='button';retry.onclick=()=>loadProducts(!rows.length);$('merchantProductsList').append(retry);feedback('Verifica a ligação. Os filtros foram preservados.');}finally{if(request===generation)paging=false;}}
+ async function loadProducts(reset=false, preserve=false){if(view.hidden||!state.store)return;const visibleCount=preserve?Math.max(30,rows.length):30;const scrollTop=view.scrollTop;if(reset){generation++;offset=0;rows=[];hasMore=true;paging=false;if(!preserve)$('merchantProductsList').replaceChildren(...Array.from({length:3},()=>el('div','mw-product-skeleton')));}if(paging||!hasMore)return;const request=generation,storeId=state.store.id;paging=true;showSpinner($('merchantListSentinel'));try{const {data,count,error}=await queryProducts(visibleCount);if(error)throw error;if(request!==generation||storeId!==state.store?.id)return;rows.push(...data);offset+=data.length;total=count??rows.length;hasMore=offset<total;renderProducts();if(preserve&&tab==='produtos')view.scrollTop=scrollTop;set('merchantListSentinel','');set('merchantCatalogCount',total+' '+(total===1?'produto encontrado':'produtos encontrados'));}catch{if(request!==generation)return;if(!rows.length)$('merchantProductsList').replaceChildren(el('p','mw-empty','Não foi possível carregar o catálogo.'));set('merchantListSentinel','');set('merchantCatalogCount','');const retry=el('button','mw-secondary','Tentar novamente');retry.type='button';retry.onclick=()=>loadProducts(!rows.length);$('merchantProductsList').append(retry);feedback('Verifica a ligação. Os filtros foram preservados.');}finally{if(request===generation)paging=false;}}
  const observer=new IntersectionObserver(entries=>{if(entries.some(x=>x.isIntersecting)&&tab==='produtos')loadProducts();},{root:view,rootMargin:'180px'});observer.observe($('merchantListSentinel'));
  function renderProducts(){
    const list=$('merchantProductsList');
@@ -158,7 +170,7 @@ export function setupWorkspace({state,composer,onChanged,onStoreChanged,onTerms}
      const details=el('span','mw-row-details');
      const publication={published:'Publicado',draft:'Rascunho',archived:'Arquivado'}[product.status];
      if(publication&&!blocked)details.append(el('span','mw-product-state',publication));
-     if(blocked)details.append(el('span','mw-stock-alert','Com restrição'));
+     if(blocked)details.append(el('span','mw-stock-alert','Restringido pela gestão'),el('span','mw-muted','Contacta a gestão para saber mais.'));
      if(product.stock_status==='out'&&product.status==='published')details.append(el('span','mw-stock-alert','Esgotado'));
      meta.append(el('strong','mw-product-name',product.title),
        el('span','mw-product-price',price>0?(new Set(prices).size>1?'Desde ':'')+money(price):'Preço por definir'),details);
@@ -173,6 +185,13 @@ export function setupWorkspace({state,composer,onChanged,onStoreChanged,onTerms}
        menu.setAttribute('aria-expanded','false');
        menu.innerHTML=icon('more');
        menu.onclick=()=>menu.getAttribute('aria-expanded')==='true'?closeMenu():openProductMenu(product,menu);
+       if(product.status==='published'){
+         const priceAndStock=el('button','mw-row-stock','Preço e stock');
+         priceAndStock.type='button';
+         priceAndStock.setAttribute('aria-label','Preço e stock de '+product.title);
+         priceAndStock.onclick=()=>composer.open(product,false,'stock');
+         actions.append(priceAndStock);
+       }
        actions.append(menu);
        article.append(actions);
      }
@@ -261,14 +280,16 @@ export function setupWorkspace({state,composer,onChanged,onStoreChanged,onTerms}
    Object.assign(filters,{q:'',status,category:'',available:'all',min:'',max:'',sort:'recent'});
    $('merchantSearch').value='';
    renderFilters();
-   await switchTab('produtos');
+   await switchTab('produtos',false);
    view.scrollTop=0;
    await loadProducts(true);
  }
- $('merchantHistoryBack').onclick=()=>switchTab('resumo');
  const summary=setupMerchantSummary({
    root:body.querySelector('[data-mw="resumo"]'),state,onProducts:openSummaryCatalogue,
-   onStore:()=>switchTab('loja'),onPublish:publishStore,onActivity:()=>switchTab('actividade')
+   onStore:()=>switchTab('loja'),onPublish:publishStore,onCreate:async()=>{
+     await switchTab('produtos');
+     if(tab==='produtos')await composer.open();
+   }
  });
  const loadSummary=()=>summary.load();
  const activityPeriod=$('merchantActivityPeriod');
@@ -341,7 +362,7 @@ export function setupWorkspace({state,composer,onChanged,onStoreChanged,onTerms}
      for(const day of days.slice().reverse()){
        const row=el('tr');
        for(const value of [dates.format(new Date(day.day+'T00:00:00Z')),day.views,day.contacts]){
-         row.append(el('td','',String(value)));
+         row.append(el('td','',typeof value==='number'?value.toLocaleString('pt-MZ'):value));
        }
        values.append(row);
      }
@@ -386,7 +407,7 @@ export function setupWorkspace({state,composer,onChanged,onStoreChanged,onTerms}
      }
    }
  }
- async function load(){if(!state.store)return;const id=state.store.id;const {data,error}=await platform.from('kg_stores').select('*').eq('id',id).single();if(view.hidden||state.store?.id!==id)return;if(!error){state.store=data;onStoreChanged(data);}renderSidebarIdentity();summary.syncStatus();const unavailable=!canPrepareStore(state.store);$('btnOpenNewProductModal').disabled=unavailable;await Promise.all([loadSummary(),loadProducts(true,tab==='produtos'),loadCategories()]);if(tab==='loja'&&!storeDirty){renderStoreForm();renderProfile();void renderStoreCatalogue();}if(tab==='actividade')loadActivity();}
+ async function load(){if(!state.store)return;const id=state.store.id;const {data,error}=await platform.from('kg_stores').select('*').eq('id',id).single();if(view.hidden||state.store?.id!==id)return;if(!error){state.store=data;onStoreChanged(data);}renderSidebarIdentity();summary.syncStatus();const unavailable=!canPrepareStore(state.store);$('btnOpenNewProductModal').disabled=unavailable;await Promise.all([loadSummary(),loadProducts(true,tab==='produtos'),loadCategories()]);if(tab==='loja'&&!storeDirty){renderStoreForm();renderProfile();}if(tab==='actividade')loadActivity();}
  const form=$('merchantStoreForm');form.oninput=e=>{storeDirty=true;if(/^(day|open|close)-/.test(e.target.name||''))hoursDirty=true;notice($('merchantStoreSaveNotice'),'Alterações por guardar.');};
  function renderStoreForm(){const s=state.store;if(!s)return;hoursDirty=false;storeAssets={logo_path:s.logo_path||null,banner_path:s.banner_path||null};['name','description','whatsapp_e164','location','address','service_area'].forEach(key=>form.elements[key].value=s[key]||'');$('merchantPublicPreview').href='#loja/'+s.id;$('merchantPublicPreview').hidden=s.status!=='approved';const hours=$('merchantOpeningHours');hours.replaceChildren();['Segunda','Terça','Quarta','Quinta','Sexta','Sábado','Domingo'].forEach((day,index)=>{const value=s.opening_hours?.find(x=>x.day===index)||{closed:true,open:'08:00',close:'17:00'};const row=el('div','mw-hours');const label=el('label','mw-check');const check=el('input');check.type='checkbox';check.checked=!value.closed;check.name='day-'+index;label.append(check,document.createTextNode(day));const from=el('input'),to=el('input');from.type=to.type='time';from.name='open-'+index;to.name='close-'+index;from.value=value.open||'08:00';to.value=value.close||'17:00';from.setAttribute('aria-label','Abertura '+day);to.setAttribute('aria-label','Fecho '+day);from.disabled=to.disabled=value.closed||!canPrepareStore(s);check.onchange=()=>{from.disabled=to.disabled=!check.checked;storeDirty=true;hoursDirty=true;};row.append(label,from,el('span','','–'),to);hours.append(row);});form.querySelectorAll('input,textarea,button').forEach(n=>{if(!n.name?.startsWith('open-')&&!n.name?.startsWith('close-'))n.disabled=!canPrepareStore(s);});storeDirty=false;notice($('merchantStoreSaveNotice'),'');}
  const storeEditor=$('merchantStoreEditor');
@@ -406,52 +427,9 @@ export function setupWorkspace({state,composer,onChanged,onStoreChanged,onTerms}
  $('merchantCloseStoreEditor').onclick=closeStoreEditor;
  storeEditor.oncancel=event=>{event.preventDefault();closeStoreEditor();};
 
- let catalogueRevision=0;
- $('merchantGoToProducts').onclick=()=>void switchTab('produtos');
- async function renderStoreCatalogue(){
-   const storeId=state.store?.id;
-   if(!storeId)return;
-   const list=$('merchantStoreCatalogue');
-   const revision=++catalogueRevision;
-   showSpinner(list);
-   try{
-     const {data,error}=await platform.from('kg_products')
-       .select('id,title,image_url,images:kg_product_images(storage_path,sort_order)')
-       .eq('store_id',storeId).eq('status','published').eq('moderation_status','allowed')
-       .order('created_at',{ascending:false}).order('id').limit(2);
-     if(revision!==catalogueRevision||storeId!==state.store?.id||view.hidden)return;
-     if(error)throw error;
-     list.replaceChildren();
-     if(!data?.length){
-       list.append(el('p','mw-muted','Ainda não há produtos publicados.'));
-       return;
-     }
-     for(const product of data){
-       const card=el('a','mw-store-catalogue-item');
-       card.href='#produto/'+encodeURIComponent(product.id);
-       const media=el('span','mw-store-catalogue-image');
-       const image=el('img');
-       image.alt='';
-       image.loading='lazy';
-       media.innerHTML=icon('products');
-       media.append(image);
-       card.append(media,el('strong','',product.title));
-       list.append(card);
-       void showProductThumbnail(platform,product,image);
-     }
-   }catch{
-     if(revision!==catalogueRevision||storeId!==state.store?.id||view.hidden)return;
-     const retry=el('button','mw-text','Voltar a carregar o catálogo');
-     retry.type='button';
-     retry.onclick=()=>void renderStoreCatalogue();
-     list.replaceChildren(retry);
-   }
- }
  function renderProfile(){
-   publishButton.hidden=!['draft','pending'].includes(state.store?.status);
    const store=state.store;
    if(!store)return;
-   renderSidebarIdentity();
    renderSidebarIdentity();
    const editable=canPrepareStore(store);
    $('merchantEditProfile').hidden=!editable;
@@ -482,15 +460,15 @@ export function setupWorkspace({state,composer,onChanged,onStoreChanged,onTerms}
    img.onload = () => {
      if (!photo.contains(img)) return;
      img.hidden = false;
-     photo.disabled = storeBusy;
+     syncStorePhotoButton();
    };
    img.onerror = () => {
      if (!photo.contains(img)) return;
      img.hidden = true;
-     photo.disabled = !editable || storeBusy;
+     syncStorePhotoButton();
    };
    photo.replaceChildren(el('span','',initials(store.name)), img);
-   photo.disabled = !editable || storeBusy;
+   syncStorePhotoButton();
    const options = {img,path,editable,label:'Fotografia da loja',kind:'avatar'};
    photo.onclick = () => editable ? openPhotoActions(options) : viewArtwork(options);
    if (editable) photo.setAttribute('aria-haspopup','dialog');
@@ -501,6 +479,10 @@ export function setupWorkspace({state,composer,onChanged,onStoreChanged,onTerms}
      img.style.objectPosition = fallback.avatarPosition;
      img.src = fallback.avatar;
    }
+ }
+ function syncStorePhotoButton(){
+   const button=$('merchantStoreLogo');
+   button.disabled=storeBusy||(!canPrepareStore(state.store)&&!button.querySelector('img:not([hidden])'));
  }
  function viewArtwork({img,label,kind}){
    if(!img.naturalWidth||img.hidden||!state.store)return;
@@ -538,9 +520,8 @@ export function setupWorkspace({state,composer,onChanged,onStoreChanged,onTerms}
    }
    if(!img.hidden&&img.naturalWidth)action('Ver fotografia','eye',()=>viewArtwork({img,label,kind}));
    if(editable)action(path||!img.hidden?'Alterar fotografia':'Adicionar fotografia','image',()=>{
-     const input=el('input');
-     input.type='file';
-     input.accept='image/jpeg,image/png,image/webp';
+     const input=$('merchantStorePhotoFile');
+     input.value='';
      const storeId=state.store.id;
      input.onchange=async()=>{
        const file=input.files[0];
@@ -605,16 +586,21 @@ export function setupWorkspace({state,composer,onChanged,onStoreChanged,onTerms}
      if(state.store?.id===store.id)profileNotice(error?.code==='40001'?'A loja mudou noutra sessão. Actualiza e tenta novamente.':'Não foi possível guardar a alteração da fotografia.');
    }finally{
      storeBusy=false;
-     artworkButton.disabled=!canPrepareStore(state.store) && !artworkButton.querySelector('img:not([hidden])');
+     syncStorePhotoButton();
      setButtonBusy(artworkButton,false);
    }
  }
  form.addEventListener('invalid',event=>{const group=event.target.closest('details');if(group)group.open=true;},true);
- form.onsubmit=async e=>{e.preventDefault();if(storeBusy||!canPrepareStore(state.store))return;if(!navigator.onLine){notice($('merchantStoreSaveNotice'),'Sem ligação. As alterações continuam aqui.');return;}const doc=Object.fromEntries(new FormData(form));const document={...Object.fromEntries(['name','description','whatsapp_e164','location','address','service_area'].map(key=>[key,doc[key]||''])),logo_path:storeAssets.logo_path||null,banner_path:storeAssets.banner_path||null,opening_hours:storeHoursDocument(state.store.opening_hours,hoursDirty,Array.from({length:7},(_,day)=>({day,closed:!form.elements['day-'+day].checked,open:form.elements['open-'+day].value,close:form.elements['close-'+day].value})))};document.whatsapp_e164='+'+document.whatsapp_e164.replace(/\D/g,'');storeBusy=true;$('merchantSaveStore').disabled=true;setButtonBusy($('merchantSaveStore'),true);showSpinner($('merchantStoreSaveNotice'));try{const {data,error}=await platform.rpc('kg_save_store_settings',{p_store_id:state.store.id,p_expected_updated_at:state.store.updated_at,p_document:document});if(error)throw error;state.store=data;renderSidebarIdentity();onStoreChanged(data);storeDirty=false;hoursDirty=false;storeEditor.close();renderProfile();profileSaved('Loja actualizada.');await onChanged();}catch(error){notice($('merchantStoreSaveNotice'),error.code==='40001'?'A loja mudou noutra sessão. Copia as tuas alterações antes de actualizar.':'Não foi possível confirmar a gravação. Os dados continuam aqui. Actualiza a loja antes de tentar novamente.');}finally{storeBusy=false;setButtonBusy($('merchantSaveStore'),false);$('merchantSaveStore').disabled=false;}};
+ form.onsubmit=async e=>{e.preventDefault();if(storeBusy||!canPrepareStore(state.store))return;if(!navigator.onLine){notice($('merchantStoreSaveNotice'),'Sem ligação. As alterações continuam aqui.');return;}const doc=Object.fromEntries(new FormData(form));const document={...Object.fromEntries(['name','description','whatsapp_e164','location','address','service_area'].map(key=>[key,doc[key]||''])),logo_path:storeAssets.logo_path||null,banner_path:storeAssets.banner_path||null,opening_hours:storeHoursDocument(state.store.opening_hours,hoursDirty,Array.from({length:7},(_,day)=>({day,closed:!form.elements['day-'+day].checked,open:form.elements['open-'+day].value,close:form.elements['close-'+day].value})))};document.whatsapp_e164='+'+document.whatsapp_e164.replace(/\D/g,'');storeBusy=true;$('merchantSaveStore').disabled=true;setButtonBusy($('merchantSaveStore'),true);showSpinner($('merchantStoreSaveNotice'));try{const {data,error}=await platform.rpc('kg_save_store_settings',{p_store_id:state.store.id,p_expected_updated_at:state.store.updated_at,p_document:document});if(error)throw error;state.store=data;renderSidebarIdentity();onStoreChanged(data);storeDirty=false;hoursDirty=false;storeEditor.close();renderProfile();profileSaved('Loja actualizada.');await onChanged();}catch(error){notice($('merchantStoreSaveNotice'),error.code==='40001'?'A loja mudou noutra sessão. Copia as tuas alterações antes de actualizar.':'Não foi possível confirmar a gravação. Os dados continuam aqui. Actualiza a loja antes de tentar novamente.');}finally{
+   storeBusy=false;
+   syncStorePhotoButton();
+   setButtonBusy($('merchantSaveStore'),false);
+   $('merchantSaveStore').disabled=false;
+ }};
  $('btnOpenNewProductModal').onclick=()=>composer.open();
  function online(){const offline=!navigator.onLine;notice($('merchantOffline'),offline?'Sem ligação. Podes consultar os dados carregados; as alterações exigem ligação.':'');}window.addEventListener('offline',online);window.addEventListener('online',online);
  async function canLeave(){if(storeBusy)return false;if(!await composer.close())return false;if(storeDirty&&!await confirmAction('Sair sem guardar?','As configurações da loja ainda não foram guardadas.','Descartar'))return false;storeDirty=false;return true;}
- function reset(){generation++;catalogueRevision++;$('merchantStoreCatalogue').replaceChildren();if(storeEditor.open)storeEditor.close();summary.reset();rows=[];activityRequest++;activityPeriod.value='7';storeDirty=false;hoursDirty=false;storeBusy=false;offset=0;tab='resumo';syncHeader('resumo');body.dataset.activeTab='resumo';nav.querySelectorAll('button').forEach(b=>b.setAttribute('aria-current',b.dataset.destination==='resumo'?'page':'false'));closeMenu();$('merchantProductsList').replaceChildren();$('merchantActivityList').replaceChildren();$('merchantActivityChart').replaceChildren();$('merchantStoreLogo').replaceChildren();$('merchantOpeningHours').replaceChildren();Object.assign(filters,{q:'',status:'all',category:'',available:'all',min:'',max:'',sort:'recent'});$('merchantSearch').value='';renderFilters();form.reset();body.querySelectorAll('[data-mw]').forEach(n=>n.hidden=n.dataset.mw!=='resumo');}
+ function reset(){generation++;if(storeEditor.open)storeEditor.close();summary.reset();rows=[];activityRequest++;activityPeriod.value='7';storeDirty=false;hoursDirty=false;storeBusy=false;offset=0;tab='resumo';syncHeader('resumo');body.dataset.activeTab='resumo';nav.querySelectorAll('button').forEach(b=>b.setAttribute('aria-current',b.dataset.destination==='resumo'?'page':'false'));closeMenu();$('merchantProductsList').replaceChildren();$('merchantActivityList').replaceChildren();$('merchantActivityChart').replaceChildren();$('merchantStoreLogo').replaceChildren();$('merchantOpeningHours').replaceChildren();Object.assign(filters,{q:'',status:'all',category:'',available:'all',min:'',max:'',sort:'recent'});$('merchantSearch').value='';renderFilters();form.reset();body.querySelectorAll('[data-mw]').forEach(n=>n.hidden=n.dataset.mw!=='resumo');}
  window.addEventListener('beforeunload',e=>{if(!view.hidden&&(storeDirty||storeBusy)){e.preventDefault();e.returnValue='';}});
  async function revealProduct(id){
    Object.assign(filters,{q:'',status:'all',category:'',available:'all',min:'',max:'',sort:'recent'});
@@ -626,5 +612,5 @@ export function setupWorkspace({state,composer,onChanged,onStoreChanged,onTerms}
    row?.scrollIntoView({block:'nearest'});
    row?.querySelector('.mw-product-entry')?.focus({preventScroll:true});
  }
- renderFilters();switchTab('resumo');online();return{load,loadProducts,canLeave,reset,switchTab,revealProduct,syncStoreStatus:summary.syncStatus,isDirty:()=>storeDirty};
+ renderFilters();switchTab('resumo');online();return{load,loadProducts,canLeave,reset,switchTab,revealProduct,restoreQuickEditFocus,syncStoreStatus:summary.syncStatus,isDirty:()=>storeDirty};
 }

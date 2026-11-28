@@ -1,7 +1,8 @@
+import {loadAccountTerms, showAccountTerms} from './account-terms.js';
 import {showFeedback} from './merchant-ui.js';
 import { addPasswordVisibility, describeNewPassword } from './password-visibility.js';
 import { analyticsAllowed, setAnalyticsAllowed } from './analytics.js';
-import { registrationCredentials, registrationError } from './account-registration.js';
+import { privacyPolicyVersion, registrationCredentials, registrationError, registrationEvidence } from './account-registration.js';
 import {setButtonBusy,showSpinner,showSkeleton} from "./loading.js";
 import {platform} from './platform.js';
 import {canShowAdminEntry} from './account-access.js';
@@ -200,6 +201,7 @@ export function setupSettings({openSellerSetup,savedProducts,renderProductCard,g
   appearance.insertBefore(value, appearance.lastChild);
   publicMenu.replaceChildren(appearance);
   if (a.user) publicMenu.append(row('Segurança e acesso', null, 'shield', 'seguranca', unavailable));
+  publicMenu.append(row('Privacidade', null, 'shield', 'privacidade'));
   publicMenu.append(row('Ajuda', null, 'help', 'ajuda'));
   if (a.user && !view.hidden && ['entrar', 'registo'].includes(screen)) {
    const destination = afterSignIn;
@@ -213,6 +215,16 @@ export function setupSettings({openSellerSetup,savedProducts,renderProductCard,g
  }
  function formError(form,copy){let p=form.querySelector('[role="alert"]');if(!p){p=node('p',undefined,'field-error');p.setAttribute('role','alert');form.append(p);}p.textContent=copy;p.hidden=!copy;}
  function field(form,name,label,value='',type='text',required=false){const l=node('label',label,'settings-field'),i=node('input');i.type=type;i.name=name;i.value=value;i.required=required;i.autocomplete='off';l.append(i);form.append(l);return i;}
+ function saveDownload(file, filename) {
+  const url = URL.createObjectURL(file);
+  const link = node('a');
+  link.href = url;
+  link.download = filename;
+  document.body.append(link);
+  link.click();
+  link.remove();
+  window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+ }
  function lead(title,copy){if(title)body.append(node('h2',title,'settings-lead'));if(copy)body.append(node('p',copy,'settings-copy'));}
  function empty(title,copy){const box=node('div',undefined,'search-zero-box');box.append(node('h2',title,'settings-lead'),node('p',copy));body.append(box);}
  async function ownedWrite(table,id,values){const update=()=>platform.from(table).update(values).eq(table==='kg_profiles'?'id':'user_id',id).select().maybeSingle();let r=await update();if(r.error)throw r.error;if(r.data)return r.data;r=await platform.from(table).insert({[table==='kg_profiles'?'id':'user_id']:id,...values}).select().single();if(r.error?.code==='23505')r=await update();if(r.error)throw r.error;return r.data;}
@@ -229,8 +241,8 @@ export function setupSettings({openSellerSetup,savedProducts,renderProductCard,g
    return;
   }
   if (screen === 'privacidade') {
-   let saveSearches = true;
-   try { saveSearches = localStorage.getItem('kamby:search-history') !== 'off'; } catch {}
+   let saveSearches = false;
+   try { saveSearches = localStorage.getItem('kamby:search-history') === 'on'; } catch {}
    const search = privacyToggle('Guardar pesquisas recentes', null, saveSearches, input => {
     try {
      if (!input.checked) localStorage.removeItem('kamby:recent-searches');
@@ -241,7 +253,9 @@ export function setupSettings({openSellerSetup,savedProducts,renderProductCard,g
      notice('Não foi possível guardar a preferência.');
     }
    });
-   const measurement = privacyToggle('Medição de utilização', 'Partilha eventos de navegação com o Google Analytics.', analyticsAllowed(), input => {
+   lead('Dados da conta', 'O Kamby usa o teu nome, contacto e dados de conta para autenticar a sessão, guardar preferências e disponibilizar as funcionalidades do teu perfil. Podes actualizar os dados em Perfil e solicitar o encerramento em Segurança e acesso.');
+   lead('Dados neste dispositivo', 'O dispositivo guarda a sessão, o carrinho, os guardados de visitante e as preferências. Podes limpar os dados locais nesta página.');
+   const measurement = privacyToggle('Medição opcional', 'Controla a medição pelo Kamby e pelo Google Analytics. Se iniciares sessão, os contactos com lojas podem aparecer na tua actividade. Os cookies de medição têm duração configurada de até 30 dias.', analyticsAllowed(), input => {
     try { setAnalyticsAllowed(input.checked); }
     catch {
      input.checked = analyticsAllowed();
@@ -251,21 +265,97 @@ export function setupSettings({openSellerSetup,savedProducts,renderProductCard,g
    const group = node('div', undefined, 'settings-group');
    group.append(search, measurement);
    body.append(group);
+   if (!a.user) return;
+   const controls = node('div', undefined, 'settings-group privacy-actions');
+   const download = button('Descarregar os meus dados', 'settings-text-action', async () => {
+    if (download.disabled || getAccount().user?.id !== a.user.id) return;
+    download.disabled = true;
+    setButtonBusy(download, true);
+    try {
+     const {data, error} = await platform.rpc('kg_download_account_data', {p_user_id: a.user.id});
+     if (error || data?.account?.id !== a.user.id) throw error || new Error();
+     if (request !== generation || getAccount().user?.id !== a.user.id) return;
+     saveDownload(new Blob([JSON.stringify(data, null, 2)], {type: 'application/json'}), 'kamby-dados.json');
+    } catch {
+     if (request === generation) notice('Não foi possível descarregar. Verifica a ligação e tenta novamente.');
+    } finally {
+     setButtonBusy(download, false);
+     download.disabled = false;
+    }
+   });
+   controls.append(download, row('Pedir eliminação dos meus dados', null, 'user', 'encerramento'));
+   body.append(controls);
+   const avatar = await profilePhoto(a.user.id);
+   if (request !== generation || getAccount().user?.id !== a.user.id) return;
+   if (avatar) {
+    const exportPhoto = button('Descarregar foto do perfil', 'settings-text-action', async () => {
+     if (exportPhoto.disabled || getAccount().user?.id !== a.user.id) return;
+     exportPhoto.disabled = true;
+     try {
+      const {data, error} = await profilesBucket.download(a.user.id + '/avatar');
+      if (error || !data) throw error || new Error();
+      if (request !== generation || getAccount().user?.id !== a.user.id) return;
+      const extension = {'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp'}[data.type];
+      saveDownload(data, extension ? 'kamby-foto.' + extension : 'kamby-foto');
+     } catch {
+      if (request === generation) notice('Não foi possível descarregar a fotografia.');
+     } finally {
+      exportPhoto.disabled = false;
+     }
+    });
+    controls.insertBefore(exportPhoto, controls.lastChild);
+   }
+   const {data: subscribed, error} = await platform.rpc('kg_email_marketing_choice', {p_user_id: a.user.id});
+   if (request !== generation || getAccount().user?.id !== a.user.id) return;
+   if (error) {
+    controls.append(node('p', 'A preferência de marketing está indisponível.', 'settings-copy'));
+    return;
+   }
+   group.append(privacyToggle('Marketing por e-mail', 'Novidades e ofertas do Kamby.', subscribed, async input => {
+    const allowed = input.checked;
+    input.disabled = true;
+    try {
+     const result = await platform.rpc('kg_email_marketing_choice', {p_user_id: a.user.id, p_allowed: allowed});
+     if (result.error || result.data !== allowed) throw result.error || new Error();
+    } catch {
+     input.checked = !allowed;
+     if (request === generation) notice('Não foi possível guardar a preferência de marketing.');
+    } finally {
+     input.disabled = false;
+    }
+   }));
    return;
   }
   if (screen === 'termos') {
-   lead('Pedidos às lojas', 'Confirma directamente com a loja o preço, a disponibilidade, o pagamento e a entrega. Enviar um pedido pelo WhatsApp inicia o contacto com a loja.');
-   body.append(node('p', 'Os termos de utilização ainda não foram publicados.', 'settings-copy'));
+   const pending=node('div');
+   body.append(pending);
+   showSpinner(pending, 'A carregar os termos');
+   const terms=await loadAccountTerms(platform);
+   if(request!==generation)return;
+   pending.remove();
+   showAccountTerms(body,terms);
    return;
   }
   if(privateScreens.includes(screen)&&!a.user){open('entrar',false);return;}
   if(screen==='entrar')return;
   if (screen === 'registo') {
    const form = node('form', undefined, 'settings-form');
-   const name = field(form, 'name', 'Nome completo', '', 'text', true);
-   const email = field(form, 'email', 'E-mail', '', 'email', true);
-   const password = field(form, 'password', 'Palavra-passe', '', 'password', true);
-   const confirmation = field(form, 'confirmation', 'Confirmar palavra-passe', '', 'password', true);
+   const ageLabel = node('label', 'Tens 18 anos ou mais?', 'settings-field');
+   const age = node('select');
+   age.required = true;
+   for (const [value, label] of [['', 'Selecciona'], ['yes', 'Sim'], ['no', 'Não']]) {
+    const option = node('option', label);
+    option.value = value;
+    age.append(option);
+   }
+   ageLabel.append(age);
+   const fields = node('fieldset', undefined, 'registration-fields');
+   fields.disabled = fields.hidden = true;
+   form.append(ageLabel, fields);
+   const name = field(fields, 'name', 'Nome completo', '', 'text', true);
+   const email = field(fields, 'email', 'E-mail', '', 'email', true);
+   const password = field(fields, 'password', 'Palavra-passe', '', 'password', true);
+   const confirmation = field(fields, 'confirmation', 'Confirmar palavra-passe', '', 'password', true);
    name.autocomplete = 'name';
    name.maxLength = 80;
    email.autocomplete = 'email';
@@ -278,6 +368,56 @@ export function setupSettings({openSellerSetup,savedProducts,renderProductCard,g
    addPasswordVisibility(password);
    addPasswordVisibility(confirmation);
    describeNewPassword(password);
+   const acceptance = node('input');
+   acceptance.type = 'checkbox';
+   acceptance.required = true;
+   const agreement = node('label', undefined, 'registration-choice');
+   const termsLink = node('a', 'Termos de utilização');
+   termsLink.href = './legal.html#termos';
+   const privacyLink = node('a', 'Política de privacidade');
+   privacyLink.href = './legal.html#privacidade';
+   for (const link of [termsLink, privacyLink]) {
+    link.target = '_blank';
+    link.rel = 'noopener';
+   }
+   const versionCopy = node('small');
+   const agreementCopy = node('span');
+   agreementCopy.append('Li e aceito os ', termsLink, ' e a ', privacyLink, '.', versionCopy);
+   agreement.append(acceptance, agreementCopy);
+   const marketing = node('input');
+   marketing.type = 'checkbox';
+   const marketingChoice = node('label', undefined, 'registration-choice');
+   marketingChoice.append(marketing, node('span', 'Quero receber novidades e ofertas do Kamby por e-mail.'));
+   fields.append(agreement, marketingChoice);
+   let documents;
+   let documentRequest;
+   age.addEventListener('change', async () => {
+    acceptance.checked = marketing.checked = false;
+    formError(form, '');
+    fields.disabled = fields.hidden = true;
+    if (age.value !== 'yes') {
+     for (const input of [name, email, password, confirmation]) input.value = '';
+     if (age.value === 'no') {
+      // A resposta sobre a idade não precisa de ser armazenada nem enviada.
+      try { setAnalyticsAllowed(false); } catch { /* A medição fica bloqueada nesta página. */ }
+      formError(form, 'O cadastro só está disponível para pessoas com 18 anos ou mais. Podes consultar o catálogo como visitante.');
+     }
+     return;
+    }
+    try {
+     documentRequest ||= platform.rpc('kg_registration_documents');
+     const {data, error} = await documentRequest;
+     if (request !== generation || age.value !== 'yes') return;
+     if (error || data?.privacy_version !== privacyPolicyVersion || !data.terms_version) throw error || new Error();
+     documents = data;
+     termsLink.href = './legal.html?versao=' + encodeURIComponent(data.terms_version) + '#termos';
+     versionCopy.textContent = 'Termos ' + data.terms_version + ' · Privacidade ' + data.privacy_version;
+     fields.disabled = fields.hidden = false;
+    } catch {
+     documentRequest = null;
+     if (request === generation && age.value === 'yes') formError(form, 'Os documentos estão indisponíveis. Reabre o cadastro e tenta novamente.');
+    }
+   });
    const instructions = node('div');
    instructions.tabIndex = -1;
    instructions.hidden = true;
@@ -304,13 +444,16 @@ export function setupSettings({openSellerSetup,savedProducts,renderProductCard,g
     if (await open('entrar', false)) history.replaceState(null, '', '#definicoes/entrar');
    }));
    body.append(form, instructions);
-   saveForm(form, 'Criar conta', async () => {
+   const submit = saveForm(form, 'Criar conta', async () => {
     if (!navigator.onLine) throw { safeMessage: 'Sem ligação à internet. Liga-te e tenta novamente.' };
     let credentials;
     try {
      credentials = registrationCredentials({
       name: name.value, email: email.value, password: password.value, confirmation: confirmation.value
      }, window.location.origin);
+     Object.assign(credentials.options.data, registrationEvidence({
+      adult: age.value, accepted: acceptance.checked, marketing: marketing.checked
+     }, documents));
     } catch (error) {
      throw { safeMessage: error.message };
     }
@@ -323,6 +466,7 @@ export function setupSettings({openSellerSetup,savedProducts,renderProductCard,g
     instructions.hidden = false;
     instructions.focus();
    });
+   fields.append(submit);
    return;
   }
   if (screen === 'aparencia') {
@@ -364,8 +508,6 @@ export function setupSettings({openSellerSetup,savedProducts,renderProductCard,g
    const name=field(form,'name','Nome completo',a.profile?.display_name||a.user.user_metadata?.display_name||a.user.user_metadata?.full_name||'','text',true);
    name.maxLength=80;
    name.autocomplete='name';
-   const location=field(form,'location','Localização',a.profile?.location||'');
-   location.maxLength=120;
    const contacts=node('dl',undefined,'settings-account-contact');
    const email=/@kamby\.invalid$/i.test(a.user.email||'')?'':a.user.email;
    const phone=a.user.phone?'+'+a.user.phone.replace(/^\+/, ''):'';
@@ -377,15 +519,13 @@ export function setupSettings({openSellerSetup,savedProducts,renderProductCard,g
    form.append(contacts);
    body.append(form);
    let originalName=name.value;
-   let originalLocation=location.value;
    const submit=saveForm(form,'Guardar alterações',async()=>{
     let values;
-    try{values=profileValues(name.value,location.value);}catch(error){throw{safeMessage:error.message};}
+    try{const {display_name}=profileValues(name.value,'');values={display_name};}catch(error){throw{safeMessage:error.message};}
     const id=a.user.id;
     await ownedWrite('kg_profiles',id,values);
     if(id!==getAccount().user?.id)return;
     originalName=name.value;
-    originalLocation=location.value;
     dirty=false;
     submit.hidden=true;
     await loadAccount();
@@ -393,7 +533,7 @@ export function setupSettings({openSellerSetup,savedProducts,renderProductCard,g
    });
    submit.hidden=true;
    form.addEventListener('input',()=>{
-    dirty=name.value!==originalName||location.value!==originalLocation;
+    dirty=name.value!==originalName;
     submit.hidden=!dirty;
    });
    return;
@@ -452,7 +592,7 @@ export function setupSettings({openSellerSetup,savedProducts,renderProductCard,g
    return;
   }
   if(screen==='notificacoes'){lead('Preferências de avisos','Os avisos são apresentados aqui, dentro do Kamby.');const pending=node('div');body.append(pending);showSkeleton(pending,'rows',3);const [pref,notes]=await Promise.all([platform.from('kg_user_preferences').select('catalogue_alerts,account_alerts').eq('user_id',a.user.id).maybeSingle(),platform.from('kg_notifications').select('id,title,body,read_at,created_at,action').eq('user_id',a.user.id).order('created_at',{ascending:false}).limit(50)]);if(request!==generation)return;pending.remove();if(pref.error||notes.error){empty('Não foi possível carregar','Verifica a ligação e tenta novamente.');body.append(button('Tentar novamente','settings-text-action',renderScreen));return;}let values=pref.data||{catalogue_alerts:true,account_alerts:true};const g=node('div',undefined,'settings-group');for(const [key,label,sub]of[['catalogue_alerts','Produtos guardados','Alterações de preço e disponibilidade'],['account_alerts','Pedidos da conta','Actualizações do pedido de encerramento']]){const l=node('label',undefined,'settings-choice'),copy=node('span',label),input=node('input');copy.append(node('small',sub));input.type='checkbox';input.checked=values[key];input.addEventListener('change',async()=>{const value=input.checked;input.disabled=true;const pending=node('span');l.append(pending);showSpinner(pending);try{await ownedWrite('kg_user_preferences',a.user.id,{...values,[key]:value});if(request!==generation)return;values[key]=value;showFeedback('Preferência guardada.');}catch{if(request!==generation)return;input.checked=!value;notice('Não foi possível guardar a preferência.');}finally{pending.remove();input.disabled=false;}});l.append(copy,input);g.append(l);}body.append(g);if(!notes.data.length)empty('Sem avisos','Os novos avisos aparecem aqui.');for(const n of notes.data){const article=node('article',undefined,'settings-item'+(!n.read_at?' settings-notification-unread':'')),meta=node('div');meta.append(node('strong',n.title),node('p',n.body));article.append(meta);if(n.action==='seller_setup'&&openSellerSetup&&a.access?.sellerOnboarding){article.append(button('Configurar loja','settings-text-action',()=>{close(true);navigate('perfil');openSellerSetup();}));}if(!n.read_at){const read=button('Lido','settings-text-action',async()=>{read.disabled=true;setButtonBusy(read,true);const {error}=await platform.from('kg_notifications').update({read_at:new Date().toISOString()}).eq('id',n.id).eq('user_id',a.user.id);if(request!==generation)return;if(error){setButtonBusy(read,false);read.disabled=false;notice('Não foi possível marcar como lido.');}else{article.classList.remove('settings-notification-unread');read.remove();}});article.append(read);}body.append(article);}return;}
-  if(screen==='encerramento'){const pending=node('div');body.append(pending);showSkeleton(pending,'rows',2);const {data,error}=await platform.from('kg_account_requests').select('status,created_at').eq('user_id',a.user.id).maybeSingle();if(request!==generation)return;pending.remove();if(error){empty('Não foi possível carregar','Tenta novamente mais tarde.');return;}if(data){const statuses={pending:'Pedido em análise',processing:'Pedido em tratamento',completed:'Pedido concluído pela gestão',declined:'Pedido revisto pela gestão'};empty(statuses[data.status]||'Pedido registado','O pedido não elimina a conta automaticamente.');return;}lead('Encerramento da conta','Pede à equipa Kamby a análise do encerramento da tua conta. A conta mantém-se activa enquanto o pedido é tratado.');body.append(button('Pedir encerramento','settings-text-action profile-sign-out',()=>confirm('Registar pedido de encerramento?','O pedido será enviado à gestão da plataforma. Esta acção não apaga os teus dados imediatamente.','Registar pedido',async()=>{if(busy)return;busy=true;const action=body.querySelector('button');action.disabled=true;setButtonBusy(action,true);try{const {error}=await platform.from('kg_account_requests').insert({user_id:a.user.id});if(error&&error.code!=='23505')notice('Não foi possível registar o pedido.');else renderScreen();}finally{setButtonBusy(action,false);action.disabled=false;busy=false;}})));return;}
+  if(screen==='encerramento'){const pending=node('div');body.append(pending);showSkeleton(pending,'rows',2);const {data,error}=await platform.from('kg_account_requests').select('status,created_at').eq('user_id',a.user.id).maybeSingle();if(request!==generation)return;pending.remove();if(error){empty('Não foi possível carregar','Tenta novamente mais tarde.');return;}if(data){const statuses={pending:'Pedido em análise',processing:'Pedido em tratamento',completed:'Pedido concluído pela gestão',declined:'Pedido revisto pela gestão'};empty(statuses[data.status]||'Pedido registado','O pedido não elimina a conta automaticamente.');return;}lead('Encerramento da conta','Pede gratuitamente a eliminação dos teus dados à equipa Kamby. A conta mantém-se activa enquanto o pedido é analisado.');body.append(button('Pedir eliminação','settings-text-action profile-sign-out',()=>confirm('Registar pedido de encerramento?','O pedido será enviado à gestão da plataforma. Esta acção não apaga os teus dados imediatamente.','Registar pedido',async()=>{if(busy)return;busy=true;const action=body.querySelector('button');action.disabled=true;setButtonBusy(action,true);try{const {error}=await platform.from('kg_account_requests').insert({user_id:a.user.id});if(error&&error.code!=='23505')notice('Não foi possível registar o pedido.');else renderScreen();}finally{setButtonBusy(action,false);action.disabled=false;busy=false;}})));return;}
   if(screen==='ajuda'){for(const [q,copy]of[['Como contactar uma loja?','Na página da loja, toca em Perguntar à loja. Para enviar um pedido com os teus artigos, abre o carrinho dessa loja e toca em Enviar pedido pelo WhatsApp.'],['O contacto confirma a compra?','Não. Confirma o preço, a disponibilidade, o pagamento e a entrega com a loja.'],['Como recuperar o acesso?','Usa Esqueci a palavra-passe na entrada da conta. A recuperação por email depende de um email associado.'],['Onde ficam os meus produtos?','Os produtos adicionados ficam no Carrinho deste dispositivo. Encontra os favoritos em Perfil → Guardados. Sem conta, ficam neste dispositivo.']]){const d=node('details',undefined,'settings-group'),s=node('summary',q);s.style.padding='16px';const p=node('p',copy,'settings-copy');p.style.padding='0 16px';d.append(s,p);body.append(d);}const links=node('div',undefined,'profile-menu-list');links.append(row('Sobre o Kamby',null,'info','sobre'));body.append(links);return;}
   if(screen==='sobre'){lead('Kamby · Orbion');body.append(node('p','Descobre produtos e lojas e contacta cada vendedor pelo WhatsApp.','settings-copy'));}
  }
@@ -471,14 +611,6 @@ export function setupSettings({openSellerSetup,savedProducts,renderProductCard,g
  }
  function close(force=false){if(view.hidden)return true;if(!force&&(busy||dirty)){if(dirty)confirm('Descartar alterações?','Há dados que ainda não foram guardados.','Descartar',()=>{dirty=false;close(true);history.replaceState(null,'','#perfil');});return false;}generation++;busy=false;dirty=false;body.replaceChildren();$('accountPassword').value='';view.hidden=true;view.classList.remove('active');closeSubscreen();window.scrollTo({top:returnScroll,behavior:'auto'});const trigger = returnFocus === 'entrar' ? $('btnOpenAccountSignIn') : document.querySelector('[data-settings-target="'+returnFocus+'"]');
   (trigger?.getClientRects().length ? trigger : $('viewProfile').querySelector('.page-title'))?.focus({preventScroll:true});document.title='Perfil · Kamby';return true;}
- for (const link of document.querySelectorAll('.profile-footer [data-settings-target]')) {
-  link.addEventListener('click', event => {
-   if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
-   event.preventDefault();
-   returnFocus = link.dataset.settingsTarget;
-   open(returnFocus);
-  });
- }
  $('btnProfilePersonal').addEventListener('click', () => { returnFocus = 'pessoais'; open('pessoais'); });
  $('btnBackSettings').addEventListener('click', async () => {
   const parent = screen === 'registo' ? 'entrar' : ['palavra-passe', 'sessoes', 'encerramento'].includes(screen) ? 'seguranca'

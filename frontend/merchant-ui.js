@@ -47,7 +47,7 @@ export function bindSignOut(signOut, onSuccess) {
  });
 }
 
-export async function imageUrl(platform,path,fallback=''){const replacement=cataloguePhoto(path);if(replacement)return replacement;if(!path)return fallback;try{const {data,error}=await platform.storage.from('kg-product-images').createSignedUrl(path,3600);return error?fallback:data.signedUrl;}catch{return fallback;}}
+export async function imageUrl(platform,path,fallback=''){const replacement=cataloguePhoto(path);if(replacement!==undefined)return replacement;if(!path)return fallback;try{const {data,error}=await platform.storage.from('kg-product-images').createSignedUrl(path,3600);return error?fallback:data.signedUrl;}catch{return fallback;}}
 
 
 export async function showProductThumbnail(platform,product,img) {

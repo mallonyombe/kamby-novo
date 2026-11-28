@@ -2,6 +2,7 @@ import {bindSidebar,sidebarToggleIcon} from './panel-sidebar.js';
 import {enableModalDismiss, requestModalDismiss, protectModalEdits} from './modal-dismiss.js';
 import {listIcon,bindListSearch,paintFilterIcon} from './list-controls.js';
 import {platform} from './platform.js';
+import {ensureAccountTerms} from './account-terms.js';
 import {el,icon,icons,money,showProductThumbnail,imageUrl,confirmAction} from './merchant-ui.js';
 import {resolveStoreArtwork} from './storefront-artwork.js';
 import {initials} from './merchant-domain.js';
@@ -60,7 +61,6 @@ async function read(area,params={}){
   return data;
 }
 function status(value){const n=el('span','status',storeStates[value]||({published:'Publicado',draft:'Rascunho',archived:'Arquivado',open:'Nova',resolved:'Resolvida',dismissed:'Arquivada'}[value])||value);n.dataset.state=value;return n;}
-function heading(title,action){const h=el('header','page-heading'),t=el('div');t.append(el('h1','',title));h.append(t);if(action)h.append(action);return h;}
 function button(copy,cls,fn,ico){const b=el('button',cls);b.type='button';if(ico)b.innerHTML=icon(ico);b.append(document.createTextNode(copy));b.onclick=fn;return b;}
 const mobileAreas=['overview','stores','moderation'];
 const desktop = matchMedia('(min-width: 800px)');
@@ -128,8 +128,9 @@ function shell(){
   const drawer=$('#adminDrawer');
   const toggle=$('.admin-drawer-trigger');
   const close=$('.admin-drawer-close');
-  toggle.onclick=()=>{
+  toggle.onclick=event=>{
     if(drawer.open)return;
+    drawer.toggleAttribute('data-pointer-open',event.detail>0);
     drawer.showModal();
     toggle.setAttribute('aria-expanded','true');
     const active=$('[aria-current="page"]',drawer);
@@ -243,7 +244,7 @@ async function route(){
     state(main,'Sem acesso','A tua conta não tem autorização para esta área.');
     return;
   }
-  const shape=id&&section==='resumo'?'profile':routeArea==='overview'?'metrics':'rows';
+  const shape=id&&section==='resumo'?'profile':routeArea==='overview'?'metrics':routeArea==='analytics'?'chart':'rows';
   const finish=beginAdminLoad(main,shape);
   try{
     if(['users','categories'].includes(routeArea)&&id)await entityDetail(main,routeArea,id,request);
@@ -264,56 +265,69 @@ async function route(){
     if(request===revision)finish();
   }
 }
+const numberFormat=new Intl.NumberFormat('pt-MZ');
+const isCount=value=>Number.isSafeInteger(value)&&value>=0;
+const formatCount=value=>isCount(value)?numberFormat.format(value):'—';
+
 async function overview(main,request){
   const data=await read('overview');
   if(request!==revision)return;
-  const actions=el('section','operations-queue');
-  actions.append(el('h2','section-heading','Por rever'));
-  const format=new Intl.NumberFormat('pt-MZ');
-  for(const [key,label,target,filter,glyph] of [
-    ['reports','Denúncias por rever','moderation','open','shield']
-  ]){
-    if(!data[key]||!can(target+'.read'))continue;
-    const link=el('a','attention-row');
-    link.href='#'+target;
-    link.onclick=()=>sessionStorage.setItem('kamby:admin-filter:'+target,filter);
-    const mark=el('span','queue-icon');
-    mark.innerHTML=icon(glyph);
-    const arrow=el('span','queue-chevron');
-    arrow.innerHTML=icon('next');
-    link.append(mark,el('span','queue-label',label),el('strong','queue-count',format.format(data[key])),arrow);
-    actions.append(link);
+  const queue=el('section','operations-queue');
+  queue.append(el('h2','section-heading','Por rever'));
+  if(can('moderation.read')){
+    if(isCount(data.reports)&&data.reports>0){
+      const link=el('a','attention-row');
+      link.href='#moderation';
+      link.onclick=event=>{
+        if(event.ctrlKey||event.metaKey||event.shiftKey||event.altKey)return;
+        listSettings.set('moderation',{q:'',filter:'open'});
+      };
+      const mark=el('span','queue-icon');
+      mark.innerHTML=icon('shield');
+      const arrow=el('span','queue-chevron');
+      arrow.innerHTML=icon('next');
+      link.append(mark,el('span','queue-label','Denúncias por rever'),el('strong','queue-count',formatCount(data.reports)),arrow);
+      queue.append(link);
+    }else if(data.reports===0){
+      queue.append(el('p','queue-empty','Sem denúncias por rever.'));
+    }else{
+      const unavailable=el('div');
+      state(unavailable,'Denúncias indisponíveis','',route,'warning');
+      queue.append(unavailable);
+    }
   }
-  if(actions.children.length===1)actions.append(el('p','queue-empty','Tudo em dia'));
+
+  const snapshot=el('section','overview-snapshot');
+  const counts=el('dl','overview-metric-grid');
+  for(const [key,label,permission] of [
+    ['stores','Lojas activas','stores.read'],
+    ['products','Produtos públicos','products.read']
+  ]){
+    if(!can(permission))continue;
+    const metric=el('div');
+    metric.append(el('dt','',label),el('dd','',formatCount(data[key])));
+    counts.append(metric);
+  }
+  if(counts.childElementCount){
+    snapshot.append(el('h2','section-heading','Catálogo'),counts);
+    if(data.as_of){
+      const updatedAt=el('time','caption','Actualizado '+date(data.as_of));
+      updatedAt.dateTime=data.as_of;
+      snapshot.append(updatedAt);
+    }
+  }
+
   main.replaceChildren();
-  if(can('analytics.read'))void renderAudience(main,7,request);
+  if(can('moderation.read'))main.append(queue);
+  if(counts.childElementCount)main.append(snapshot);
   if(can('analytics.read')){
-    const activity=el('section','overview-metrics');
-    const header=el('div','overview-metrics-heading');
-    header.append(el('h2','','Actividade'),el('span','muted','Últimos 7 dias'));
-    const values=el('div');
-    values.className='overview-pending-metrics';
     const link=el('a','overview-activity');
     link.href='#analytics';
-    link.innerHTML='<span>Ver relatório</span>'+icon('next');
-    activity.append(header,values,link);
-    main.append(activity,actions);
-    const finish=beginAdminLoad(values,'metrics');
-    try{
-      const report=await read('analytics',{p_days:7});
-      if(request!==revision)return;
-      const metrics=el('dl','overview-metric-grid');
-      for(const [key,label] of [['views','Visitas às lojas'],['contacts','Cliques no WhatsApp']]){
-        const total=report.rows.reduce((sum,row)=>sum+Number(row[key]||0),0);
-        const metric=el('div');
-        metric.append(el('dt','',label),el('dd','',format.format(total)));
-        metrics.append(metric);
-      }
-      values.replaceChildren(metrics);
-    }catch{
-      if(request===revision)values.replaceChildren(el('p','muted','Não foi possível carregar os indicadores.'));
-    }finally{finish();}
-  }else main.append(actions);
+    link.append(el('span','','Ver actividade'));
+    link.insertAdjacentHTML('beforeend',icon('next'));
+    main.append(link);
+  }
+  if(!main.childElementCount)state(main,'Sem indicadores disponíveis','');
 }
 const configs={stores:{title:'Lojas',search:'Pesquisar por nome',filters:[['','Todas'],['draft','Em preparação'],['approved','Activas'],['suspended','Suspensas'],['trash','Eliminadas']],empty:'Nenhuma loja encontrada'},products:{title:'Produtos',search:'Pesquisar produto',filters:[['','Todos'],['published','Publicados'],['draft','Rascunhos'],['archived','Arquivados']],empty:'Nenhum produto encontrado'},users:{title:'Utilizadores',search:'Pesquisar por nome',empty:'Nenhuma conta encontrada'},categories:{title:'Categorias',search:'Pesquisar categorias',empty:'Nenhuma categoria encontrada'},moderation:{title:'Moderação',search:'Pesquisar denúncia',filters:[['open','Novas'],['resolved','Resolvidas'],['dismissed','Arquivadas'],['','Todas']],empty:'Sem denúncias nesta fila'},system:{title:'Auditoria',search:'Pesquisar alterações',empty:'Sem eventos encontrados'}};
 function stateFilter(choices, current, onApply) {
@@ -353,14 +367,8 @@ async function listing(main,area,request){const cfg=configs[area];let q=listSett
  toolbar.classList.add('kamby-search-panel');
  toolbar.hidden=!q;
  bindListSearch(searchButton,toolbar,input);
- const contextualActions=$('#adminContext .subbar-spacer')||$('#adminPrimaryActions');
- if(contextualActions){
-  contextualActions.replaceChildren(actions);
-  contextualActions.closest('.admin-subbar')?.classList.toggle('has-list-filters',Boolean(cfg.filters));
-  main.replaceChildren(toolbar);
- }else{
-  main.replaceChildren(heading(cfg.title,actions),toolbar);
- }
+ $('#adminPrimaryActions').replaceChildren(actions);
+ main.replaceChildren(toolbar);
  if(cfg.filters){
   actions.append(stateFilter(cfg.filters,filter,value=>{
    clearTimeout(timer);
@@ -373,30 +381,22 @@ async function listing(main,area,request){const cfg=configs[area];let q=listSett
  async function load(append=false){const n=++fetchVersion;if(!append)offset=0;const finish=beginAdminLoad(list);more.disabled=true;list.setAttribute('aria-busy','true');try{listSettings.set(area,{q,filter});const data=await read(area,{p_query:q,p_state:filter,p_offset:offset});if(n!==fetchVersion||request!==revision)return;total=data.total;
  let rows=data.rows;
  if(area==='products'&&rows.length){
-   const {data:photos,error}=await platform.from('kg_products').select('*,images:kg_product_images(storage_path,sort_order),variants:kg_product_variants(*)').in('id',rows.map(row=>row.id));
+   const {data:photos,error}=await platform.from('kg_products').select(productPreviewFields).in('id',rows.map(row=>row.id));
    if(n!==fetchVersion||request!==revision)return;
-   if(!error)rows=rows.map(row=>({...row,...photos.find(product=>product.id===row.id)}));
+   if(!error){
+     const byId=new Map(photos.map(product=>[product.id,product]));
+     rows=rows.map(row=>({...row,...byId.get(row.id)}));
+   }
  }
  if(!append)list.replaceChildren();
  for(const row of rows)list.append(renderRow(area,row));offset+=data.rows.length;meta.textContent=total+' '+(area==='stores'?(total===1?'loja encontrada':'lojas encontradas'):(total===1?'resultado':'resultados'));if(!offset)state(list,cfg.empty,q?'Ajusta a pesquisa ou os filtros.':'');more.hidden=offset>=total; }catch(e){if(n===fetchVersion&&request===revision){if(append)feedback(adminError(e));else {meta.textContent='';more.hidden=true;loadFailure(list,e,()=>load(),area==='moderation'?'as denúncias':'a lista');}}}finally{if(n===fetchVersion){more.disabled=false;finish();}}}await load();}
 function renderRow(area,row){
  if(area==='system')return auditRow(row);
  if(area==='products'){
-   const entry=productRow(row);
-   entry.onclick=async()=>{
-     entry.disabled=true;
-     try{
-       const {data,error}=await platform.from('kg_products').select('*,images:kg_product_images(storage_path,sort_order),variants:kg_product_variants(*)').eq('id',row.id).single();
-       if(error)throw error;
-       openProduct(data);
-     }catch{feedback('Não foi possível abrir o produto. Tenta novamente.');}
-     finally{entry.disabled=false;}
-   };
-   return entry;
+   return productRow(row);
  }
  if(area==='stores'){storeNames.set(row.id,row.name);const b=button('','store-row',()=>{location.hash='stores/'+row.id;});const mark=el('span','store-mark');mark.innerHTML=icon('store');const text=el('div');text.append(el('p','row-title',row.name),el('p','row-sub',(row.merchant_name||'Responsável por atribuir')+' · '+row.product_count+' produtos'));b.append(mark,text,status(row.status),el('span','chevron','›'));return b;}
  const n=el('article','simple-row'),top=el('div','simple-row-top');top.append(el('p','row-title',row.title||row.display_name||row.name||row.action||(row.target_type==='store'?'Denúncia de loja':'Denúncia de produto')));if(row.status)top.append(status(row.status));n.append(top);
- if(area==='products'){n.append(el('p','row-sub',row.store_name+' · '+(row.category_name||'Sem categoria')),el('p','',money(row.price_minor)));if(row.moderation_status==='blocked')n.append(el('p','row-sub','Produto oculto pela moderação'));}
  if(area==='users'){
    const seller=Boolean(row.seller_active||row.stores);
    const card=button('', 'store-row',()=>{location.hash='users/'+row.id;});
@@ -426,7 +426,7 @@ async function reviewReport(report){
     link.href='index.html#'+(report.target_type==='store'?'loja/':'produto/')+targetId;
     sheet.append(link);
   }
-  if(report.status==='open'){
+  if(report.status==='open'&&can('stores.write')){
     const form=el('form');
     protectModalEdits(sheet, form, confirmDiscard);
     const reason=field(form,'Motivo da decisão','reason','','textarea',2000);
@@ -455,20 +455,6 @@ async function reviewReport(report){
     };
     sheet.append(form);
   }else if(report.resolution_reason)sheet.append(el('p','',report.resolution_reason));
-  if(can('stores.write')&&product.updated_at){
-   const controls=el('div','dialog-actions'),error=el('p','field-error');error.setAttribute('role','status');sheet.append(error);
-   const choices=product.moderation_status==='blocked'?[['allow','Permitir no catálogo']]:product.status==='archived'?[['restore','Restaurar rascunho']]:product.status==='published'?[['hide','Ocultar do público'],['archive','Arquivar']]:[['publish','Publicar'],['archive','Arquivar']];
-   for(const [action,label] of choices){
-    const control=button(label,'secondary',async()=>{
-     if(!await confirmAction(label+'?',product.title,'Confirmar'))return;
-     control.disabled=true;setButtonBusy(control,true);
-     try{await rpc('kg_admin_product_action',{p_id:product.id,p_action:action,p_expected:product.updated_at});sheet.close();readCache.clear();feedback('Produto actualizado.');await route();}
-     catch(failure){error.textContent=adminError(failure);}
-     finally{control.disabled=false;setButtonBusy(control,false);}
-    });controls.append(control);
-   }
-   sheet.append(controls);
-  }
   sheet.append(button('Fechar','quiet',()=>requestModalDismiss(sheet)));
   sheet.showModal();
 }
@@ -727,7 +713,7 @@ async function storeDetail(main,id,request,section){
       more.disabled=true;
       try{
         listSettings.set(key,{q:search.value.trim(),filter});
-        let query=platform.from('kg_products').select('*,images:kg_product_images(storage_path,sort_order),variants:kg_product_variants(*)',{count:'exact'}).eq('store_id',id).eq('status',filter);
+        let query=platform.from('kg_products').select('title,status,moderation_status,price_minor,'+productPreviewFields,{count:'exact'}).eq('store_id',id).eq('status',filter);
         if(search.value.trim())query=query.ilike('title','%'+search.value.trim().replace(/[\\%_]/g,'\\$&')+'%');
         const {data:products,count,error}=await query.order('created_at',{ascending:false}).order('id').range(offset,offset+29);
         if(error)throw error;
@@ -749,10 +735,32 @@ async function storeDetail(main,id,request,section){
   }
 }
 
+const productPreviewFields='id,image_url,images:kg_product_images(storage_path,sort_order),variants:kg_product_variants(price_minor,active)';
+const productDetailFields='id,title,description,status,moderation_status,price_minor,previous_price_minor,updated_at,image_url,images:kg_product_images(storage_path,sort_order),variants:kg_product_variants(option_name,price_minor,active)';
+
 function productRow(product){
-  const row=button('','admin-product-row',()=>openProduct(product));
+  const row=button('','admin-product-row',async()=>{
+    const session=sessionVersion;
+    const request=revision;
+    row.disabled=true;
+    setButtonBusy(row,true);
+    const current=()=>session===sessionVersion&&request===revision&&row.isConnected;
+    try{
+      const {data,error}=await platform.from('kg_products').select(productDetailFields).eq('id',product.id).single();
+      if(!current())return;
+      if(error)throw error;
+      openProduct(data);
+    }catch{
+      if(current())feedback('Não foi possível abrir o produto. Tenta novamente.');
+    }finally{
+      row.disabled=false;
+      setButtonBusy(row,false);
+    }
+  });
   const img=el('img');
   img.alt='';
+  img.loading='lazy';
+  img.decoding='async';
   const photo=el('span','product-thumbnail');
   photo.innerHTML=icon('image');
   photo.append(img);
@@ -913,7 +921,7 @@ async function entityDetail(main,area,id,request){
   if(item.has_photo)platform.storage.from('kg-profile-photos').createSignedUrl(item.id+'/avatar',300).then(({data})=>{if(data?.signedUrl&&avatar.isConnected){const image=el('img');image.src=data.signedUrl;image.alt='';avatar.replaceChildren(image);}});
   profile.append(avatar);
  }
- profile.append(el('h1','',item.display_name||item.name));
+ profile.append(el('h2','',item.display_name||item.name));
  main.append(profile);
  const fields=el('dl','admin-detail-fields');
  const field=(label,value)=>{const block=el('div');block.append(el('dt','',label),el('dd','',value||'Não indicado'));fields.append(block);};
@@ -1009,33 +1017,137 @@ function openUserCard(row,seller){
  sheet.showModal();
  close.focus();
 }
-async function renderAudience(container,days,request){
- const section=el('section','admin-audience');section.append(el('h2','','Utilização do Kamby'));container.append(section);
- const finish=beginAdminLoad(section,'metrics');
- try{
-  const data=await rpc('kg_admin_audience',{p_days:days});
-  if(request!==revision||!section.isConnected)return;
-  const values=el('dl');
-  for(const [key,label] of [['sessions','Sessões'],['active_devices','Dispositivos activos'],['returning_devices','Recorrentes']]){
-   const cell=el('div');cell.append(el('dt','',label),el('dd','',Number(data[key]||0).toLocaleString('pt-MZ')));values.append(cell);
-  }
-  section.append(values,el('p','caption',data.started_at?'Recolha desde '+date(data.started_at):'A recolha começa com as próximas visitas.'));
-  const help=el('details');help.append(el('summary','','Como são medidos'));
-  help.append(el('p','caption','Uma sessão termina após 30 minutos sem actividade. Activos e recorrentes contam navegadores deste período. Recorrentes têm pelo menos duas sessões. Os dados são conservados por 90 dias.'));
-  section.append(help);
- }catch{section.append(el('p','muted','Métricas de utilização indisponíveis.'));}finally{finish();}
+const trafficMetrics=[['views','Visitas às lojas'],['contacts','Cliques no WhatsApp']];
+const reportDate=new Intl.DateTimeFormat('pt-MZ',{day:'numeric',month:'short',timeZone:'UTC'});
+const shortReportDate=day=>reportDate.format(new Date(day+'T12:00:00Z'));
+
+function addMetric(list,label,value){
+  const item=el('div');
+  item.append(el('dt','',label),el('dd','',formatCount(value)));
+  list.append(item);
 }
-async function analytics(main,request){let days=7;const select=el('select','filter-select admin-period-select');select.setAttribute('aria-label','Período de actividade');for(const value of [7,30]){const o=el('option','',value+' dias');o.value=value;select.append(o);}const content=el('div');const actions=$('#adminPrimaryActions');if(actions)actions.replaceChildren(select);main.replaceChildren(content);let n=0;async function load(){const version=++n;const finish=beginAdminLoad(content,'chart');try{const data=await read('analytics',{p_days:days});if(request!==revision||version!==n)return;content.replaceChildren();const legend=el('div','legend');legend.append(el('span','','Visitas às lojas'),el('span','','Cliques WhatsApp'));content.append(legend);const graph=el('div','analytics-bars');graph.setAttribute('aria-hidden','true');const max=Math.max(1,...data.rows.flatMap(r=>[r.views,r.contacts]));for(const day of data.rows){const bar=el('div','day-bar');for(const value of [day.views,day.contacts]){const line=el('span');line.style.height=(Number(value)/max*100)+'%';bar.append(line);}graph.append(bar);}const totals=el('dl','traffic-totals');
- for(const [key,label] of [['views','Visitas às lojas'],['contacts','Cliques no WhatsApp']]){
-   const item=el('div');
-   item.append(el('dt','',label),el('dd','',data.rows.reduce((sum,day)=>sum+Number(day[key]||0),0).toLocaleString('pt-MZ')));
-   totals.append(item);
- }
- content.prepend(totals);
- content.append(graph);const table=el('table');table.innerHTML='<caption class="caption">Eventos registados · dias em Maputo</caption><thead><tr><th scope="col">Dia</th><th scope="col">Visitas</th><th scope="col">Cliques WhatsApp</th></tr></thead>';const tbody=el('tbody');for(const day of data.rows){const tr=el('tr');for(const value of [day.day,day.views,day.contacts])tr.append(el('td','',value));tbody.append(tr);}table.append(tbody);const values=el('details','audit-details');
- values.append(el('summary','','Consultar valores diários'),table);
- content.append(values);await renderAudience(content,days,request);}catch(e){if(version===n)state(content,'Não foi possível actualizar',adminError(e),load);}finally{if(version===n)finish();}}select.onchange=()=>{days=Number(select.value);load();};await load();}
-async function start(){const version=++sessionVersion;permissions=[];++revision;readCache.clear();renderedRoute=null;root.replaceChildren();const pending=el('div','auth-shell');root.append(pending);const finish=beginAdminLoad(pending,'account');try{const {data:{session}}=await platform.auth.getSession();if(version!==sessionVersion)return;if(!session){login();return;}const context=await rpc('kg_admin_context');if(version!==sessionVersion)return;if(context.mfa_required){await mfa(version);return;}permissions=context.permissions;shell();await route();}catch(e){if(version!==sessionVersion)return;root.replaceChildren();const wrap=el('div','auth-shell');state(wrap,e.code==='42501'?'Sem acesso':'Administração indisponível',adminError(e),start);wrap.append(button('Terminar sessão','quiet',openSignOutDialog));root.append(wrap);}finally{finish();}}
+
+async function renderAudience(section,days,isCurrent){
+  const finish=beginAdminLoad(section,'metrics');
+  try{
+    const data=await rpc('kg_admin_audience',{p_days:days});
+    if(!isCurrent())return;
+    const values=el('dl');
+    for(const [key,label] of [
+      ['sessions','Sessões'],
+      ['active_devices','Dispositivos activos'],
+      ['returning_devices','Recorrentes']
+    ])addMetric(values,label,data[key]);
+    const help=el('details','audit-details');
+    help.append(el('summary','','Como são medidos'),
+      el('p','caption','Uma sessão termina após 30 minutos sem actividade. Os dispositivos activos e recorrentes contam navegadores neste período. Recorrentes têm pelo menos duas sessões.'));
+    section.replaceChildren(el('h2','','Utilização do Kamby'),values);
+    if(data.started_at)section.append(el('p','caption','Recolha desde '+date(data.started_at)));
+    section.append(help);
+  }catch(error){
+    if(isCurrent())loadFailure(section,error,()=>renderAudience(section,days,isCurrent),'os dados de utilização');
+  }finally{finish();}
+}
+
+function trafficChart(rows){
+  const figure=el('figure','traffic-chart');
+  figure.setAttribute('aria-hidden','true');
+  figure.append(el('figcaption','section-heading','Eventos por dia'));
+  const legend=el('div','legend');
+  for(const [,label] of trafficMetrics)legend.append(el('span','',label));
+  figure.append(legend);
+
+  const scale=Math.max(2,Math.ceil(Math.max(...rows.flatMap(row=>[row.views,row.contacts]))/2)*2);
+  const panel=el('div','traffic-plot');
+  const axis=el('div','traffic-axis');
+  for(const value of [scale,scale/2,0])axis.append(el('span','',formatCount(value)));
+  const bars=el('div','analytics-bars');
+  for(const day of rows){
+    const group=el('div','day-bar');
+    group.title=shortReportDate(day.day)+' · '+formatCount(day.views)+' visitas · '+formatCount(day.contacts)+' cliques no WhatsApp';
+    for(const [key] of trafficMetrics){
+      const value=el('span','traffic-bar');
+      value.style.height=(day[key]/scale*100)+'%';
+      value.style.visibility=day[key]?'':'hidden';
+      group.append(value);
+    }
+    bars.append(group);
+  }
+  const first=rows[0].day;
+  const middle=rows[Math.floor((rows.length-1)/2)].day;
+  const last=rows.at(-1).day;
+  const labels=el('div','traffic-dates');
+  for(const day of new Set([first,middle,last]))labels.append(el('span','',shortReportDate(day)));
+  panel.append(axis,bars,labels);
+  figure.append(panel);
+  return figure;
+}
+
+function dailyTrafficTable(rows){
+  const table=el('table','traffic-table');
+  table.innerHTML='<caption class="caption">Eventos registados · dias em Maputo</caption><thead><tr><th scope="col">Dia</th><th scope="col">Visitas</th><th scope="col">Cliques no WhatsApp</th></tr></thead>';
+  const body=el('tbody');
+  for(const day of rows){
+    const row=el('tr');
+    const dateCell=el('th');
+    dateCell.scope='row';
+    const time=el('time','',shortReportDate(day.day));
+    time.dateTime=day.day;
+    dateCell.append(time);
+    row.append(dateCell,el('td','',formatCount(day.views)),el('td','',formatCount(day.contacts)));
+    body.append(row);
+  }
+  table.append(body);
+  const details=el('details','audit-details');
+  details.append(el('summary','','Consultar valores diários'),table);
+  return details;
+}
+
+async function analytics(main,request){
+  const select=el('select','filter-select admin-period-select');
+  select.setAttribute('aria-label','Período de actividade');
+  for(const days of [7,30])select.append(new Option(days+' dias',days));
+  const actions=$('#adminPrimaryActions');
+  if(actions)actions.replaceChildren(select);
+  let generation=0;
+
+  async function load(){
+    const version=++generation;
+    const days=Number(select.value);
+    const current=()=>request===revision&&version===generation;
+    const traffic=el('section','admin-traffic');
+    const audience=el('section','admin-audience');
+    main.replaceChildren(traffic,audience);
+    const audienceLoad=renderAudience(audience,days,current);
+    const finish=beginAdminLoad(traffic,'chart');
+    try{
+      const data=await read('analytics',{p_days:days});
+      if(!current())return;
+      const rows=data.rows;
+      if(!Array.isArray(rows)||rows.some(row=>!/^\d{4}-\d{2}-\d{2}$/.test(row.day)||!isCount(row.views)||!isCount(row.contacts))){
+        throw new Error('Dados de actividade inválidos');
+      }
+      if(!rows.length){
+        state(traffic,'Sem dados para este período','');
+        return;
+      }
+      const totals=el('dl','traffic-totals');
+      for(const [key,label] of trafficMetrics)addMetric(totals,label,rows.reduce((sum,day)=>sum+day[key],0));
+      traffic.replaceChildren(totals);
+      if(rows.some(row=>row.views>0||row.contacts>0))traffic.append(trafficChart(rows));
+      else traffic.append(el('p','queue-empty','Sem actividade no período.'));
+      traffic.append(dailyTrafficTable(rows));
+    }catch(error){
+      if(current())loadFailure(traffic,error,load,'a actividade');
+    }finally{
+      finish();
+      await audienceLoad;
+    }
+  }
+  select.onchange=()=>void load();
+  await load();
+}
+async function start(){const version=++sessionVersion;permissions=[];++revision;readCache.clear();renderedRoute=null;root.replaceChildren();const pending=el('div','auth-shell');root.append(pending);const finish=beginAdminLoad(pending,'account');try{const {data:{session}}=await platform.auth.getSession();if(version!==sessionVersion)return;if(!session){login();return;}const context=await rpc('kg_admin_context');if(version!==sessionVersion)return;if(context.mfa_required){await mfa(version);return;}const accepted=await ensureAccountTerms(platform,async()=>{const {error}=await platform.auth.signOut({scope:'local'});if(error)throw error;location.assign('index.html');}, {isCurrent:()=>version===sessionVersion});if(version!==sessionVersion)return;if(!accepted){login();return;}permissions=context.permissions;shell();await route();}catch(e){if(version!==sessionVersion)return;root.replaceChildren();const wrap=el('div','auth-shell');state(wrap,e.code==='42501'?'Sem acesso':'Administração indisponível',adminError(e),start);wrap.append(button('Terminar sessão','quiet',openSignOutDialog));root.append(wrap);}finally{finish();}}
 function authWrap(title,copy){const wrap=el('main','auth-shell');wrap.innerHTML='<div class="auth-brand"><img src="icone.svg" alt="">Kamby</div>';wrap.append(el('h1','',title),el('p','muted',copy));root.replaceChildren(wrap);return wrap;}
 function login(){const wrap=authWrap('Administração','Usa a mesma conta do Kamby. O acesso administrativo exige autorização e confirmação de segurança.'),link=el('a','primary','Entrar no Kamby');link.href='index.html#definicoes/entrar';wrap.append(link);}
 window.addEventListener('beforeunload',event=>{if(formDirty){event.preventDefault();event.returnValue='';}});

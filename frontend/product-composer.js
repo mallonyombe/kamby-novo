@@ -7,7 +7,7 @@ import { el,icon,money,notice,confirmAction,imageUrl,showProductThumbnail } from
 
 export function setupProductComposer(hooks){
  const dialog=document.getElementById('modalNewProduct');dialog.className='merchant-editor';
- dialog.innerHTML=`<header class="editor-header"><button type="button" id="btnCloseNewProductModal" class="mw-icon" aria-label="Voltar ao catálogo">${icon('back')}</button><h2 id="modalNewProdTitle">Novo produto</h2><span id="editorStepCount" class="editor-step-count" hidden></span></header><form id="formNewProduct" novalidate><div class="editor-scroll"><p id="newProductError" class="field-error" role="alert" hidden></p><p id="newProductProgress" class="merchant-feedback" role="status" aria-live="polite" hidden></p><section data-step="1" hidden><h3>Fotografias</h3><p class="mw-muted">Até 10 fotografias · 5 MB por ficheiro</p><div id="editorGallery" class="editor-gallery"></div><input type="file" id="inputNewProdImage" accept="image/jpeg,image/png,image/webp" multiple hidden><button type="button" id="btnChooseNewProdImg" class="mw-secondary">${icon('plus')}Adicionar fotografias</button></section><section data-step="0"><h3>Dados do produto</h3><label>Nome do produto<input id="inputNewProdTitle" maxlength="160" required autocomplete="off"></label><label>Categoria<select id="selectNewProdCat" required><option value=""></option></select><span id="editorCategoriesPending"></span></label><button type="button" id="editorRetryCategories" class="mw-text" hidden>Tentar carregar categorias</button><button type="button" id="editorOpenDetails" class="editor-details-row" aria-haspopup="dialog" aria-controls="editorDetails"><span>Descrição e características</span><span id="editorDetailsValue" class="mw-muted"></span>${icon('next')}</button>
+ dialog.innerHTML=`<header class="editor-header"><button type="button" id="btnCloseNewProductModal" class="mw-icon" aria-label="Voltar ao catálogo">${icon('back')}</button><h2 id="modalNewProdTitle">Novo produto</h2></header><form id="formNewProduct" novalidate><div class="editor-scroll"><p id="newProductError" class="field-error" role="alert" hidden></p><p id="newProductProgress" class="merchant-feedback" role="status" aria-live="polite" hidden></p><section data-step="1" hidden><h3>Fotografias</h3><p class="mw-muted">Até 10 fotografias · 5 MB por ficheiro</p><div id="editorGallery" class="editor-gallery"></div><input type="file" id="inputNewProdImage" accept="image/jpeg,image/png,image/webp" multiple hidden><button type="button" id="btnChooseNewProdImg" class="mw-secondary">${icon('plus')}Adicionar fotografias</button></section><section data-step="0"><h3>Dados do produto</h3><label>Nome do produto<input id="inputNewProdTitle" maxlength="160" required autocomplete="off"></label><label>Categoria<select id="selectNewProdCat" required><option value=""></option></select><span id="editorCategoriesPending"></span></label><button type="button" id="editorRetryCategories" class="mw-text" hidden>Tentar carregar categorias</button><button type="button" id="editorOpenDetails" class="editor-details-row" aria-haspopup="dialog" aria-controls="editorDetails"><span>Descrição e características</span><span id="editorDetailsValue" class="mw-muted"></span>${icon('next')}</button>
  <dialog id="editorDetails" class="mw-filter-dialog" aria-labelledby="editorDetailsTitle">
   <header><h2 id="editorDetailsTitle">Descrição e características</h2><button type="button" id="editorCloseDetails" class="mw-icon" aria-label="Fechar">${icon('close')}</button></header>
   <label>Descrição<textarea id="inputNewProdDesc" rows="2" maxlength="5000"></textarea></label>
@@ -15,11 +15,10 @@ export function setupProductComposer(hooks){
   <label>Informações essenciais<textarea id="editorAttributes" rows="2" maxlength="1000"></textarea></label>
   <footer><button type="button" id="editorApplyDetails" class="mw-primary">Concluir</button></footer>
  </dialog></section><section data-step="3" hidden><h3 id="editorPriceHeading">Preço e stock</h3><div id="editorPrices"></div></section><section data-step="2" hidden><details class="editor-extra" id="editorOptions"><summary>Adicionar variantes</summary><label class="mw-check"><input type="checkbox" id="editorHasVariants">Usar variantes</label><div id="editorVariantsBody" hidden><div id="editorVariants"></div><button type="button" id="editorAddVariant" class="mw-secondary">${icon('plus')}Adicionar opção</button></div></details></section><section data-step="4" hidden><h3 tabindex="-1" id="editorReviewHeading">Pré-visualização</h3><div id="editorReview" class="editor-review"></div></section></div><footer class="editor-footer"><button type="button" id="editorSaveDraft" class="mw-secondary">Guardar rascunho</button><button type="submit" id="btnSubmitNewProduct" class="mw-primary">Continuar</button></footer></form>`;
- const q=id=>dialog.querySelector('#'+id);let model=null,reviewing=false,stockOnly=false,dirty=false,busy=false,uncertain=null,urls=[],storeId='',photoRequest=0;
+ const q=id=>dialog.querySelector('#'+id);let model=null,reviewing=false,quickEdit=false,dirty=false,busy=false,uncertain=null,urls=[],storeId='',photoRequest=0;
  const sections=[0,1,2,3,4].map(step=>dialog.querySelector('[data-step="'+step+'"]'));
- let guided=false,stage=0,returnToReview=false,historyEntry=null,cleaningHistory=false,exitDialog=null;
- const stageTitles=['Fotografias','Produto','Revisão'];
- const directTitle=()=>stockOnly?'Actualizar stock':'Editar produto';
+ let guided=false,stage=1,historyEntry=null,cleaningHistory=false,exitDialog=null;
+ const directTitle=()=>quickEdit?'Preço e stock':'Editar produto';
  const scroll=dialog.querySelector('.editor-scroll');
  const details=q('editorDetails');
  const detailsTrigger=q('editorOpenDetails');
@@ -48,20 +47,16 @@ export function setupProductComposer(hooks){
    stage=next;
    reviewing=guided&&stage===2;
    const preparing=hooks.getStore()?.status!=='approved';
-   const visible=stockOnly?[3]:guided?[[1],[0,2,3],[4]][stage]:[1,0,2,3];
+   const visible=quickEdit?[3]:reviewing?[4]:[1,0,2,3];
    sections.forEach((section,index)=>{
-     section.hidden=!visible.includes(index)||(index===3&&!stockOnly&&model.variants.length>0);
+     section.hidden=!visible.includes(index)||(index===3&&!quickEdit&&model.variants.length>0);
    });
    if(reviewing)renderReview();
    const title=q('modalNewProdTitle');
-   title.textContent=guided?stageTitles[stage]:directTitle();
-   q('editorStepCount').hidden=!guided;
-   q('editorStepCount').textContent=guided?(stage+1)+' de 3':'';
-   q('btnCloseNewProductModal').setAttribute('aria-label',guided&&stage>0?'Voltar à etapa anterior':'Voltar ao catálogo');
-   q('editorSaveDraft').hidden=stockOnly||reviewing||model.status==='published';
-   q('btnSubmitNewProduct').textContent=stockOnly?'Guardar stock':guided
-     ?stage===0?'Continuar':stage===1?'Rever produto':preparing?'Guardar rascunho':'Publicar produto'
-     :model.status==='published'?'Guardar alterações':'Guardar rascunho';
+   title.textContent=guided?(reviewing?'Rever publicação':model.updated_at?'Editar rascunho':'Novo produto'):directTitle();
+   q('btnCloseNewProductModal').setAttribute('aria-label',reviewing?'Voltar à edição':'Voltar ao catálogo');
+   q('editorSaveDraft').hidden=quickEdit||reviewing||preparing||model.status==='published';
+   syncSubmitLabel();
    if(focus&&dialog.open){
      scroll.scrollTop=0;
      title.tabIndex=-1;
@@ -69,9 +64,10 @@ export function setupProductComposer(hooks){
    }
  }
 
- function reviewEdit(next){
-   returnToReview=true;
-   showEditor(next,{focus:true});
+ function syncSubmitLabel(){
+   const preparing=hooks.getStore()?.status!=='approved';
+   q('btnSubmitNewProduct').textContent=quickEdit||!guided?'Guardar alterações'
+     :preparing?'Guardar rascunho':!reviewing&&model.variants.length?'Rever publicação':'Publicar produto';
  }
 
  function fieldProblem(copy,input){
@@ -85,7 +81,7 @@ export function setupProductComposer(hooks){
    clearFieldProblem();
    if(!input){fail(error.message);q('newProductError').scrollIntoView({block:'nearest'});return;}
    if(guided&&input.closest('section[data-step]')?.hidden){
-     showEditor(sections[1].contains(input)?0:1,{focus:true});
+     showEditor(1,{focus:true});
    }
    for(let group=input.closest('details');group;group=group.parentElement.closest('details'))group.open=true;
    const message=el('span','editor-field-error',error.message);
@@ -146,17 +142,16 @@ export function setupProductComposer(hooks){
  q('editorRetryCategories').onclick=loadCategories;
  function newVariant(name=''){return{id:crypto.randomUUID(),option_name:name,price_minor:0,price:'',previous:'',in_stock:true,track_quantity:false,stock_quantity:0,quantity:'',imageKey:''};}
  async function open(product=null,duplicate=false,mode='edit'){
-  const store=hooks.getStore();if(!store||!canPrepareStore(store))return;if(dialog.open&&!await close())return;release();storeId=store.id;stage=0;returnToReview=false;uncertain=null;dirty=false;reviewing=false;stockOnly=mode==='stock';guided=!stockOnly&&(!product||duplicate||product.status==='draft');dialog.classList.toggle('guided-editor',guided);
+  const store=hooks.getStore();if(!store||!canPrepareStore(store))return;if(dialog.open&&!await close())return;release();storeId=store.id;stage=1;uncertain=null;dirty=false;reviewing=false;quickEdit=mode==='stock';guided=!quickEdit&&(!product||duplicate||product.status==='draft');dialog.classList.toggle('guided-editor',guided);
   model=product?structuredClone(product):{id:crypto.randomUUID(),title:'',category_id:'',description:'',condition:'new',attributes:'',price_minor:0,stock_status:'available',status:'draft',variants:[],images:[]};
   model.id=duplicate?crypto.randomUUID():model.id;model.updated_at=duplicate?null:model.updated_at;model.title=duplicate?model.title+' · cópia':model.title;model.status=duplicate?'draft':model.status;
   model.images=(model.images||[]).sort((a,b)=>a.sort_order-b.sort_order).map(x=>({key:crypto.randomUUID(),path:x.storage_path,preview:'',file:null}));
   model.variants=(model.variants||[]).filter(v=>v.active!==false).sort((a,b)=>(a.sort_order||0)-(b.sort_order||0)).map(v=>({...v,id:duplicate?crypto.randomUUID():v.id,price:(Number(v.price_minor)/100).toFixed(2),previous:v.previous_price_minor?(Number(v.previous_price_minor)/100).toFixed(2):'',quantity:v.track_quantity?String(v.stock_quantity):'',imageKey:model.images.find(x=>x.path===v.image_path)?.key||''}));
   model.price=model.price_minor?(Number(model.price_minor)/100).toFixed(2):'';model.previous=model.previous_price_minor?(Number(model.previous_price_minor)/100).toFixed(2):'';model.quantity=model.stock_quantity==null?'':String(model.stock_quantity);model.in_stock=model.stock_status!=='out';
-  q('modalNewProdTitle').textContent=stockOnly?'Actualizar stock':product&&!duplicate?'Editar produto':'Novo produto';
-  q('editorPriceHeading').textContent=stockOnly?model.title:'Preço e stock';
-  dialog.classList.toggle('stock-editor',stockOnly);
+  q('editorPriceHeading').textContent=quickEdit?model.title:'Preço e stock';
+  dialog.classList.toggle('stock-editor',quickEdit);
   q('inputNewProdTitle').value=model.title;q('inputNewProdDesc').value=model.description||'';q('editorCondition').value=model.condition||'new';q('editorAttributes').value=model.attributes||'';q('editorHasVariants').checked=!!model.variants.length;q('editorOptions').open=false;q('editorOptions').querySelector('summary').textContent=model.variants.length?'Variantes · '+model.variants.length:'Adicionar variantes';refreshDetailsValue();
-  fail('');notice(q('newProductProgress'),'');lock(false);q('selectNewProdCat').value='';q('selectNewProdCat').disabled=true;renderGallery();renderVariants();showEditor(guided&&product&&!duplicate&&(model.images.length||model.image_url)?1:0);dialog.showModal();armEditorHistory();fitViewport();document.body.classList.add('merchant-editing');(stockOnly?q('editorPrices').querySelector('input:not([type=checkbox])'):q('btnCloseNewProductModal'))?.focus({preventScroll:true});if(stockOnly)return;await loadCategories();if(!model||!dialog.open||storeId!==store.id)return;
+  fail('');notice(q('newProductProgress'),'');lock(false);q('selectNewProdCat').value='';q('selectNewProdCat').disabled=true;renderGallery();renderVariants();showEditor(1);dialog.showModal();armEditorHistory();fitViewport();document.body.classList.add('merchant-editing');(quickEdit?q('editorPrices').querySelector('input:not([type=checkbox])'):q('btnCloseNewProductModal'))?.focus({preventScroll:true});if(quickEdit)return;await loadCategories();if(!model||!dialog.open||storeId!==store.id)return;
   const generation=++photoRequest;await Promise.all(model.images.map(async photo=>{photo.preview=await imageUrl(platform,photo.path);if(generation===photoRequest&&dialog.open)renderGallery();}));
  }
  function release(){++photoRequest;urls.forEach(URL.revokeObjectURL);urls=[];}
@@ -174,7 +169,7 @@ export function setupProductComposer(hooks){
      title.id='productEditorExitTitle';
      prompt.setAttribute('aria-labelledby',title.id);
      const actions=el('div','local-dialog-actions');
-     for(const [value,label] of [['continue','Continuar a editar'],...(!stockOnly&&model.status!=='published'?[['draft','Guardar rascunho']]:[]),['discard','Descartar']]){
+     for(const [value,label] of [['continue','Continuar a editar'],...(!quickEdit&&model.status!=='published'?[['draft','Guardar rascunho']]:[]),['discard','Descartar']]){
        const control=el('button','',label);
        control.type='button';
        control.onclick=()=>prompt.close(value);
@@ -223,8 +218,7 @@ export function setupProductComposer(hooks){
  function back(){
    if(busy||uncertain)return;
    fail('');clearFieldProblem();
-   if(guided&&returnToReview&&stage!==2){returnToReview=false;showEditor(2,{focus:true});}
-   else if(guided&&stage>0)showEditor(stage-1,{focus:true});
+   if(reviewing)showEditor(1,{focus:true});
    else void close();
  }
 
@@ -355,9 +349,10 @@ export function setupProductComposer(hooks){
  function renderPrices(){
   const container=q('editorPrices');container.replaceChildren();
   const items=model.variants.length?model.variants:[model];
-  sections[3].hidden=!stockOnly&&(model.variants.length>0||guided&&stage!==1);
+  sections[3].hidden=!quickEdit&&(model.variants.length>0||reviewing);
+  syncSubmitLabel();
   items.forEach(item=>{
-   const card=el('section','editor-price-card');const name=item===model?'Produto sem variantes':item.option_name||'Opção sem nome';card.setAttribute('aria-label',name);
+   const card=el('section','editor-price-card');const name=item===model?(quickEdit?model.title:'Produto sem variantes'):item.option_name||'Opção sem nome';card.setAttribute('aria-label',name);
    const main=el('div','editor-price-main');main.append(el('strong','editor-price-name',name));
    function priceField(key,label,placeholder){const field=el('label','editor-money-field');field.append(el('span','commerce-sr-only',label+' de '+name));const input=el('input');input.type='text';input.inputMode='decimal';input.dataset.productValue=key;input.maxLength=13;input.placeholder=placeholder;input.value=item[key]||'';input.oninput=()=>item[key]=input.value;field.append(input,el('span','editor-currency','MT'));return field;}
    const priceLabel=el('div','editor-current-price');priceLabel.append(el('span','','Preço'),priceField('price','Preço actual',''));
@@ -367,7 +362,12 @@ export function setupProductComposer(hooks){
    const quantityLabel=el('label','','Quantidade (opcional)'),quantity=el('input');quantity.type='number';quantity.dataset.productValue='quantity';quantity.min='0';quantity.max='1000000000';quantity.step='1';quantity.placeholder='Sem limite';quantity.value=item.quantity;quantity.oninput=()=>{item.quantity=quantity.value;if(Number(quantity.value)>0){item.in_stock=true;stock.checked=true;}};quantityLabel.append(quantity);fields.append(quantityLabel);
    const stockLabel=el('label','mw-check'),stock=el('input');stock.type='checkbox';stock.checked=item.in_stock;stock.onchange=()=>item.in_stock=stock.checked;stockLabel.append(stock,document.createTextNode('Em stock'));
    fields.append(stockLabel);
-   if(stockOnly){card.append(main,fields);container.append(card);}
+   if(quickEdit){
+     if(item!==model)card.append(main);
+     card.append(priceLabel,fields);
+     if(item.previous)card.append(more);
+     container.append(card);
+   }
    else{
      const stockDetails=el('details','editor-price-details');
      stockDetails.open=item.quantity!==''||!item.in_stock;
@@ -431,14 +431,6 @@ export function setupProductComposer(hooks){
  box.append(el('p','mw-muted',hooks.getStore()?.name));
  if(model.description)box.append(el('p','',model.description));
  if(model.attributes)box.append(el('p','mw-muted',model.attributes));
- const actions=el('div','editor-review-actions');
- for(const [name,next] of [['Editar fotos',0],['Editar dados',1]]){
-   const button=el('button','mw-secondary',name);
-   button.type='button';
-   button.onclick=()=>reviewEdit(next);
-   actions.append(button);
- }
- box.append(actions);
  }
  function validateIdentity(){
    collectBasics();
@@ -475,7 +467,7 @@ export function setupProductComposer(hooks){
      const key=name.toLocaleLowerCase('pt');
      if(!name||names.has(key))throw fieldProblem('Cada opção precisa de um nome único.',row.querySelector('input'));
      names.add(key);
-     const card=stockOnly?q('editorPrices').children[index]:row;
+     const card=quickEdit?q('editorPrices').children[index]:row;
      return {id:variant.id,option_name:name,...itemData(variant,card),
        track_quantity:variant.quantity!=='',image_path:model.images.find(photo=>photo.key===variant.imageKey)?.path||null};
    });
@@ -485,9 +477,10 @@ export function setupProductComposer(hooks){
  }
  async function save(status){if(busy||!model)return;if(!navigator.onLine){fail('Sem ligação. As alterações continuam neste formulário. Liga-te e tenta novamente.');return;}let document;try{document=uncertain?.document||documentData(status);}catch(e){reportProblem(e);return;}lock(true);fail('');setButtonBusy(q(status==='draft'&&!q('editorSaveDraft').hidden?'editorSaveDraft':'btnSubmitNewProduct'),true);let accepted=false;const wasPublished=model.status==='published';
   try{if(!uncertain){for(let i=0;i<model.images.length;i++){const photo=model.images[i];if(photo.path)continue;notice(q('newProductProgress'),'A enviar fotografia '+(i+1)+' de '+model.images.length+'…');const extension=validateProductPhoto(photo.file);const {data:auth,error:authError}=await platform.auth.getUser();if(authError||!auth.user)throw authError||Error('Sessão expirada.');const path=auth.user.id+'/'+storeId+'/'+model.id+'/'+crypto.randomUUID()+'.'+extension;const {error}=await platform.storage.from('kg-product-images').upload(path,photo.file,{upsert:false,contentType:photo.file.type});if(error)throw fieldProblem('Não foi possível enviar a fotografia '+(i+1)+'. Tenta novamente.',q('btnChooseNewProdImg'));photo.path=path;}document=documentData(status);uncertain={request:crypto.randomUUID(),document,productId:model.id,expected:model.updated_at||null};}
-   notice(q('newProductProgress'),status==='published'?'A publicar…':'A guardar…');const {data,error}=await platform.rpc('kg_save_catalogue_product',{p_request_id:uncertain.request,p_store_id:storeId,p_product_id:uncertain.productId,p_expected_updated_at:uncertain.expected,p_document:uncertain.document});if(error)throw error;accepted=true;model.updated_at=data.updated_at;model.status=data.status;dirty=false;uncertain=null;notice(q('newProductProgress'),'');const id=model.id,sid=storeId;const message=stockOnly?'Stock actualizado.':data.status==='published'?(wasPublished?'Alterações guardadas.':'Produto publicado.'):data.status==='archived'?'Produto arquivado.':'Rascunho guardado.';await close(true);
-   try{await hooks.onPublished(id,sid,{newPublication:!stockOnly&&!wasPublished&&data.status==='published'});}
-   finally{hooks.onFeedback(message);}
+   notice(q('newProductProgress'),status==='published'?'A publicar…':'A guardar…');const {data,error}=await platform.rpc('kg_save_catalogue_product',{p_request_id:uncertain.request,p_store_id:storeId,p_product_id:uncertain.productId,p_expected_updated_at:uncertain.expected,p_document:uncertain.document});if(error)throw error;accepted=true;model.updated_at=data.updated_at;model.status=data.status;dirty=false;uncertain=null;notice(q('newProductProgress'),'');const id=model.id,sid=storeId;const message=quickEdit?'Preço e stock guardados.':data.status==='published'?(wasPublished?'Alterações guardadas.':'Produto publicado.'):data.status==='archived'?'Produto arquivado.':'Rascunho guardado.';await close(true);
+   let leftFilter=false;
+   try{leftFilter=await hooks.onPublished(id,sid,{newPublication:!quickEdit&&!wasPublished&&data.status==='published',quickEdit});}
+   finally{hooks.onFeedback(leftFilter?'Alterações guardadas. O produto saiu do filtro actual.':message);}
   }catch(e){if(e.field){fail(e.message);q('newProductError').scrollIntoView({block:'nearest'});notice(q('newProductProgress'),'');return;}const known=/^(22|23|40|42|P000)/.test(e.code||'');if(known)uncertain=null;fail(accepted?'O produto foi guardado. Actualiza o catálogo para consultar a versão actual.':e.code==='40001'?'Outro colaborador alterou este produto. Os teus dados continuam aqui; copia as alterações antes de reabrir a versão actual.':e.code==='42501'?'A sessão ou as permissões da loja mudaram. As alterações não foram guardadas.':known?(e.message||'Confere os dados do artigo.'):'O envio foi interrompido. '+(uncertain?'Toca em «Verificar gravação» para confirmar o mesmo pedido.':'Os dados continuam aqui. Tenta guardar novamente.'));notice(q('newProductProgress'),'');}
   finally{setButtonBusy(q('editorSaveDraft'),false);setButtonBusy(q('btnSubmitNewProduct'),false);lock(false);if(uncertain)q('btnSubmitNewProduct').textContent='Verificar gravação';}
  }
@@ -509,23 +502,19 @@ export function setupProductComposer(hooks){
    clearFieldProblem();
    fail('');
    if(uncertain){void save(uncertain.document.status);return;}
-   if(stockOnly||!guided){void save(model.status);return;}
+   if(quickEdit||!guided){void save(model.status);return;}
    const status=hooks.getStore()?.status==='approved'?'published':'draft';
+   if(status==='draft'||reviewing||!model.variants.length){void save(status);return;}
    try{
-     if(stage===0){
-       requirePhoto();
-       const next=returnToReview?2:1;
-       returnToReview=false;
-       showEditor(next,{focus:true});
-     }else if(stage===1){
-       documentData(status);
-       returnToReview=false;
-       showEditor(2,{focus:true});
-     }else{
-       void save(status);
-     }
+     documentData(status);
+     showEditor(2,{focus:true});
    }catch(error){reportProblem(error);}
  };
+ window.addEventListener('beforeunload',event=>{
+   if(!dialog.open||(!dirty&&!busy&&!uncertain))return;
+   event.preventDefault();
+   event.returnValue='';
+ });
  function fitViewport(){if(!dialog.open||!window.visualViewport)return;dialog.style.height=Math.round(window.visualViewport.height)+'px';dialog.style.top=Math.round(window.visualViewport.offsetTop)+'px';dialog.style.bottom='auto';}
  window.visualViewport?.addEventListener('resize',fitViewport);window.visualViewport?.addEventListener('scroll',fitViewport);window.addEventListener('resize',fitViewport);
  const beforeUnload=e=>{if(dialog.open&&dirty){e.preventDefault();e.returnValue='';}};window.addEventListener('beforeunload',beforeUnload);
