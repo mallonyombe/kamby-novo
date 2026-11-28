@@ -7,6 +7,7 @@
   margin-inline: auto;
   display: flex;
   align-items: center;
+  gap: 8px;
   padding: 10px 14px;
   border: 1px solid var(--ui-line);
   border-radius: 16px;
@@ -39,7 +40,11 @@ body.is-searching .pwa-install-invite { display: none; }
   gap: 9px;
   min-width: 0;
   padding: 0 10px;
-  text-align: left;
+  justify-content: center;
+  background: var(--text-main);
+  color: var(--bg-surface);
+  cursor: pointer;
+  text-align: center;
   font-size: 14px;
   font-weight: 600;
 }
@@ -52,7 +57,8 @@ body.is-searching .pwa-install-invite { display: none; }
   color: var(--text-secondary);
 }
 .pwa-install-dismiss svg { width: 20px; height: 20px; }
-.pwa-install-action:active,
+.pwa-install-action:active { opacity: .8; }
+.pwa-install-action:focus-visible { outline: 2px solid var(--text-main); outline-offset: 3px; }
 .pwa-install-dismiss:active { background: var(--bg-input); }
 
 .pwa-install-action { flex: 1; }
