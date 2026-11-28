@@ -541,3 +541,32 @@
 .merchant-editor .editor-schedule-sheet {max-height:calc(100dvh - 24px);overflow-y:auto;}
 .merchant-editor .editor-schedule-sheet [hidden] {display:none;}
 .merchant-editor .editor-schedule-sheet footer {margin-top:12px;}
+
+/* Estados consistentes para a edição frequente do catálogo. */
+.merchant-editor .editor-details-row {border-radius:8px;}
+.merchant-editor .editor-details-row > span:first-child {min-width:0;}
+.merchant-editor .editor-details-row > svg {flex:none;}
+.merchant-editor .editor-schedule-trigger .mw-muted {font-size:.8125rem;line-height:1.4;}
+.merchant-editor .editor-schedule-sheet .editor-promotion-boundary + .editor-promotion-boundary {
+  border-inline-start:1px solid var(--ui-line);padding-inline-start:12px;
+}
+.merchant-editor .editor-scroll .editor-switch {padding-block:8px;}
+.merchant-editor .editor-scroll .editor-switch input::before {transition:none;}
+.merchant-editor .editor-details-row:active,
+.merchant-editor .editor-photo-remove:active {background:var(--ui-input);}
+.merchant-editor .editor-photo-remove:focus-visible {outline-offset:-3px;}
+.merchant-editor .editor-footer button:disabled:not(.is-pending) {opacity:.45;cursor:default;}
+.merchant-editor:has(:focus-visible) {animation:none;}
+@media (max-width:520px) {
+  .merchant-editor .editor-schedule-sheet .editor-promotion-boundary + .editor-promotion-boundary {
+    border-inline-start:0;padding-inline-start:0;border-block-start:1px solid var(--ui-line);padding-block-start:12px;
+  }
+}
+@media (prefers-reduced-motion:no-preference) {
+  .merchant-editor:not(:has(:focus-visible))[open] {animation-timing-function:cubic-bezier(.16,1,.3,1);}
+}
+@media (prefers-reduced-motion:reduce) {
+  .merchant-editor,.merchant-editor *,.merchant-editor *::before,.merchant-editor *::after {
+    animation:none!important;transition:none!important;scroll-behavior:auto!important;
+  }
+}
