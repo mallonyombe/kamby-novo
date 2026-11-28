@@ -368,10 +368,6 @@
     }
 
     /* Categorias em Destaque */
-    #viewSearchResults:has(#searchResultsInput:not(:placeholder-shown)) .search-category-entry { display:none; }
-    .search-category-entry { margin-block:16px; }
-    .search-category-entry .profile-menu-item { min-height:54px; padding-inline:16px; text-decoration:none; }
-    .search-category-entry svg { flex-shrink:0; color:var(--text-secondary); }
     .category-pills-grid {
       display: grid;
       grid-template-columns: repeat(2, 1fr);
@@ -1789,13 +1785,6 @@
           </div>
           <div class="recent-chips-wrap" id="recentChips"></div>
         </section>
-        <div class="profile-menu-list search-category-entry">
-          <a href="#categorias" class="profile-menu-item">
-            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="2"/><rect x="14" y="3" width="7" height="7" rx="2"/><rect x="3" y="14" width="7" height="7" rx="2"/><rect x="14" y="14" width="7" height="7" rx="2"/></svg>
-            <span class="profile-menu-copy"><span class="profile-menu-label">Explorar categorias</span></span>
-            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg>
-          </a>
-        </div>
       </div>
       <div class="search-result-controls" id="searchResultControls" hidden><div class="search-tabs-row" role="tablist" aria-label="Tipo de resultado">
         <button type="button" class="search-tab-btn active" id="tabBtnProducts" role="tab" aria-controls="searchResultsProductsWrap" aria-selected="true">Produtos <span id="countProductsTab">0</span></button>
