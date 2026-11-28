@@ -41,7 +41,11 @@ document.querySelector('#run').onclick=async()=>{
     check(!find('.mw-filter-dialog select[name="available"]'),'catálogo sem filtro de stock');
     click('.mw-filter-dialog header button');
 
-    click('[data-product-id="p1"] .mw-row-stock');
+    find('[data-product-id="p1"] .mw-product-actions > button').dispatchEvent(new MouseEvent('click',{bubbles:true,detail:1}));
+    const menu=find('[data-product-id="p1"] .mw-context-menu');
+    check(menu&&!menu.contains(doc().activeElement),'toque abre o menu sem mover o foco para a primeira opção');
+    const editPrice=Array.from(menu.querySelectorAll('button')).find(button=>button.textContent==='Editar preço');
+    editPrice.click();
     const editor=find('#modalNewProduct');
     check(editor.open&&find('#modalNewProdTitle').textContent.includes('Preço'),'Editar preço abre o editor rápido');
     check(!find('.editor-stock-fields'),'editor rápido sem campos de stock');

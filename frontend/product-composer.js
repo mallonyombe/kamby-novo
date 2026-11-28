@@ -68,9 +68,13 @@ export function setupProductComposer(hooks){
    }
  }
 
+ function saveAsDraft(){
+   return model.status==='published'&&hooks.getStore()?.status!=='approved';
+ }
+
  function syncSubmitLabel(){
    const preparing=hooks.getStore()?.status!=='approved';
-   q('btnSubmitNewProduct').textContent=quickEdit||!guided?'Guardar alterações'
+   q('btnSubmitNewProduct').textContent=saveAsDraft()?'Guardar como rascunho':quickEdit||!guided?'Guardar alterações'
      :stage===1?'Continuar':preparing?'Guardar rascunho':!reviewing&&activeVariants().length?'Rever publicação':'Publicar produto';
  }
 
@@ -386,7 +390,7 @@ export function setupProductComposer(hooks){
  if(model.image_url){grid.append(current);showProductThumbnail(platform,model,current);}
 
  }
- grid.append(add);
+ add.hidden=model.images.length>=10;
 }
  function renderVariantPresets(){
    const presets=q('editorVariantPresets');
@@ -731,13 +735,23 @@ export function setupProductComposer(hooks){
    return {title:model.title,category_id:model.category_id,description:model.description,
      condition:model.condition,attributes:model.attributes,status,...price,images:model.images.map(photo=>photo.path),variants};
  }
+ function saveAccessMessage(message){
+   if(message==='A gestão precisa de activar a loja antes da publicação'){
+     return 'A loja precisa de ser aprovada para publicares este produto. As alterações continuam no editor.';
+   }
+   if(message==='Produto bloqueado pela administração'){
+     return 'Este produto foi restringido pela gestão. Contacta o apoio da Kamby.';
+   }
+   return 'Não foi possível guardar. Confirma se ainda tens acesso à loja. As alterações continuam no editor.';
+ }
+
  async function save(status){if(busy||!model)return;if(!navigator.onLine){fail('Sem ligação. As alterações continuam neste formulário. Liga-te e tenta novamente.');return;}let document;try{document=uncertain?.document||documentData(status);}catch(e){reportProblem(e);return;}lock(true);fail('');setButtonBusy(q(status==='draft'&&!q('editorSaveDraft').hidden?'editorSaveDraft':'btnSubmitNewProduct'),true);let accepted=false;const wasPublished=model.status==='published';
   try{if(!uncertain){for(let i=0;i<model.images.length;i++){const photo=model.images[i];if(photo.path)continue;notice(q('newProductProgress'),'A enviar fotografia '+(i+1)+' de '+model.images.length+'…');const extension=validateProductPhoto(photo.file);const {data:auth,error:authError}=await platform.auth.getUser();if(authError||!auth.user)throw authError||Error('Sessão expirada.');const path=auth.user.id+'/'+storeId+'/'+model.id+'/'+crypto.randomUUID()+'.'+extension;const {error}=await platform.storage.from('kg-product-images').upload(path,photo.file,{upsert:false,contentType:photo.file.type});if(error)throw fieldProblem('Não foi possível enviar a fotografia '+(i+1)+'. Tenta novamente.',q('btnChooseNewProdImg'));photo.path=path;}document=documentData(status);uncertain={request:crypto.randomUUID(),document,productId:model.id,expected:model.updated_at||null};}
    notice(q('newProductProgress'),status==='published'?'A publicar…':'A guardar…');const {data,error}=await platform.rpc('kg_save_catalogue_product',{p_request_id:uncertain.request,p_store_id:storeId,p_product_id:uncertain.productId,p_expected_updated_at:uncertain.expected,p_document:uncertain.document});if(error)throw error;accepted=true;model.updated_at=data.updated_at;model.status=data.status;dirty=false;uncertain=null;notice(q('newProductProgress'),'');const id=model.id,sid=storeId;const message=quickEdit?'Preço guardado.':data.status==='published'?(wasPublished?'Alterações guardadas.':'Produto publicado.'):data.status==='archived'?'Produto arquivado.':'Rascunho guardado.';await close(true);
    let leftFilter=false;
    try{leftFilter=await hooks.onPublished(id,sid,{newPublication:!quickEdit&&!wasPublished&&data.status==='published',quickEdit});}
    finally{hooks.onFeedback(leftFilter?'Alterações guardadas. O produto saiu do filtro actual.':message);}
-  }catch(e){if(e.field){fail(e.message);q('newProductError').scrollIntoView({block:'nearest'});notice(q('newProductProgress'),'');return;}const known=/^(22|23|40|42|P000)/.test(e.code||'');if(known)uncertain=null;fail(accepted?'O produto foi guardado. Actualiza o catálogo para consultar a versão actual.':e.code==='40001'?'Outro colaborador alterou este produto. Os teus dados continuam aqui; copia as alterações antes de reabrir a versão actual.':e.code==='42501'?'A sessão ou as permissões da loja mudaram. As alterações não foram guardadas.':known?(e.message||'Confere os dados do artigo.'):'O envio foi interrompido. '+(uncertain?'Toca em «Verificar gravação» para confirmar o mesmo pedido.':'Os dados continuam aqui. Tenta guardar novamente.'));notice(q('newProductProgress'),'');}
+  }catch(e){if(e.field){fail(e.message);q('newProductError').scrollIntoView({block:'nearest'});notice(q('newProductProgress'),'');return;}const known=/^(22|23|40|42|P000)/.test(e.code||'');if(known)uncertain=null;fail(accepted?'O produto foi guardado. Actualiza o catálogo para consultar a versão actual.':e.code==='40001'?'Outro colaborador alterou este produto. Os teus dados continuam aqui; copia as alterações antes de reabrir a versão actual.':e.code==='42501'?saveAccessMessage(e.message):known?(e.message||'Confere os dados do artigo.'):'O envio foi interrompido. '+(uncertain?'Toca em «Verificar gravação» para confirmar o mesmo pedido.':'Os dados continuam aqui. Tenta guardar novamente.'));notice(q('newProductProgress'),'');q('newProductError').scrollIntoView({block:'nearest'});}
   finally{setButtonBusy(q('editorSaveDraft'),false);setButtonBusy(q('btnSubmitNewProduct'),false);lock(false);if(uncertain)q('btnSubmitNewProduct').textContent='Verificar gravação';}
  }
  function saveDraft(){
@@ -757,7 +771,7 @@ export function setupProductComposer(hooks){
    clearFieldProblem();
    fail('');
    if(uncertain){void save(uncertain.document.status);return;}
-   if(quickEdit||!guided){void save(model.status);return;}
+   if(quickEdit||!guided){void save(saveAsDraft()?'draft':model.status);return;}
    const status=hooks.getStore()?.status==='approved'?'published':'draft';
    if(stage>1&&(status==='draft'||reviewing||!activeVariants().length)){void save(status);return;}
    try{
