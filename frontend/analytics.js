@@ -83,6 +83,7 @@ function clearAnalyticsCookies() {
 }
 
 function syncAnalytics() {
+  if (document.documentElement?.dataset.pilot === 'true') return false;
   if (location.protocol !== 'https:' || location.hostname !== productionHost) return false;
   const allowed = analyticsAllowed();
   const wasDisabled = window[disableKey] === true;

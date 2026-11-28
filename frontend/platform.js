@@ -5,9 +5,11 @@ export const catalogueConfig = Object.freeze({
   publishableKey: 'sb_publishable_9n2oXQLqDuaQNLEHl_Vw6A_7exV-LPl',
   imageBucket: 'kg-product-images', pageSize: 60
 });
+const pilot = document.documentElement.dataset.pilot === 'true';
 export const platform = createClient(catalogueConfig.supabaseUrl, catalogueConfig.publishableKey, {
   global: {
     fetch: (input, init) => {
+      if (pilot) return Promise.reject(new Error('O piloto não faz pedidos ao serviço de contas.'));
       const url = new URL(typeof input === 'string' || input instanceof URL ? input : input.url);
       // The SDK can add a user session to both reads and writes. Keep those
       // responses out of the browser's HTTP cache.
@@ -18,11 +20,11 @@ export const platform = createClient(catalogueConfig.supabaseUrl, catalogueConfi
       return fetch(input, options);
     }
   },
-  auth: { storageKey: 'kamby:account', persistSession: true, autoRefreshToken: true, detectSessionInUrl: true, flowType: 'pkce' }
+  auth: { storageKey: 'kamby:account', persistSession: !pilot, autoRefreshToken: !pilot, detectSessionInUrl: !pilot, flowType: 'pkce' }
 });
 const recorded = new Map();
 export function trackStoreEvent(storeId, kind, productId=null) {
-  if (!analyticsAllowed() || !storeId || !['store_view','whatsapp_click','whatsapp_intent'].includes(kind)) return;
+  if (pilot || !analyticsAllowed() || !storeId || !['store_view','whatsapp_click','whatsapp_intent'].includes(kind)) return;
   const duration = kind === 'store_view' ? 30 * 60 * 1000 : 1500;
   const key = 'kamby:event:' + kind + ':' + storeId;
   let previous = recorded.get(key) || 0;

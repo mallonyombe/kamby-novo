@@ -33,6 +33,28 @@ const notices = await Promise.all(Object.entries(lock.packages)
   }));
 await writeFile(new URL('licencas.txt', outputDirectory), notices.join('\n\n' + '='.repeat(72) + '\n\n'));
 
+if (process.argv.includes('--pilot')) {
+  const page = new URL('index.html', outputDirectory);
+  const html = await readFile(page, 'utf8');
+  const pilot = html.replace('<html lang="pt-MZ">', '<html lang="pt-MZ" data-pilot="true">')
+    .replace('<head>', '<head><meta name="robots" content="noindex,nofollow">')
+    .replace('<script type="module" src="pwa.js"></script>', '')
+    .replace(/<link[^>]+rel="manifest"[^>]*>/, '')
+    .replace(/<footer class="legal-footer kamby-legal-footer"[\s\S]*?<\/footer>/,
+      '<footer class="legal-footer kamby-legal-footer"><a href="./pilot-info.html">Sobre o piloto e privacidade</a></footer>')
+    .replace('O contacto desta loja ainda não está disponível. Podes copiar o resumo do pedido.', 'Pedido simulado. Nenhuma mensagem foi enviada à loja.')
+    .replace('Continuar no WhatsApp</button>', 'Simular pedido</button>')
+    .replace('A tua conta mantém a sessão iniciada.', '');
+  if (!pilot.includes('data-pilot="true"')) throw new Error('O modo de demonstração não foi activado.');
+  await writeFile(page, pilot);
+  const seed = JSON.parse(await readFile(new URL('fixtures/test-stores.json', import.meta.url), 'utf8'));
+  const catalogue = seed.map(({name, location, description, products}) => ({
+    name, location, description, products: products.filter(item => !['oleo','acucar'].includes(item.code))
+  }));
+  await writeFile(new URL('pilot-catalogue.json', outputDirectory), JSON.stringify(catalogue));
+  await Promise.all(['admin.html','legal.html'].map(path => rm(new URL(path, outputDirectory))));
+}
+
 const shellFiles = (await readdir(outputDirectory, {recursive: true})).filter(path =>
   !path.startsWith('admin') && path !== 'sw.js' &&
   /\.(?:js|css|png|jpg|svg|webmanifest)$/.test(path) || path === 'index.html'

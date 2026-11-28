@@ -1632,6 +1632,7 @@
        FEED COMERCIAL DE PRODUTOS
        ========================================================================== -->
   <main class="feed-container" id="mainContainer" tabindex="-1">
+    <p id="pilotNotice" class="measurement-banner" hidden>Piloto em Chongoene. Lojas e pedidos de demonstração.</p>
     <section class="measurement-banner" id="measurementBanner" aria-labelledby="measurementTitle" hidden>
       <h2 id="measurementTitle">Medição opcional</h2>
       <p>Com a tua autorização, o Kamby e o Google Analytics medem a utilização do catálogo. <a href="./legal.html#privacidade">Política de privacidade</a></p>
@@ -1810,6 +1811,12 @@
     </section>
     <section id="viewProfile" class="kamby-view" hidden aria-label="Perfil">
       <header class="page-header" aria-label="Navegação do perfil"><div class="page-header-content"><h1 class="page-title" tabindex="-1">Perfil</h1></div></header>
+      <section id="pilotProfile" class="settings-guest" hidden>
+        <h2>Piloto do Kamby</h2>
+        <p>Estás a experimentar o catálogo como visitante.</p>
+        <a href="./pilot-info.html">Sobre o piloto e privacidade</a>
+        <button type="button" class="settings-text-action" id="pilotClear">Limpar dados locais</button>
+      </section>
       <section id="settingsGuestIntro" class="settings-guest" aria-labelledby="profileGuestTitle" hidden>
         <h2 id="profileGuestTitle">A tua conta</h2>
         <p>Inicia sessão para aceder aos teus guardados noutros dispositivos.</p>
@@ -1936,6 +1943,7 @@
     import { normaliseSearch, matchCatalogue, fetchAllPages, normalisePriceFilter } from "./search-engine.js";
     import {editorContractReady,baselineCataloguePath} from "./catalogue-contract.js";
     import {enableModalDismiss} from './modal-dismiss.js';
+    import { loadPilotCatalogue } from './pilot-catalogue.js';
     import { setupMerchant } from "./merchant.js";
     import { listenForNavigation } from "./navigation.js";
     import { showFeedback } from './merchant-ui.js';
@@ -1960,8 +1968,12 @@
       });
       const header = document.getElementById('kambyHeader');
       enableModalDismiss();
-      startAnalytics();
-      bindMeasurementChoice(document.getElementById('measurementBanner'));
+      const pilot = document.documentElement.dataset.pilot === 'true';
+      let pilotCatalogue;
+      if (!pilot) {
+        startAnalytics();
+        bindMeasurementChoice(document.getElementById('measurementBanner'));
+      }
       let merchantController = null;
       function cleanProductDescription(row){return String(row.description || '');}
       function displayStoreName(store){const name = String(store?.name || '').replace(/\s*[·–-]\s*(?:Teste|Demonstração)$/i, ''); return store?.is_test === true ? name + ' · Demonstração' : name;}
@@ -2056,6 +2068,10 @@
       }
 
       async function catalogueRequest(path, options) {
+        if (pilot) {
+          pilotCatalogue ||= loadPilotCatalogue().catch(error => { pilotCatalogue = undefined; throw error; });
+          return (await pilotCatalogue)(path, options);
+        }
         if(!await editorContractReady())path=baselineCataloguePath(path);
         const requestOptions = Object.assign({cache:'no-store'}, options || {});
         requestOptions.headers = apiHeaders(requestOptions.headers);
@@ -2079,7 +2095,7 @@
         try {
           await requireStoreOpen(catalogueRequest,storeId);
           if(availabilityChecks.get(button)!==check)return;
-          button.disabled=button.classList.contains('is-pending');label.textContent=button.id==='btnStoreCartWhatsApp'?'Enviar pedido pelo WhatsApp':'WhatsApp';button.setAttribute('aria-label',label.textContent);
+          button.disabled=button.classList.contains('is-pending');label.textContent=pilot ? 'Simular pedido' : button.id==='btnStoreCartWhatsApp'?'Enviar pedido pelo WhatsApp':'WhatsApp';button.setAttribute('aria-label',label.textContent);
         } catch(error) {
           if(availabilityChecks.get(button)!==check)return;
           const closed=error.message===STORE_CLOSED_COPY;
@@ -2921,8 +2937,8 @@
         intro.textContent = store.description.trim();
         intro.hidden = !intro.textContent;
         storefrontElements.whatsapp.disabled = !store.whatsapp;
-        storefrontElements.whatsapp.querySelector('span').textContent = 'Perguntar à loja';
-        storefrontElements.whatsapp.setAttribute('aria-label', 'Fazer uma pergunta à loja no WhatsApp');
+        storefrontElements.whatsapp.querySelector('span').textContent = pilot ? 'Simular contacto' : 'Perguntar à loja';
+        storefrontElements.whatsapp.setAttribute('aria-label', pilot ? 'Simular contacto com a loja' : 'Fazer uma pergunta à loja no WhatsApp');
         storefrontElements.share.disabled = false;
         storefrontDiscovery.render(store);
       }
@@ -4824,6 +4840,10 @@
           await merchantReady;
           if (window.location.hash !== hash) return;
         }
+        if (pilot && (hash.startsWith('#definicoes/') || hash.startsWith('#lojista/'))) {
+          switchView('perfil', true);
+          return;
+        }
         if(hash.startsWith('#definicoes/')){
           if (!viewPDP.hidden) closePDP(false);
           if (!viewStorefront.hidden) closeStorefront(false);
@@ -4899,7 +4919,30 @@
       });
 
       bindGuestHeartsUntilAccountReady();
-      const merchantReady = setupMerchant({
+      function clearDeviceData() {
+        for (const {product} of readSavedEntries(localStorage)) removeFromDevice(localStorage, '', product.id);
+        window.dispatchEvent(new Event('kamby:catalogue-card'));
+        localStorage.removeItem('kamby_cart');
+        localStorage.removeItem('kamby:recent-searches');
+        sessionStorage.removeItem('kamby:home-scroll');
+        kambyCart = [];
+        updateCartBadge(); renderCartView(); renderRecentSearches();
+        window.dispatchEvent(new CustomEvent('kamby:cart-updated', { detail: { totalItems: 0 } }));
+      }
+      if (pilot) {
+        document.getElementById('pilotNotice').hidden = false;
+        document.getElementById('pilotProfile').hidden = false;
+        document.getElementById('settingsAccountCard').hidden = true;
+        const dialog = document.getElementById('clearLocalDataDialog');
+        document.getElementById('pilotClear').onclick = () => dialog.showModal();
+        document.getElementById('btnCancelLocalClear').onclick = () => dialog.close();
+        document.getElementById('btnConfirmLocalClear').onclick = () => {
+          clearDeviceData();
+          dialog.close();
+          showCommerceToast('Dados locais apagados.');
+        };
+      }
+      const merchantReady = pilot ? Promise.resolve(null) : setupMerchant({
         cartCount: () => readCart().reduce((sum,item) => sum + item.quantity, 0),
         savedProducts: ids => fetchPublishedProducts(true, ids),
         renderProductCard,
@@ -4915,16 +4958,7 @@
           setMainNavigationInert(false);
           floatingNavbar.classList.remove('is-hidden');
         },
-        clearLocalData: () => {
-          for (const {product} of readSavedEntries(localStorage)) removeFromDevice(localStorage, '', product.id);
-          window.dispatchEvent(new Event('kamby:catalogue-card'));
-          localStorage.removeItem('kamby_cart');
-          localStorage.removeItem('kamby:recent-searches');
-          sessionStorage.removeItem('kamby:home-scroll');
-          kambyCart = [];
-          updateCartBadge(); renderCartView(); renderRecentSearches();
-          window.dispatchEvent(new CustomEvent('kamby:cart-updated', { detail: { totalItems: 0 } }));
-        },
+        clearLocalData: clearDeviceData,
         catalogueChanged: async () => {
           searchState.catalogue = null; searchState.cachedAt = 0;
           storesState.loaded = false;
