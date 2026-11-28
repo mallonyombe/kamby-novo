@@ -41,6 +41,7 @@ function button(copy,cls,action){const b=node('button',copy,cls);b.type='button'
 export function setupSettings({openSellerSetup,savedProducts,renderProductCard,getAccount,loadAccount,openSubscreen,closeSubscreen,navigate}){
  const $=id=>document.getElementById(id),view=$('viewSettingsSubscreen'),body=$('settingsSubscreenContent');
  let screen='',generation=0,busy=false,dirty=false,accountId=null,returnFocus='',returnScroll=0,recovery=false,currentProduct=null;
+ let registrationBack;
  let savedState = new Map();
  let currentProductPreview = null;
  let migration = null;
@@ -240,8 +241,12 @@ export function setupSettings({openSellerSetup,savedProducts,renderProductCard,g
  function lead(title,copy){if(title)body.append(node('h2',title,'settings-lead'));if(copy)body.append(node('p',copy,'settings-copy'));}
  function empty(title,copy){const box=node('div',undefined,'search-zero-box');box.append(node('h2',title,'settings-lead'),node('p',copy));body.append(box);}
  async function ownedWrite(table,id,values){const update=()=>platform.from(table).update(values).eq(table==='kg_profiles'?'id':'user_id',id).select().maybeSingle();let r=await update();if(r.error)throw r.error;if(r.data)return r.data;r=await platform.from(table).insert({[table==='kg_profiles'?'id':'user_id']:id,...values}).select().single();if(r.error?.code==='23505')r=await update();if(r.error)throw r.error;return r.data;}
- function saveForm(form,copy,action){const submit=button(copy,'merchant-primary-button');submit.type='submit';form.append(submit);form.addEventListener('submit',async event=>{event.preventDefault();if(busy)return;busy=true;submit.disabled=true;setButtonBusy(submit,true);const request=generation;formError(form,'');try{await action();if(request!==generation)return;}catch(error){if(request===generation)formError(form,error.safeMessage||'Não foi possível guardar. Verifica a ligação e tenta novamente.');}finally{if(request===generation){busy=false;setButtonBusy(submit,false);submit.disabled=false;}}});return submit;}
- async function renderScreen(){const request=++generation;body.replaceChildren();notice('');$('settingsLoginPanel').hidden=screen!=='entrar';$('settingsSubscreenTitle').textContent=titles[screen];document.title=titles[screen]+' · Kamby';const a=getAccount();
+ function saveForm(form,copy,action,canSubmit=()=>true){const submit=button(copy,'merchant-primary-button');submit.type='submit';form.append(submit);form.addEventListener('submit',async event=>{event.preventDefault();if(busy||!canSubmit())return;busy=true;submit.disabled=true;setButtonBusy(submit,true);const request=generation;formError(form,'');try{await action();if(request!==generation)return;}catch(error){if(request===generation)formError(form,error.safeMessage||'Não foi possível guardar. Verifica a ligação e tenta novamente.');}finally{if(request===generation){busy=false;setButtonBusy(submit,false);submit.disabled=!canSubmit();}}});return submit;}
+ async function renderScreen(){const request=++generation;body.replaceChildren();notice('');
+  registrationBack=null;
+  $('btnBackSettings').setAttribute('aria-label','Voltar ao Perfil');
+  $('accountSocial').hidden=screen!=='entrar';
+  $('accountGoogleCopy').textContent='Entrar com Google';$('settingsLoginPanel').hidden=screen!=='entrar';$('settingsSubscreenTitle').textContent=titles[screen];document.title=titles[screen]+' · Kamby';const a=getAccount();
   const accountScreen=['entrar','registo','recuperacao'].includes(screen)||recovery&&screen==='palavra-passe';
   view.classList.toggle('account-screen',accountScreen);
   $('accountScreenBrand').hidden=!accountScreen;
@@ -362,23 +367,22 @@ export function setupSettings({openSellerSetup,savedProducts,renderProductCard,g
   if(privateScreens.includes(screen)&&!a.user){open('entrar',false);return;}
   if(screen==='entrar')return;
   if (screen === 'registo') {
-   const form = node('form', undefined, 'settings-form');
-   const ageLabel = node('label', 'Tens 18 anos ou mais?', 'settings-field');
-   const age = node('select');
-   age.required = true;
-   for (const [value, label] of [['', 'Selecciona'], ['yes', 'Sim'], ['no', 'Não']]) {
-    const option = node('option', label);
-    option.value = value;
-    age.append(option);
-   }
-   ageLabel.append(age);
-   const fields = node('fieldset', undefined, 'registration-fields');
-   fields.disabled = fields.hidden = true;
-   form.append(ageLabel, fields);
-   const name = field(fields, 'name', 'Nome completo', '', 'text', true);
-   const email = field(fields, 'email', 'E-mail', '', 'email', true);
-   const password = field(fields, 'password', 'Palavra-passe', '', 'password', true);
-   const confirmation = field(fields, 'confirmation', 'Confirmar palavra-passe', '', 'password', true);
+   const ageStep = node('div', undefined, 'registration-step');
+   const question = node('h2', 'Tens 18 anos ou mais?', 'settings-lead');
+   question.tabIndex = -1;
+   const answers = node('div', undefined, 'registration-answers');
+   const blocked = node('div', undefined, 'registration-step');
+   blocked.hidden = true;
+   const blockedTitle = node('h2', 'O registo é para pessoas com 18 anos ou mais', 'settings-lead');
+   blockedTitle.tabIndex = -1;
+   blocked.append(blockedTitle, node('p', 'Podes consultar o catálogo como visitante.', 'settings-copy'),
+    button('Explorar catálogo', 'merchant-primary-button', () => { if(close(true)) navigate('inicio'); }));
+   ageStep.append(question, answers);
+   const details = node('form', undefined, 'settings-form registration-step');
+   const name = field(details, 'name', 'Nome completo', '', 'text', true);
+   const email = field(details, 'email', 'E-mail', '', 'email', true);
+   const password = field(details, 'password', 'Palavra-passe', '', 'password', true);
+   const confirmation = field(details, 'confirmation', 'Confirmar palavra-passe', '', 'password', true);
    name.autocomplete = 'name';
    name.maxLength = 80;
    email.autocomplete = 'email';
@@ -391,10 +395,15 @@ export function setupSettings({openSellerSetup,savedProducts,renderProductCard,g
    addPasswordVisibility(password);
    addPasswordVisibility(confirmation);
    describeNewPassword(password);
+   const next = button('Continuar', 'merchant-primary-button');
+   next.type='submit';
+   details.append(next);
+
+   const form = node('form', undefined, 'settings-form registration-step');
    const acceptance = node('input');
    acceptance.type = 'checkbox';
    acceptance.required = true;
-   const agreement = node('label', undefined, 'registration-choice');
+   const agreement = node('label', undefined, 'registration-choice registration-required');
    const termsLink = node('a', 'Termos de utilização');
    termsLink.href = './legal.html#termos';
    const privacyLink = node('a', 'Política de privacidade');
@@ -403,43 +412,91 @@ export function setupSettings({openSellerSetup,savedProducts,renderProductCard,g
     link.target = '_blank';
     link.rel = 'noopener';
    }
-   const versionCopy = node('small');
    const agreementCopy = node('span');
-   agreementCopy.append('Li e aceito os ', termsLink, ' e a ', privacyLink, '.', versionCopy);
+   agreementCopy.append('Li e aceito os ', termsLink, ' e a ', privacyLink, '.');
    agreement.append(acceptance, agreementCopy);
    const marketing = node('input');
    marketing.type = 'checkbox';
-   const marketingChoice = node('label', undefined, 'registration-choice');
-   marketingChoice.append(marketing, node('span', 'Quero receber novidades e ofertas do Kamby por e-mail.'));
-   fields.append(agreement, marketingChoice);
-   let documents;
-   let documentRequest;
-   age.addEventListener('change', async () => {
-    acceptance.checked = marketing.checked = false;
-    formError(form, '');
-    fields.disabled = fields.hidden = true;
-    if (age.value !== 'yes') {
-     for (const input of [name, email, password, confirmation]) input.value = '';
-     if (age.value === 'no') {
-      // A resposta sobre a idade não precisa de ser armazenada nem enviada.
+   const marketingChoice = node('label', undefined, 'registration-choice registration-optional');
+   marketingChoice.append(marketing, node('span', 'Receber novidades e ofertas por e-mail (opcional).'));
+   const documentStatus = node('p', undefined, 'settings-copy');
+   documentStatus.setAttribute('role','status');
+   const retry = button('Tentar novamente','settings-text-action',()=>void loadDocuments());
+   retry.hidden = true;
+   form.append(agreement, marketingChoice, documentStatus, retry);
+
+   let stage = 'age', adult = '', documents, documentRequest;
+   function showStep(nextStage, focus = true) {
+    stage = nextStage;
+    ageStep.hidden = stage !== 'age';
+    blocked.hidden = stage !== 'blocked';
+    details.hidden = stage !== 'details';
+    form.hidden = stage !== 'consent';
+    $('accountSocial').hidden = stage !== 'age';
+    $('accountGoogleCopy').textContent = 'Já tens conta? Entra com Google';
+    const title = $('settingsSubscreenTitle');
+    title.textContent = stage === 'consent' ? 'Termos e privacidade' : stage === 'details' ? 'Dados da conta' : 'Criar conta';
+    $('btnBackSettings').setAttribute('aria-label', stage === 'age' ? 'Voltar a iniciar sessão' : 'Voltar à etapa anterior');
+    view.scrollTop = 0;
+    if(focus) (stage === 'blocked' ? blockedTitle : title).focus({preventScroll:true});
+   }
+   registrationBack = () => {
+    if (busy) return true;
+    if (stage === 'consent') { showStep('details'); return true; }
+    if (stage === 'details' || stage === 'blocked') {
+     adult = '';
+     acceptance.checked = marketing.checked = false;
+     showStep('age');
+     return true;
+    }
+    return false;
+   };
+   for(const [value,label] of [['yes','Sim'],['no','Não']]){
+    answers.append(button(label,'registration-answer',()=>{
+     adult=value;
+     if(value==='no'){
+      details.reset();
       try { setAnalyticsAllowed(false); } catch { /* A medição fica bloqueada nesta página. */ }
-      formError(form, 'O cadastro só está disponível para pessoas com 18 anos ou mais. Podes consultar o catálogo como visitante.');
-     }
+      showStep('blocked');
+     }else showStep('details');
+    }));
+   }
+   const canCreate = () => stage==='consent' && adult==='yes' && Boolean(documents) && acceptance.checked;
+   async function loadDocuments(){
+    if(documentRequest)return;
+    retry.hidden=true;
+    documentStatus.textContent='A carregar os documentos…';
+    documentStatus.hidden=false;
+    documentRequest=platform.rpc('kg_registration_documents');
+    try{
+     const {data,error}=await documentRequest;
+     if(request!==generation)return;
+     if(error||data?.privacy_version!==privacyPolicyVersion||!data.terms_version)throw error||new Error();
+     documents=data;
+     termsLink.href='./legal.html?versao='+encodeURIComponent(data.terms_version)+'#termos';
+     documentStatus.hidden=true;
+    }catch{
+     if(request!==generation)return;
+     documentStatus.textContent='Não foi possível carregar os documentos.';
+     retry.hidden=false;
+    }finally{
+     documentRequest=null;
+     if(request===generation){agreement.hidden=marketingChoice.hidden=!documents;submit.disabled=busy||!canCreate();}
+    }
+   }
+   details.addEventListener('submit',event=>{
+    event.preventDefault();
+    formError(details,'');
+    try{
+     registrationCredentials({name:name.value,email:email.value,password:password.value,confirmation:confirmation.value},location.origin);
+    }catch(error){
+     formError(details,error.message);
+     if(password.value!==confirmation.value)confirmation.focus();
      return;
     }
-    try {
-     documentRequest ||= platform.rpc('kg_registration_documents');
-     const {data, error} = await documentRequest;
-     if (request !== generation || age.value !== 'yes') return;
-     if (error || data?.privacy_version !== privacyPolicyVersion || !data.terms_version) throw error || new Error();
-     documents = data;
-     termsLink.href = './legal.html?versao=' + encodeURIComponent(data.terms_version) + '#termos';
-     versionCopy.textContent = 'Termos ' + data.terms_version + ' · Privacidade ' + data.privacy_version;
-     fields.disabled = fields.hidden = false;
-    } catch {
-     documentRequest = null;
-     if (request === generation && age.value === 'yes') formError(form, 'Os documentos estão indisponíveis. Reabre o cadastro e tenta novamente.');
-    }
+    showStep('consent');
+    submit.disabled=!canCreate();
+    if(!documents)void loadDocuments();
    });
    const instructions = node('div');
    instructions.tabIndex = -1;
@@ -466,7 +523,7 @@ export function setupSettings({openSellerSetup,savedProducts,renderProductCard,g
     $('accountIdentity').value = resendEmail.value;
     if (await open('entrar', false)) history.replaceState(null, '', '#definicoes/entrar');
    }));
-   body.append(form, instructions);
+   body.append(ageStep, blocked, details, form, instructions);
    const submit = saveForm(form, 'Criar conta', async () => {
     if (!navigator.onLine) throw { safeMessage: 'Sem ligação à internet. Liga-te e tenta novamente.' };
     let credentials;
@@ -475,7 +532,7 @@ export function setupSettings({openSellerSetup,savedProducts,renderProductCard,g
       name: name.value, email: email.value, password: password.value, confirmation: confirmation.value
      }, window.location.origin);
      Object.assign(credentials.options.data, registrationEvidence({
-      adult: age.value, accepted: acceptance.checked, marketing: marketing.checked
+      adult, accepted: acceptance.checked, marketing: marketing.checked
      }, documents));
     } catch (error) {
      throw { safeMessage: error.message };
@@ -485,11 +542,17 @@ export function setupSettings({openSellerSetup,savedProducts,renderProductCard,g
     password.value = confirmation.value = '';
     if (request !== generation || data.session) return;
     resendEmail.value = credentials.email;
+    stage = 'done';
     form.hidden = true;
     instructions.hidden = false;
     instructions.focus();
-   });
-   fields.append(submit);
+   }, canCreate);
+   acceptance.addEventListener('change',()=>{ submit.disabled=busy||!canCreate(); });
+   agreement.hidden=marketingChoice.hidden=true;
+   marketing.checked=false;
+   acceptance.checked=false;
+   submit.disabled=true;
+   showStep('age',false);
    return;
   }
   if (screen === 'aparencia') {
@@ -641,6 +704,7 @@ export function setupSettings({openSellerSetup,savedProducts,renderProductCard,g
   (trigger?.getClientRects().length ? trigger : $('viewProfile').querySelector('.page-title'))?.focus({preventScroll:true});document.title='Perfil · Kamby';return true;}
  $('btnProfilePersonal').addEventListener('click', () => { returnFocus = 'pessoais'; open('pessoais'); });
  $('btnBackSettings').addEventListener('click', async () => {
+  if(screen==='registo'&&registrationBack?.())return;
   const parent = screen === 'registo' ? 'entrar' : ['palavra-passe', 'sessoes', 'encerramento'].includes(screen) ? 'seguranca'
    : '';
   if (parent) {

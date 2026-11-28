@@ -147,7 +147,7 @@ export function setupMerchant(hooks) {
   const loginPanel = byId('settingsLoginPanel');
   let googleSettingsRequest;
   new MutationObserver(() => {
-    if (loginPanel.hidden || googleSettingsRequest) return;
+    if (byId('accountSocial').hidden || googleSettingsRequest) return;
     googleSettingsRequest = fetch(new URL('/auth/v1/settings', catalogueConfig.supabaseUrl), {
       headers: { apikey: catalogueConfig.publishableKey },
       cache: 'no-store'
@@ -158,10 +158,12 @@ export function setupMerchant(hooks) {
     }).catch(() => {
       googleSettingsRequest = null;
     });
-  }).observe(loginPanel, { attributes: true, attributeFilter: ['hidden'] });
+  }).observe(byId('accountSocial'), { attributes: true, attributeFilter: ['hidden'] });
   googleButton.addEventListener('click', async () => {
     googleButton.disabled = true;
-    message('accountLoginError', '');
+    const feedback = loginPanel.hidden ? 'settingsScreenNotice' : 'accountLoginError';
+    message(feedback, '');
+    setButtonBusy(googleButton, true);
     try {
       const { error } = await platform.auth.signInWithOAuth({
         provider: 'google',
@@ -169,8 +171,9 @@ export function setupMerchant(hooks) {
       });
       if (error) throw error;
     } catch {
-      message('accountLoginError', 'Não foi possível continuar com Google. Tenta novamente.');
+      message(feedback, loginPanel.hidden ? 'Para criar uma conta Kamby, continua com e-mail. Se já tens conta Google, tenta entrar novamente.' : 'Não foi possível continuar com Google. Tenta novamente.');
     } finally {
+      setButtonBusy(googleButton, false);
       googleButton.disabled = false;
     }
   });
