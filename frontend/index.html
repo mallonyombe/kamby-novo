@@ -2937,7 +2937,8 @@
         intro.textContent = store.description.trim();
         intro.hidden = !intro.textContent;
         storefrontElements.whatsapp.disabled = !store.whatsapp;
-        storefrontElements.whatsapp.querySelector('span').textContent = pilot ? 'Simular contacto' : 'Perguntar à loja';
+        if (pilot) storefrontElements.whatsapp.querySelector('span').textContent = 'Simular contacto';
+        else storefrontElements.whatsapp.querySelector('span').textContent = 'Perguntar à loja';
         storefrontElements.whatsapp.setAttribute('aria-label', pilot ? 'Simular contacto com a loja' : 'Fazer uma pergunta à loja no WhatsApp');
         storefrontElements.share.disabled = false;
         storefrontDiscovery.render(store);

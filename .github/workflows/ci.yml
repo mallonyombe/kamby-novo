@@ -17,4 +17,5 @@ jobs:
       - run: npm run test:frontend
       - run: npm test
       - run: npm run build
+      - run: npm run build -- --pilot
       - run: python3 reference/orbion-kamby-v7/tests/validate.py
