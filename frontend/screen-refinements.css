@@ -13,7 +13,7 @@
 #viewSearchResults .search-zero-box svg {width:32px;height:32px;}
 #viewSearchResults .search-zero-box h3 {font-size:16px;}
 #viewSearchResults .search-zero-box p {font-size:14px;line-height:1.5;}
-.profile-edit-link {display:grid;place-items:center;width:44px;height:44px;flex:none;padding:0;border:0;background:transparent;border-radius:12px;}
+.profile-edit-link {display:grid;place-items:center;min-width:44px;min-height:44px;flex:none;padding:0 10px;border:1px solid var(--ui-line);background:var(--ui-input);color:var(--ui-text);border-radius:12px;}
 .profile-user-info {min-width:0;}
 #profileContact {overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 #viewStoreCart {overflow-anchor:none;}

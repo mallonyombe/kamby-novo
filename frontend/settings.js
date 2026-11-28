@@ -614,12 +614,13 @@ export function setupSettings({openSellerSetup,savedProducts,renderProductCard,g
    const contacts=node('dl',undefined,'settings-account-contact');
    const email=/@kamby\.invalid$/i.test(a.user.email||'')?'':a.user.email;
    const phone=a.user.phone?'+'+a.user.phone.replace(/^\+/, ''):'';
-   for(const [label,value] of [['Telefone',phone],['Email',email]]){
+   for(const [label,value] of [['E-mail',email],['Telefone',phone]]){
+    if(!value)continue;
     const row=node('div');
-    row.append(node('dt',label),node('dd',value||'Não associado'));
+    row.append(node('dt',label),node('dd',value));
     contacts.append(row);
    }
-   form.append(contacts);
+   if(contacts.childElementCount)form.append(contacts);
    body.append(form);
    let originalName=name.value;
    const submit=saveForm(form,'Guardar alterações',async()=>{
@@ -717,6 +718,7 @@ export function setupSettings({openSellerSetup,savedProducts,renderProductCard,g
  }
  function close(force=false){if(view.hidden)return true;if(!force&&(busy||dirty)){if(dirty)confirm('Descartar alterações?','Há dados que ainda não foram guardados.','Descartar',()=>{dirty=false;close(true);history.replaceState(null,'','#perfil');});return false;}generation++;busy=false;dirty=false;body.replaceChildren();$('accountPassword').value='';view.hidden=true;view.classList.remove('active');closeSubscreen();window.scrollTo({top:returnScroll,behavior:'auto'});const trigger = returnFocus === 'entrar' ? $('btnOpenAccountSignIn') : document.querySelector('[data-settings-target="'+returnFocus+'"]');
   (trigger?.getClientRects().length ? trigger : $('viewProfile').querySelector('.page-title'))?.focus({preventScroll:true});document.title='Perfil · Kamby';return true;}
+ $('btnProfilePersonal').textContent = 'Editar';
  $('btnProfilePersonal').addEventListener('click', () => { returnFocus = 'pessoais'; open('pessoais'); });
  $('btnBackSettings').addEventListener('click', async () => {
   if(screen==='registo'&&registrationBack?.())return;
