@@ -9,14 +9,14 @@ import { el,icon,money,notice,imageUrl,showProductThumbnail } from './merchant-u
 
 export function setupProductComposer(hooks){
  const dialog=document.getElementById('modalNewProduct');dialog.className='merchant-editor';
- dialog.innerHTML=`<header class="editor-header"><button type="button" id="btnCloseNewProductModal" class="mw-icon" aria-label="Voltar ao catálogo">${icon('back')}</button><h2 id="modalNewProdTitle">Novo produto</h2></header><form id="formNewProduct" novalidate><div class="editor-scroll"><p id="newProductError" class="field-error" role="alert" hidden></p><p id="newProductProgress" class="merchant-feedback" role="status" aria-live="polite" hidden></p><section data-step="1" hidden><h3>Fotografias</h3><p class="mw-muted">Até 10 fotografias · 5 MB por ficheiro</p><div class="editor-gallery-row"><div id="editorGallery" class="editor-gallery"></div><button type="button" id="btnChooseNewProdImg" class="mw-secondary" aria-label="Adicionar fotografias">${icon('plus')}<span>Adicionar</span></button></div><input type="file" id="inputNewProdImage" accept="image/jpeg,image/png,image/webp" multiple hidden></section><section data-step="0"><h3>Dados do produto</h3><label>Nome do produto<input id="inputNewProdTitle" maxlength="160" required autocomplete="off"></label><label id="editorCategoryFilter" hidden>Pesquisar categorias<input id="editorCategorySearch" type="search" autocomplete="off" aria-controls="selectNewProdCat"><span id="editorCategoryMatches" class="mw-muted" role="status"></span></label><label>Categoria<select id="selectNewProdCat" required><option value=""></option></select><span id="editorCategoriesPending"></span></label><button type="button" id="editorRetryCategories" class="mw-text" hidden>Tentar carregar categorias</button><button type="button" id="editorOpenDetails" class="editor-details-row" aria-haspopup="dialog" aria-controls="editorDetails"><span>Descrição e características</span><span id="editorDetailsValue" class="mw-muted"></span>${icon('next')}</button>
+ dialog.innerHTML=`<header class="pdp-top-bar editor-navigation"><div class="pdp-nav-content"><button type="button" id="btnCloseNewProductModal" class="pdp-back-btn" aria-label="Voltar ao catálogo">${icon('back')}</button><h2 class="pdp-top-title" id="modalNewProdTitle">Novo produto</h2></div></header><form id="formNewProduct" novalidate><div class="editor-scroll"><p id="newProductError" class="field-error" role="alert" hidden></p><p id="newProductProgress" class="merchant-feedback" role="status" aria-live="polite" hidden></p><section data-step="1" hidden><h3>Fotografias</h3><p class="mw-muted">Até 10 fotografias · 5 MB por ficheiro</p><div class="editor-gallery-row"><div id="editorGallery" class="editor-gallery"></div><button type="button" id="btnChooseNewProdImg" class="mw-secondary" aria-label="Adicionar fotografias">${icon('plus')}<span>Adicionar</span></button></div><input type="file" id="inputNewProdImage" accept="image/jpeg,image/png,image/webp" multiple hidden></section><section data-step="0"><h3>Dados do produto</h3><label>Nome do produto<input id="inputNewProdTitle" maxlength="160" required autocomplete="off"></label><label id="editorCategoryFilter" hidden>Pesquisar categorias<input id="editorCategorySearch" type="search" autocomplete="off" aria-controls="selectNewProdCat"><span id="editorCategoryMatches" class="mw-muted" role="status"></span></label><label>Categoria<select id="selectNewProdCat" required><option value=""></option></select><span id="editorCategoriesPending"></span></label><button type="button" id="editorRetryCategories" class="mw-text" hidden>Tentar carregar categorias</button><button type="button" id="editorOpenDetails" class="editor-details-row" aria-haspopup="dialog" aria-controls="editorDetails"><span>Descrição e características</span><span id="editorDetailsValue" class="mw-muted"></span>${icon('next')}</button>
  <dialog id="editorDetails" class="mw-filter-dialog" aria-labelledby="editorDetailsTitle">
   <header><h2 id="editorDetailsTitle">Descrição e características</h2><button type="button" id="editorCloseDetails" class="mw-icon" aria-label="Fechar">${icon('close')}</button></header>
   <label>Descrição<textarea id="inputNewProdDesc" rows="2" maxlength="5000"></textarea></label>
   <label>Condição<select id="editorCondition"><option value="new">Novo</option><option value="used">Usado</option><option value="refurbished">Recondicionado</option></select></label>
   <label>Informações essenciais<textarea id="editorAttributes" rows="2" maxlength="1000"></textarea></label>
   <footer><button type="button" id="editorApplyDetails" class="mw-primary">Concluir</button></footer>
- </dialog></section><section data-step="3" hidden><h3 id="editorPriceHeading">Preço</h3><div id="editorPrices"></div></section><section data-step="2" hidden><label class="settings-switch editor-switch"><span>Variantes</span><input type="checkbox" id="editorEnableVariants" role="switch" aria-controls="editorVariantsBody"></label><p id="editorVariantsRemoved" class="mw-muted" hidden>As variantes serão retiradas ao guardar.</p><div id="editorVariantsBody" hidden><div id="editorVariantPresets" class="editor-presets"></div><div id="editorVariants"></div><button type="button" id="editorAddVariant" class="mw-secondary">${icon('plus')}Adicionar opção</button></div></section><section data-step="4" hidden><h3 tabindex="-1" id="editorReviewHeading">Pré-visualização</h3><div id="editorReview" class="editor-review"></div></section></div><footer class="editor-footer"><button type="button" id="editorSaveDraft" class="mw-secondary">Guardar rascunho</button><button type="submit" id="btnSubmitNewProduct" class="mw-primary">Continuar</button></footer></form>`;
+ </dialog></section><section data-step="3" hidden><h3 id="editorPriceHeading">Preço</h3><div id="editorPrices"></div></section><section data-step="2" hidden><label class="settings-switch editor-switch"><span>Variantes</span><input type="checkbox" id="editorEnableVariants" role="switch" aria-controls="editorVariantsBody"></label><p id="editorVariantsRemoved" class="mw-muted" hidden>As variantes serão retiradas ao guardar.</p><div id="editorVariantsBody" hidden><div id="editorVariantPresets" class="editor-presets"></div><div id="editorVariants"></div><button type="button" id="editorAddVariant" class="mw-secondary">${icon('plus')}Adicionar opção</button></div></section><section data-step="4" hidden><h3 tabindex="-1" id="editorReviewHeading">Pré-visualização</h3><div id="editorReview" class="editor-review"></div></section></div><footer class="pdp-sticky-bar editor-footer"><div class="pdp-sticky-inner"><button type="button" id="editorSaveDraft" class="mw-secondary">Guardar rascunho</button><button type="submit" id="btnSubmitNewProduct" class="merchant-primary-button">Continuar</button></div></footer></form>`;
  const q=id=>dialog.querySelector('#'+id);let model=null,reviewing=false,quickEdit=false,dirty=false,busy=false,uncertain=null,urls=[],storeId='',photoRequest=0;
  const sections=[0,1,2,3,4].map(step=>dialog.querySelector('[data-step="'+step+'"]'));
  let categories=[];
@@ -28,7 +28,7 @@ export function setupProductComposer(hooks){
  const detailsTrigger=q('editorOpenDetails');
  const condition=q('editorCondition');
  function refreshDetailsValue(){
-   q('editorDetailsValue').textContent=condition.selectedOptions[0]?.textContent||'';
+   q('editorDetailsValue').textContent='Condição: '+(condition.selectedOptions[0]?.textContent||'');
  }
  detailsTrigger.onclick=()=>{
    details.showModal();
@@ -256,6 +256,7 @@ export function setupProductComposer(hooks){
    model=null;uncertain=null;dirty=false;
    clearFieldProblem();
    q('formNewProduct').reset();
+   q('editorGallery').after(q('btnChooseNewProdImg'));
    for(const id of ['editorGallery','editorVariants','editorPrices','editorReview'])q(id).replaceChildren();
    return true;
  }
@@ -322,8 +323,7 @@ export function setupProductComposer(hooks){
      }
    }
  }
- function renderGallery(){const grid=q('editorGallery');grid.replaceChildren();
- const thumbs=el('div','editor-photo-thumbs');
+ function renderGallery(){const grid=q('editorGallery'), add=q('btnChooseNewProdImg');grid.replaceChildren();
  model.images.forEach((photo,index)=>{const card=el('div','editor-photo');const img=el('img');img.alt='Fotografia '+(index+1);if(photo.preview)img.src=photo.preview;const up=el('button','','←'),down=el('button','','→'),remove=el('button','editor-photo-remove'),replace=el('button','','Trocar');for(const [button,glyph,label] of [[up,'back','Mover para antes'],[down,'next','Mover para depois'],[replace,'image','Trocar fotografia'],[remove,'trash','Remover fotografia']]){
  button.type='button';button.innerHTML=icon(glyph);button.setAttribute('aria-label',label+' '+(index+1));
  }up.setAttribute('aria-label','Mover fotografia '+(index+1)+' para antes');down.setAttribute('aria-label','Mover fotografia '+(index+1)+' para depois');up.disabled=index===0;down.disabled=index===model.images.length-1;function move(delta){[model.images[index],model.images[index+delta]]=[model.images[index+delta],model.images[index]];changed();renderGallery();}up.onclick=()=>move(-1);down.onclick=()=>move(1);remove.onclick=()=>{model.images.splice(index,1);model.variants.forEach(v=>{if(v.imageKey===photo.key)v.imageKey='';});changed();renderGallery();
@@ -378,14 +378,16 @@ export function setupProductComposer(hooks){
    };
    dialog.append(sheet);sheet.showModal();close.focus();
  };
- card.append(trigger,remove);(index===0||!guided?grid:thumbs).append(card);});
- if(thumbs.childElementCount)grid.append(thumbs);
+ card.append(trigger,remove);grid.append(card);});
+
  if(!model.images.length){
  const current=el('img','editor-existing-photo');
  current.alt='Fotografia actual do produto';
  if(model.image_url){grid.append(current);showProductThumbnail(platform,model,current);}
 
-}}
+ }
+ grid.append(add);
+}
  function renderVariantPresets(){
    const presets=q('editorVariantPresets');
    presets.replaceChildren();
@@ -472,7 +474,7 @@ export function setupProductComposer(hooks){
      input.dataset.productValue=key;
      input.maxLength=13;
      input.placeholder=placeholder;
-     input.value=item[key];
+     input.value=item[key].replace('.',',');
      input.oninput=()=>item[key]=input.value;
      field.append(input,el('span','editor-currency','MT'));
      control.append(field);
@@ -497,30 +499,94 @@ export function setupProductComposer(hooks){
      fields.hidden=!enabled.checked;
    };
    toggle.append(enabled);
-   fields.append(priceField('promoPrice','Preço promocional',''));
+   fields.append(priceField('promoPrice','Preço promocional','Obrigatório'));
 
-   const schedule=el('details','editor-price-details');
-   schedule.open=Boolean(item.promotionStartDate||item.promotionEndDate);
-   const summary=el('summary','','Programar promoção');
-   summary.insertAdjacentHTML('beforeend',icon('next'));
+   const schedule=el('dialog','mw-filter-dialog editor-schedule-sheet');
+   const trigger=el('button','editor-details-row editor-schedule-trigger');
+   trigger.type='button';
+   trigger.setAttribute('aria-haspopup','dialog');
+   const caption=el('span','mw-muted');
+   trigger.append(el('span','','Programar promoção'),caption);
+   trigger.insertAdjacentHTML('beforeend',icon('next'));
+   const title=el('h2','','Programar promoção');
+   title.id='schedule-title-'+item.id;
+   schedule.setAttribute('aria-labelledby',title.id);
+   const header=el('header');
+   const close=el('button','mw-icon');
+   close.type='button';
+   close.setAttribute('aria-label','Fechar');
+   close.innerHTML=icon('close');
+   close.onclick=()=>schedule.close();
+   header.append(title,close);
    const dates=el('div','editor-promotion-dates');
-   for(const [key,copy] of [['promotionStart','Início'],['promotionEnd','Fim']]){
+   const controls={};
+   const boundaries=[['promotionStart','Início','Começa agora'],['promotionEnd','Fim','Sem data de fim']];
+   for(const [key,copy,placeholder] of boundaries){
      const range=el('fieldset','editor-promotion-boundary');
      range.append(el('legend','',copy));
-     for(const [part,type,label] of [['Date','date','Data'],['Time','time','Hora (opcional)']]){
-       const field=el('label','',label);
-       const input=el('input');
-       input.type=type;
-       input.dataset.productValue=key+part;
-       input.value=item[key+part];
-       input.oninput=()=>item[key+part]=input.value;
-       field.append(input);
-       range.append(field);
+     const date=el('input');
+     date.type='date';
+     date.dataset.productValue=key+'Date';
+     const time=el('input');
+     time.type='time';
+     time.dataset.productValue=key+'Time';
+     const dateLabel=el('label','', 'Data');
+     dateLabel.append(date);
+     const timeLabel=el('label','', 'Hora (opcional)');
+     timeLabel.append(time);
+     const fallback=el('span','mw-muted',placeholder);
+     function reflectDate(){
+       timeLabel.hidden=!date.value;
+       fallback.hidden=Boolean(date.value);
      }
+     date.addEventListener('input',reflectDate);
+     controls[key]={date,time,reflectDate};
+     range.append(fallback,dateLabel,timeLabel);
      dates.append(range);
    }
-   schedule.append(summary,el('p','mw-muted','Hora de Moçambique. Sem hora, a promoção abrange o dia inteiro.'),dates);
-   fields.append(schedule);
+   const footer=el('footer');
+   const apply=el('button','mw-primary','Concluir');
+   apply.type='button';
+   footer.append(apply);
+   const error=el('p','field-error');
+   error.setAttribute('role','alert');
+   error.hidden=true;
+   function updateCaption(){
+     const short=date=>date.split('-').reverse().slice(0,2).join('/');
+     const start=item.promotionStartDate,end=item.promotionEndDate;
+     caption.textContent=start&&end?short(start)+' – '+short(end):start?'A partir de '+short(start):end?'Até '+short(end):'Começa agora';
+   }
+   updateCaption();
+   trigger.onclick=()=>{
+     for(const [key,{date,time,reflectDate}] of Object.entries(controls)){
+       date.value=item[key+'Date'];
+       time.value=item[key+'Time'];
+       reflectDate();
+     }
+     notice(error,'');
+     schedule.showModal();
+   };
+   schedule.addEventListener('input',event=>event.stopPropagation());
+   schedule.addEventListener('change',event=>event.stopPropagation());
+   schedule.addEventListener('close',()=>{if(trigger.isConnected&&dialog.open)trigger.focus({preventScroll:true});});
+   apply.onclick=()=>{
+     try{
+       const start=controls.promotionStart,end=controls.promotionEnd;
+       if([start.date,start.time,end.date,end.time].some(input=>input.validity.badInput))throw Error('Verifica as datas e horas.');
+       const from=promotionInstant(start.date.value,start.date.value?start.time.value:'');
+       const to=promotionInstant(end.date.value,end.date.value?end.time.value:'',true);
+       if(from&&to&&Date.parse(to)<=Date.parse(from))throw Error('O fim deve ser depois do início da promoção.');
+       for(const [key,{date,time}] of Object.entries(controls)){
+         item[key+'Date']=date.value;
+         item[key+'Time']=date.value?time.value:'';
+       }
+       updateCaption();
+       changed();
+       schedule.close();
+     }catch(failure){notice(error,failure.message);}
+   };
+   schedule.append(header,el('p','mw-muted','Hora de Moçambique. Sem hora, aplica-se o dia inteiro.'),dates,error,footer);
+   fields.append(trigger,schedule);
    card.append(toggle,fields);
    return card;
  }
@@ -638,19 +704,12 @@ export function setupProductComposer(hooks){
        if(status==='published'&&price<=0)throw fieldProblem('Indica um preço promocional superior a zero.',value);
        if(price>=regular)throw fieldProblem('O preço promocional deve ser inferior ao preço normal.',value);
        previous=regular;
-       function readTime(key,end=false){
-         const date=field(key+'Date');
-         const time=field(key+'Time');
-         if(time.validity.badInput)throw fieldProblem('Indica uma hora válida.',time);
-         try{
-           if(date.validity.badInput)throw new Error('Indica uma data válida.');
-           return promotionInstant(date.value,time.value,end);
-         }catch(error){throw fieldProblem(error.message,date);}
-       }
-       start=readTime('promotionStart');
-       end=readTime('promotionEnd',true);
+       try{
+         start=promotionInstant(item.promotionStartDate,item.promotionStartTime);
+         end=promotionInstant(item.promotionEndDate,item.promotionEndTime,true);
+       }catch(error){throw fieldProblem(error.message,card.querySelector('.editor-schedule-trigger'));}
        if(start&&end&&Date.parse(end)<=Date.parse(start)){
-         throw fieldProblem('O fim deve ser depois do início da promoção.',field('promotionEndDate'));
+         throw fieldProblem('O fim deve ser depois do início da promoção.',card.querySelector('.editor-schedule-trigger'));
        }
      }
      return {

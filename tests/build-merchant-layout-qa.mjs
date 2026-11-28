@@ -47,14 +47,18 @@ document.querySelector('#run').onclick=async()=>{
     check(!find('.editor-stock-fields'),'editor rápido sem campos de stock');
     const promotion='#editorPrices input[role="switch"]';
     check(!find(promotion).checked&&find('.editor-promo-fields').hidden,'preço abre com configuração da promoção recolhida');
+    check(find(promotion).offsetWidth===42&&find(promotion).offsetHeight===24,'interruptor mantém 42 × 24 px');
+    check(find('.editor-navigation.pdp-top-bar')&&find('.editor-footer.pdp-sticky-bar'),'editor usa o cabeçalho e o rodapé partilhados');
     click(promotion);
     check(!find('.editor-promo-fields').hidden,'interruptor revela preço promocional');
-    click('.editor-price-details summary');
+    click('.editor-schedule-trigger');
+    check(find('.editor-schedule-sheet').open,'calendário abre numa folha própria');
     const start=new Date(Date.now()+2*86400000).toISOString().slice(0,10);
     const end=new Date(Date.now()+3*86400000).toISOString().slice(0,10);
     fill('[data-product-value="promoPrice"]','100,25');
     fill('[data-product-value="promotionStartDate"]',start);
     fill('[data-product-value="promotionEndDate"]',end);
+    click('.editor-schedule-sheet[open] footer button');
 
     for(const theme of ['light','dark']){
       doc().documentElement.dataset.theme=theme;

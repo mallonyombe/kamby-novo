@@ -77,19 +77,19 @@
 .merchant-editor .editor-money-field input {width:100%;min-width:0;border:0;padding:10px;background:transparent;outline:none;}
 .editor-currency {font-size:12px;color:var(--text-secondary);}
 .merchant-editor .editor-scroll .editor-switch {
-  display:flex;align-items:center;justify-content:space-between;gap:12px;
+  display:flex;flex-direction:row;align-items:center;justify-content:space-between;gap:12px;
   min-height:var(--ui-target,44px);margin:0;font-size:14px;font-weight:600;cursor:pointer;
 }
 .merchant-editor .editor-price-card .editor-switch {margin-block-start:10px;}
 .merchant-editor .editor-switch input:focus-visible {outline:2px solid var(--ui-focus);outline-offset:3px;}
 .merchant-editor .editor-promo-fields:not([hidden]) {display:grid;gap:8px;margin-block:4px;}
-.merchant-editor .editor-price-details > summary,.merchant-editor .editor-variant > summary {
+.merchant-editor .editor-variant > summary {
   list-style:none;display:flex;align-items:center;justify-content:space-between;gap:10px;
   min-height:var(--ui-target,44px);font-size:14px;font-weight:600;cursor:pointer;
 }
-.merchant-editor .editor-price-details > summary::-webkit-details-marker,.merchant-editor .editor-variant > summary::-webkit-details-marker {display:none;}
-.merchant-editor .editor-price-details > summary svg,.merchant-editor .editor-variant > summary svg {width:17px;height:17px;flex:none;color:var(--text-secondary);}
-.merchant-editor :is(.editor-price-details,.editor-variant)[open] > summary svg {transform:rotate(90deg);}
+.merchant-editor .editor-variant > summary::-webkit-details-marker {display:none;}
+.merchant-editor .editor-variant > summary svg {width:17px;height:17px;flex:none;color:var(--text-secondary);}
+.merchant-editor .editor-variant[open] > summary svg {transform:rotate(90deg);}
 .merchant-editor .editor-promotion-dates {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;padding-block-end:8px;}
 .merchant-editor .editor-promotion-boundary {display:grid;gap:8px;min-width:0;margin:0;padding:0;border:0;}
 .merchant-editor .editor-promotion-boundary legend {font-size:13px;font-weight:600;margin-block-end:5px;}
@@ -102,8 +102,7 @@
 .merchant-editor .editor-variant {margin:10px 0;padding:12px;border-radius:12px;}
 .merchant-editor .editor-variant label {margin-top:10px;margin-bottom:10px;}
 .merchant-editor .editor-variant label:first-child {margin-top:0;}
-.merchant-editor .editor-footer .mw-primary {background:var(--storefront-action-fill);color:#fff;border-radius:11px;}
-.merchant-editor .editor-footer .mw-secondary {border-radius:11px;}
+
 @media(min-width:800px){#viewMerchant .mw-content{padding:24px 28px 36px;}#viewMerchant .merchant-own-nav{position:static;transform:none;padding:0;border-radius:0;}#viewMerchant .merchant-own-nav button{min-height:46px;font-size:13px;border-radius:10px;}#viewMerchant .mw-kpis{grid-template-columns:repeat(4,minmax(0,1fr));}#viewMerchant .mw-product-photo{width:64px;height:72px;}#viewMerchant .mw-sidebar{padding:24px 16px;}#viewMerchant .mw-store-identity{margin-bottom:20px;}}
 
 /* Summary hierarchy: one primary action, flat catalogue data, conditional tasks, then interest. */
@@ -341,7 +340,6 @@
   #viewMerchant .mw-return svg { width:18px;height:18px; }
   #viewMerchant #btnBackFromMerchant { visibility:hidden; }
 }
-.merchant-editor .editor-header { flex:none; }
 .merchant-editor .editor-scroll { scroll-padding-block:16px 32px;min-height:0; }
 .merchant-editor .editor-footer button { min-height:44px;line-height:1.25;padding-block:10px; }
 .merchant-editor .editor-scroll h3 { font-size:17px;line-height:1.3; }
@@ -374,23 +372,8 @@
 #viewMerchant .mw-profile-actions .btn-store-status::before { content:none; }
 #viewMerchant .mw-profile-image:not(:disabled) { cursor:pointer; }
 
-.guided-editor .editor-header {
-  grid-template-columns:48px minmax(0,1fr) 48px;
-}
 .guided-editor .editor-scroll > section > h3 { display:none; }
 .guided-editor .editor-scroll > section { padding-bottom:0;border:0; }
-.guided-editor #editorGallery { display:block;overflow:visible; }
-.guided-editor #editorGallery:empty { display:none; }
-.guided-editor #editorGallery > .editor-photo img { height:clamp(150px,34svh,280px); }
-.editor-photo-thumbs { display:flex;gap:8px;overflow:auto;margin-top:8px;padding:2px 0; }
-.editor-photo-thumbs .editor-photo { flex-basis:84px; }
-.editor-photo-thumbs .editor-photo img { height:84px; }
-.guided-editor #btnChooseNewProdImg { min-height:48px; }
-.guided-editor #editorGallery:empty ~ #btnChooseNewProdImg {
-  min-height:64px;width:100%;
-  border:1px dashed var(--ui-secondary);
-  display:flex;align-items:center;justify-content:center;gap:8px;
-}
 .guided-editor #editorSaveDraft {
   flex:0 1 auto;
   background:transparent;color:var(--ui-secondary);border:0;
@@ -513,23 +496,48 @@
 #viewMerchant .mw-profile-actions .mw-store-state {grid-column:1 / -1;justify-self:start;}
 #viewMerchant .mw-profile-actions {grid-template-columns:repeat(auto-fit,minmax(min(100%,136px),1fr));}
 
-.merchant-editor .editor-gallery-row {
-  display:flex;align-items:flex-start;gap:12px;margin-bottom:12px;
+.merchant-editor .editor-gallery-row { margin-bottom:8px; }
+.merchant-editor .editor-gallery {
+  display:flex;align-items:center;gap:8px;min-width:0;margin-bottom:0;
 }
-.merchant-editor .editor-gallery-row > .editor-gallery {flex:1;min-width:0;margin-bottom:0;}
-.merchant-editor .editor-gallery-row > button {
-  display:inline-flex;align-items:center;justify-content:center;gap:5px;
+.merchant-editor .editor-gallery .editor-photo {flex:0 0 88px;}
+.merchant-editor .editor-photo-trigger img {height:80px;}
+.merchant-editor #btnChooseNewProdImg {
+  display:inline-flex;align-items:center;justify-content:center;gap:6px;
   flex:none;min-width:44px;min-height:44px;white-space:nowrap;
 }
-.merchant-editor .editor-gallery-row > button svg,
-.merchant-editor .editor-photo-remove svg {width:18px;height:18px;}
+.merchant-editor #btnChooseNewProdImg svg {width:18px;height:18px;}
 .merchant-editor .editor-photo-remove {
-  position:absolute;inset-block-start:4px;inset-inline-end:4px;z-index:1;
+  position:absolute;inset-block-start:0;inset-inline-end:0;z-index:1;
   width:44px;height:44px;padding:0;display:grid;place-items:center;
-  border:1px solid var(--ui-line);border-radius:50%;background:var(--ui-surface);color:var(--ui-text);
+  border:0;background:transparent;color:var(--ui-text);
+}
+.merchant-editor .editor-photo-remove svg {
+  box-sizing:border-box;width:27px;height:27px;padding:6px;
+  border-radius:50%;background:var(--ui-surface);
 }
 .merchant-editor .editor-presets {flex-wrap:wrap;margin-block:8px;}
 .merchant-editor .editor-presets:empty {display:none;}
 @media(max-width:400px) {
-  .merchant-editor .editor-gallery-row:has(.editor-photo) > button span {display:none;}
+  .merchant-editor .editor-gallery:has(.editor-photo) #btnChooseNewProdImg span {display:none;}
 }
+
+.merchant-editor > .editor-navigation {position:relative;inset:auto;flex:none;}
+.merchant-editor .editor-footer.pdp-sticky-bar {position:relative;inset:auto;display:block;padding:0;}
+.merchant-editor .editor-footer > .pdp-sticky-inner {
+  display:flex;max-width:580px;padding:10px var(--nav-inset) calc(10px + var(--safe-bottom));
+}
+.merchant-editor .editor-footer .merchant-primary-button {flex:1;margin:0;}
+.merchant-editor .editor-scroll .editor-switch input {
+  flex:none;width:42px;height:24px;min-height:0;margin:0;padding:2px;
+  border:1px solid var(--ui-secondary);border-radius:999px;background:var(--ui-input);
+}
+.merchant-editor .editor-scroll .editor-switch input:checked {background:var(--buyer-accent-ink);border-color:var(--buyer-accent-ink);}
+.merchant-editor .editor-variant > summary::after {content:none;}
+.merchant-editor .editor-price-card {border-bottom:0;margin-top:0;}
+.merchant-editor .editor-scroll > section {padding-bottom:10px;margin-bottom:10px;}
+.merchant-editor .editor-scroll h3 + .mw-muted {margin-bottom:8px;}
+.merchant-editor .editor-schedule-trigger .mw-muted {margin-inline-start:auto;text-align:end;}
+.merchant-editor .editor-schedule-sheet {max-height:calc(100dvh - 24px);overflow-y:auto;}
+.merchant-editor .editor-schedule-sheet [hidden] {display:none;}
+.merchant-editor .editor-schedule-sheet footer {margin-top:12px;}
