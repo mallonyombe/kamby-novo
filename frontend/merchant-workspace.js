@@ -1,6 +1,7 @@
 import {bindSidebar,sidebarToggleIcon} from './panel-sidebar.js';
 import {listIcon,bindListSearch,paintFilterIcon} from './list-controls.js';
 import {preparePhoto, previewPhoto} from './prepare-photo.js';
+import {promotionPriceAt} from './catalogue-promotions.js';
 import {canPrepareStore,initials,storeHoursDocument} from './merchant-domain.js';
 import {summaryMarkup,setupMerchantSummary} from './merchant-summary.js';
 import {setButtonBusy,showSpinner,showSkeleton} from "./loading.js";
@@ -16,7 +17,7 @@ const merchantDestinations = [
 ];
 
 export function setupWorkspace({state,composer,onChanged,onStoreChanged,onTerms}){
- const view=document.getElementById('viewMerchant'),body=view.querySelector('.merchant-body');let tab='resumo',generation=0,paging=false,hasMore=false,total=0,offset=0,rows=[],storeDirty=false,storeBusy=false,hoursDirty=false;const filters={q:'',status:'all',category:'',available:'all',min:'',max:'',sort:'recent'};const positions={};let storeAssets={logo_path:null,banner_path:null};
+ const view=document.getElementById('viewMerchant'),body=view.querySelector('.merchant-body');let tab='resumo',generation=0,paging=false,hasMore=false,total=0,offset=0,rows=[],storeDirty=false,storeBusy=false,hoursDirty=false;const filters={q:'',status:'all',category:'',min:'',max:'',sort:'recent'};const positions={};let storeAssets={logo_path:null,banner_path:null};
  body.className='merchant-workspace';body.innerHTML=`<aside class="mw-sidebar panel-sidebar">
   <div class="panel-sidebar-header">
     <div class="mw-brand panel-sidebar-brand"><span id="merchantSidebarAvatar" aria-hidden="true"></span><strong id="merchantSidebarName"></strong></div>
@@ -107,13 +108,12 @@ export function setupWorkspace({state,composer,onChanged,onStoreChanged,onTerms}
    return !restored&&!$('merchantClearFilters').hidden;
  }
  function renderFilters(){
-   const active=filters.status!=='all'||filters.category||filters.available!=='all'||filters.min||filters.max||filters.sort!=='recent';
+   const active=filters.status!=='all'||filters.category||filters.min||filters.max||filters.sort!=='recent';
    paintFilterIcon(filterButton,active);
    $('merchantClearFilters').hidden=!active;
    const category = filterDialog.querySelector('[name="category"]');
    const labels = [
-     {published:'Publicados',draft:'Rascunhos',archived:'Arquivados',blocked:'Com restrições',out:'Esgotados'}[filters.status],
-     filters.status!=='out' && {available:'Disponíveis',out:'Esgotados'}[filters.available],
+     {published:'Publicados',draft:'Rascunhos',archived:'Arquivados',blocked:'Com restrições'}[filters.status],
      filters.category && Array.from(category.options).find(option=>option.value===filters.category)?.textContent,
      filters.min && 'Desde '+money(Math.round(Number(filters.min)*100)),
      filters.max && 'Até '+money(Math.round(Number(filters.max)*100)),
@@ -134,12 +134,12 @@ export function setupWorkspace({state,composer,onChanged,onStoreChanged,onTerms}
      else button.removeAttribute('aria-current');
    });window.dispatchEvent(new Event('kamby:feedback-scope'));view.scrollTop=positions[tab]||0;if(tab==='actividade')loadActivity();if(tab==='loja'){renderStoreForm();renderProfile();}if(loadCatalogue&&tab==='produtos'&&!rows.length)await loadProducts(true);}
  let debounce; $('merchantSearch').oninput=()=>{clearTimeout(debounce);filters.q=$('merchantSearch').value.trim();debounce=setTimeout(()=>{renderFilters();loadProducts(true);},220);};
- $('merchantClearFilters').onclick=()=>{Object.assign(filters,{status:'all',category:'',available:'all',min:'',max:'',sort:'recent'});renderFilters();loadProducts(true);};
- const filterDialog=el('dialog','mw-filter-dialog');filterDialog.innerHTML='<form><header><h2>Filtros do catálogo</h2><button type="button" aria-label="Fechar filtros">'+icon('close')+'</button></header><label>Categoria<select name="category"><option value="">Todas as categorias</option></select></label><label>Disponibilidade<select name="available"><option value="all">Todas</option><option value="available">Disponíveis</option><option value="out">Esgotados</option></select></label><label>Estado<select name="status"><option value="all">Todos</option><option value="published">Publicados</option><option value="draft">Rascunhos</option><option value="archived">Arquivados</option><option value="blocked">Bloqueados pela administração</option></select></label><details class="mw-filter-extra"><summary>Preço e ordenação</summary><div class="editor-two-columns"><label>Preço mínimo (MT)<input name="min" type="number" min="0" step="0.01"></label><label>Preço máximo (MT)<input name="max" type="number" min="0" step="0.01"></label></div><label>Ordenação<select name="sort"><option value="recent">Mais recentes</option><option value="name">Nome A–Z</option><option value="low">Menor preço</option><option value="high">Maior preço</option></select></label></details><p class="field-error" role="alert" hidden></p><footer><button type="submit" class="mw-primary">Aplicar filtros</button></footer></form>';filterDialog.querySelector('h2').id='merchantFilterTitle';filterDialog.setAttribute('aria-labelledby','merchantFilterTitle');document.body.append(filterDialog);filterDialog.querySelector('header button').onclick=()=>filterDialog.close();
- $('merchantFilterButton').onclick=()=>{for(const key of Object.keys(filters)){const field=filterDialog.querySelector('[name="'+key+'"]');if(field)field.value=key==='status'&&filters.status==='out'?'published':key==='available'&&filters.status==='out'?'out':filters[key];}filterDialog.showModal();};
+ $('merchantClearFilters').onclick=()=>{Object.assign(filters,{status:'all',category:'',min:'',max:'',sort:'recent'});renderFilters();loadProducts(true);};
+ const filterDialog=el('dialog','mw-filter-dialog');filterDialog.innerHTML='<form><header><h2>Filtros do catálogo</h2><button type="button" aria-label="Fechar filtros">'+icon('close')+'</button></header><label>Categoria<select name="category"><option value="">Todas as categorias</option></select></label><label>Estado<select name="status"><option value="all">Todos</option><option value="published">Publicados</option><option value="draft">Rascunhos</option><option value="archived">Arquivados</option><option value="blocked">Bloqueados pela administração</option></select></label><details class="mw-filter-extra"><summary>Preço e ordenação</summary><div class="editor-two-columns"><label>Preço mínimo (MT)<input name="min" type="number" min="0" step="0.01"></label><label>Preço máximo (MT)<input name="max" type="number" min="0" step="0.01"></label></div><label>Ordenação<select name="sort"><option value="recent">Mais recentes</option><option value="name">Nome A–Z</option><option value="low">Menor preço</option><option value="high">Maior preço</option></select></label></details><p class="field-error" role="alert" hidden></p><footer><button type="submit" class="mw-primary">Aplicar filtros</button></footer></form>';filterDialog.querySelector('h2').id='merchantFilterTitle';filterDialog.setAttribute('aria-labelledby','merchantFilterTitle');document.body.append(filterDialog);filterDialog.querySelector('header button').onclick=()=>filterDialog.close();
+ $('merchantFilterButton').onclick=()=>{for(const key of Object.keys(filters)){const field=filterDialog.querySelector('[name="'+key+'"]');if(field)field.value=filters[key];}filterDialog.showModal();};
  filterDialog.querySelector('form').onsubmit=e=>{e.preventDefault();const data=Object.fromEntries(new FormData(e.target));if(data.min&&data.max&&Number(data.min)>Number(data.max)){notice(filterDialog.querySelector('[role="alert"]'),'O preço máximo deve ser superior ao mínimo.');return;}Object.assign(filters,data);filterDialog.close();renderFilters();loadProducts(true);};
  async function loadCategories(){const {data,error}=await platform.from('kg_store_categories').select('category:kg_categories(id,name,is_active)').eq('store_id',state.store.id);if(error)return;const cats=(data||[]).map(x=>Array.isArray(x.category)?x.category[0]:x.category).filter(x=>x?.is_active);const select=filterDialog.querySelector('[name="category"]');select.replaceChildren(new Option('Todas as categorias',''));cats.forEach(c=>select.append(new Option(c.name,c.id)));renderFilters();}
- function queryProducts(pageSize=30){let query=platform.from('kg_products').select('*,category:kg_categories(name),variants:kg_product_variants(*),images:kg_product_images(storage_path,sort_order)',{count:'exact'}).eq('store_id',state.store.id);if(filters.q){if(/^[a-f0-9]{8}-(?:[a-f0-9]{4}-){3}[a-f0-9]{12}$/i.test(filters.q))query=query.eq('id',filters.q);else query=query.ilike('title','%'+filters.q.replace(/[\\%_]/g,'\\$&')+'%');}if(['published','draft','archived'].includes(filters.status))query=query.eq('status',filters.status);if(['published','draft'].includes(filters.status))query=query.eq('moderation_status','allowed');else if(filters.status==='all')query=query.neq('status','archived');if(filters.status==='blocked')query=query.eq('moderation_status','blocked').neq('status','archived');if(filters.status==='out')query=query.eq('stock_status','out').eq('status','published').eq('moderation_status','allowed');else if(filters.available==='out')query=query.eq('stock_status','out');if(filters.available==='available')query=query.neq('stock_status','out');if(filters.category)query=query.eq('category_id',filters.category);if(filters.min)query=query.gte('price_minor',Math.round(Number(filters.min)*100));if(filters.max)query=query.lte('price_minor',Math.round(Number(filters.max)*100));const sort={recent:['created_at',false],name:['title',true],low:['price_minor',true],high:['price_minor',false]}[filters.sort]||['created_at',false];return query.order(sort[0],{ascending:sort[1]}).order('id').range(offset,offset+pageSize-1);}
+ function queryProducts(pageSize=30){let query=platform.from('kg_products').select('*,category:kg_categories(name),variants:kg_product_variants(*),images:kg_product_images(storage_path,sort_order)',{count:'exact'}).eq('store_id',state.store.id);if(filters.q){if(/^[a-f0-9]{8}-(?:[a-f0-9]{4}-){3}[a-f0-9]{12}$/i.test(filters.q))query=query.eq('id',filters.q);else query=query.ilike('title','%'+filters.q.replace(/[\\%_]/g,'\\$&')+'%');}if(['published','draft','archived'].includes(filters.status))query=query.eq('status',filters.status);if(['published','draft'].includes(filters.status))query=query.eq('moderation_status','allowed');else if(filters.status==='all')query=query.neq('status','archived');if(filters.status==='blocked')query=query.eq('moderation_status','blocked').neq('status','archived');if(filters.category)query=query.eq('category_id',filters.category);if(filters.min)query=query.gte('price_minor',Math.round(Number(filters.min)*100));if(filters.max)query=query.lte('price_minor',Math.round(Number(filters.max)*100));const sort={recent:['created_at',false],name:['title',true],low:['price_minor',true],high:['price_minor',false]}[filters.sort]||['created_at',false];return query.order(sort[0],{ascending:sort[1]}).order('id').range(offset,offset+pageSize-1);}
  async function loadProducts(reset=false, preserve=false){if(view.hidden||!state.store)return;const visibleCount=preserve?Math.max(30,rows.length):30;const scrollTop=view.scrollTop;if(reset){generation++;offset=0;rows=[];hasMore=true;paging=false;if(!preserve)$('merchantProductsList').replaceChildren(...Array.from({length:3},()=>el('div','mw-product-skeleton')));}if(paging||!hasMore)return;const request=generation,storeId=state.store.id;paging=true;showSpinner($('merchantListSentinel'));try{const {data,count,error}=await queryProducts(visibleCount);if(error)throw error;if(request!==generation||storeId!==state.store?.id)return;rows.push(...data);offset+=data.length;total=count??rows.length;hasMore=offset<total;renderProducts();if(preserve&&tab==='produtos')view.scrollTop=scrollTop;set('merchantListSentinel','');set('merchantCatalogCount',total+' '+(total===1?'produto encontrado':'produtos encontrados'));}catch{if(request!==generation)return;if(!rows.length)$('merchantProductsList').replaceChildren(el('p','mw-empty','Não foi possível carregar o catálogo.'));set('merchantListSentinel','');set('merchantCatalogCount','');const retry=el('button','mw-secondary','Tentar novamente');retry.type='button';retry.onclick=()=>loadProducts(!rows.length);$('merchantProductsList').append(retry);feedback('Verifica a ligação. Os filtros foram preservados.');}finally{if(request===generation)paging=false;}}
  const observer=new IntersectionObserver(entries=>{if(entries.some(x=>x.isIntersecting)&&tab==='produtos')loadProducts();},{root:view,rootMargin:'180px'});observer.observe($('merchantListSentinel'));
  function renderProducts(){
@@ -150,6 +150,7 @@ export function setupWorkspace({state,composer,onChanged,onStoreChanged,onTerms}
      list.append(el('p','mw-empty',filters.q||!$('merchantClearFilters').hidden?'Nenhum produto encontrado.':'Ainda não há produtos no catálogo.'));
      return;
    }
+   const now=Date.now();
    for(const product of rows){
      const blocked=product.moderation_status==='blocked';
      const editable=!blocked&&canPrepareStore(state.store);
@@ -164,14 +165,13 @@ export function setupWorkspace({state,composer,onChanged,onStoreChanged,onTerms}
      const photo=el('span','mw-product-photo');
      photo.innerHTML=icon('products');
      const meta=el('span','mw-product-meta');
-     const prices=(product.variants||[]).filter(v=>v.active!==false).map(v=>Number(v.price_minor));
-     if(!prices.length)prices.push(Number(product.price_minor));
+     const prices=(product.variants||[]).filter(v=>v.active!==false).map(variant=>promotionPriceAt(variant,now));
+     if(!prices.length)prices.push(promotionPriceAt(product,now));
      const price=Math.min(...prices);
      const details=el('span','mw-row-details');
      const publication={published:'Publicado',draft:'Rascunho',archived:'Arquivado'}[product.status];
      if(publication&&!blocked)details.append(el('span','mw-product-state',publication));
      if(blocked)details.append(el('span','mw-stock-alert','Restringido pela gestão'),el('span','mw-muted','Contacta a gestão para saber mais.'));
-     if(product.stock_status==='out'&&product.status==='published')details.append(el('span','mw-stock-alert','Esgotado'));
      meta.append(el('strong','mw-product-name',product.title),
        el('span','mw-product-price',price>0?(new Set(prices).size>1?'Desde ':'')+money(price):'Preço por definir'),details);
      entry.append(photo,meta);
@@ -186,11 +186,11 @@ export function setupWorkspace({state,composer,onChanged,onStoreChanged,onTerms}
        menu.innerHTML=icon('more');
        menu.onclick=()=>menu.getAttribute('aria-expanded')==='true'?closeMenu():openProductMenu(product,menu);
        if(product.status==='published'){
-         const priceAndStock=el('button','mw-row-stock','Preço e stock');
-         priceAndStock.type='button';
-         priceAndStock.setAttribute('aria-label','Preço e stock de '+product.title);
-         priceAndStock.onclick=()=>composer.open(product,false,'stock');
-         actions.append(priceAndStock);
+         const editPrice=el('button','mw-row-stock mw-secondary','Editar preço');
+         editPrice.type='button';
+         editPrice.setAttribute('aria-label','Editar preço de '+product.title);
+         editPrice.onclick=()=>composer.open(product,false,'price');
+         actions.append(editPrice);
        }
        actions.append(menu);
        article.append(actions);
@@ -245,7 +245,35 @@ export function setupWorkspace({state,composer,onChanged,onStoreChanged,onTerms}
    };
  }
  document.addEventListener('click',e=>{if(menuNode&&!e.target.closest('.mw-product-actions'))closeMenu();});
- function documentFrom(p,status){return{title:p.title,category_id:p.category_id,description:p.description||'',condition:p.condition||'new',attributes:p.attributes||'',status,price_minor:p.price_minor,previous_price_minor:p.previous_price_minor,stock_quantity:p.stock_quantity,in_stock:p.stock_status!=='out',images:(p.images||[]).sort((a,b)=>a.sort_order-b.sort_order).map(i=>i.storage_path),variants:(p.variants||[]).filter(v=>v.active!==false).map(v=>({id:v.id,option_name:v.option_name,price_minor:v.price_minor,previous_price_minor:v.previous_price_minor,in_stock:v.in_stock,track_quantity:v.track_quantity,stock_quantity:v.stock_quantity,image_path:v.image_path}))};}
+ function documentFrom(product,status){
+   return {
+     title:product.title,
+     category_id:product.category_id,
+     description:product.description||'',
+     condition:product.condition||'new',
+     attributes:product.attributes||'',
+     status,
+     price_minor:product.price_minor,
+     previous_price_minor:product.previous_price_minor,
+     promotion_starts_at:product.promotion_starts_at,
+     promotion_ends_at:product.promotion_ends_at,
+     stock_quantity:product.stock_quantity,
+     in_stock:product.stock_status!=='out',
+     images:(product.images||[]).slice().sort((a,b)=>a.sort_order-b.sort_order).map(image=>image.storage_path),
+     variants:(product.variants||[]).filter(variant=>variant.active!==false).map(variant=>({
+       id:variant.id,
+       option_name:variant.option_name,
+       price_minor:variant.price_minor,
+       previous_price_minor:variant.previous_price_minor,
+       promotion_starts_at:variant.promotion_starts_at,
+       promotion_ends_at:variant.promotion_ends_at,
+       in_stock:variant.in_stock,
+       track_quantity:variant.track_quantity,
+       stock_quantity:variant.stock_quantity,
+       image_path:variant.image_path
+     }))
+   };
+ }
  async function deleteUnpublishedProduct(product){
    if(!await confirmAction('Apagar «'+product.title+'»?', 'O produto será removido definitivamente do catálogo.', 'Apagar'))return;
    const {error}=await platform.rpc('kg_delete_archived_product',{
@@ -271,7 +299,9 @@ export function setupWorkspace({state,composer,onChanged,onStoreChanged,onTerms}
      p_expected_updated_at:product.updated_at,p_document:documentFrom(product,status)
    });
    if(error){
-     feedback(error.code==='40001'?'O produto foi alterado noutra sessão. Actualiza o catálogo.':'Não foi possível confirmar a alteração. Actualiza o catálogo antes de tentar novamente.');
+     const categoryUnavailable=restoring&&error.code==='22023'&&/categoria/i.test(error.message||'');
+     feedback(categoryUnavailable?'Edita o produto e escolhe uma categoria activa antes de o repor.':
+       error.code==='40001'?'O produto foi alterado noutra sessão. Actualiza o catálogo.':'Não foi possível confirmar a alteração. Actualiza o catálogo antes de tentar novamente.');
      return;
    }
    await onChanged(product.id);
@@ -279,7 +309,7 @@ export function setupWorkspace({state,composer,onChanged,onStoreChanged,onTerms}
    feedback(archived?'Produto arquivado.':restoring?'Produto reposto nos rascunhos.':'Produto ocultado. Disponível nos rascunhos.','success');
  }
  async function openSummaryCatalogue(status){
-   Object.assign(filters,{q:'',status,category:'',available:'all',min:'',max:'',sort:'recent'});
+   Object.assign(filters,{q:'',status,category:'',min:'',max:'',sort:'recent'});
    $('merchantSearch').value='';
    renderFilters();
    await switchTab('produtos',false);
@@ -602,10 +632,10 @@ export function setupWorkspace({state,composer,onChanged,onStoreChanged,onTerms}
  $('btnOpenNewProductModal').onclick=()=>composer.open();
  function online(){const offline=!navigator.onLine;notice($('merchantOffline'),offline?'Sem ligação. Podes consultar os dados carregados; as alterações exigem ligação.':'');}window.addEventListener('offline',online);window.addEventListener('online',online);
  async function canLeave(){if(storeBusy)return false;if(!await composer.close())return false;if(storeDirty&&!await confirmAction('Sair sem guardar?','As configurações da loja ainda não foram guardadas.','Descartar'))return false;storeDirty=false;return true;}
- function reset(){generation++;if(storeEditor.open)storeEditor.close();summary.reset();rows=[];activityRequest++;activityPeriod.value='7';storeDirty=false;hoursDirty=false;storeBusy=false;offset=0;tab='resumo';syncHeader('resumo');body.dataset.activeTab='resumo';nav.querySelectorAll('button').forEach(b=>b.setAttribute('aria-current',b.dataset.destination==='resumo'?'page':'false'));closeMenu();$('merchantProductsList').replaceChildren();$('merchantActivityList').replaceChildren();$('merchantActivityChart').replaceChildren();$('merchantStoreLogo').replaceChildren();$('merchantOpeningHours').replaceChildren();Object.assign(filters,{q:'',status:'all',category:'',available:'all',min:'',max:'',sort:'recent'});$('merchantSearch').value='';renderFilters();form.reset();body.querySelectorAll('[data-mw]').forEach(n=>n.hidden=n.dataset.mw!=='resumo');}
+ function reset(){generation++;if(storeEditor.open)storeEditor.close();summary.reset();rows=[];activityRequest++;activityPeriod.value='7';storeDirty=false;hoursDirty=false;storeBusy=false;offset=0;tab='resumo';syncHeader('resumo');body.dataset.activeTab='resumo';nav.querySelectorAll('button').forEach(b=>b.setAttribute('aria-current',b.dataset.destination==='resumo'?'page':'false'));closeMenu();$('merchantProductsList').replaceChildren();$('merchantActivityList').replaceChildren();$('merchantActivityChart').replaceChildren();$('merchantStoreLogo').replaceChildren();$('merchantOpeningHours').replaceChildren();Object.assign(filters,{q:'',status:'all',category:'',min:'',max:'',sort:'recent'});$('merchantSearch').value='';renderFilters();form.reset();body.querySelectorAll('[data-mw]').forEach(n=>n.hidden=n.dataset.mw!=='resumo');}
  window.addEventListener('beforeunload',e=>{if(!view.hidden&&(storeDirty||storeBusy)){e.preventDefault();e.returnValue='';}});
  async function revealProduct(id){
-   Object.assign(filters,{q:'',status:'all',category:'',available:'all',min:'',max:'',sort:'recent'});
+   Object.assign(filters,{q:'',status:'all',category:'',min:'',max:'',sort:'recent'});
    $('merchantSearch').value='';
    renderFilters();
    await switchTab('produtos');

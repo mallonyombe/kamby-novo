@@ -61,7 +61,8 @@ export function setupMerchantSummary({root,state,onProducts,onStore,onPublish,on
     button.innerHTML=icon(glyph);
     const copy=el('span','mw-task-copy');
     copy.append(el('strong','',title),el('small','mw-muted',detail));
-    const arrow=el('span','mw-summary-chevron','›');
+    const arrow=el('span','mw-summary-chevron');
+    arrow.innerHTML=icon('next');
     arrow.setAttribute('aria-hidden','true');
     button.append(copy,arrow);
     button.onclick=action;
@@ -82,19 +83,18 @@ export function setupMerchantSummary({root,state,onProducts,onStore,onPublish,on
     const products=()=>platform.from('kg_products').select('id',{count:'exact',head:true}).eq('store_id',id);
     try{
       const results=await Promise.allSettled([
-        products().eq('status','published').eq('moderation_status','allowed').eq('stock_status','out'),
         products().eq('status','draft').eq('moderation_status','allowed'),
         products().eq('moderation_status','blocked').neq('status','archived'),
         products().eq('status','published').eq('moderation_status','allowed')
       ]);
       if(request!==generation||id!==state.store?.id)return;
-      const [out,drafts,blocked,published]=results.map(result=>
+      const [drafts,blocked,published]=results.map(result=>
         result.status==='fulfilled'?result.value:{error:result.reason});
       if(Number.isInteger(published.count)){
         count.textContent=published.count.toLocaleString('pt-MZ');
         $('merchantSummaryPublished').disabled=!published.count;
       }
-      if(![out,drafts,blocked,published].every(result=>Number.isInteger(result.count)))throw Error();
+      if(![drafts,blocked,published].every(result=>Number.isInteger(result.count)))throw Error();
       const noProducts=published.count===0&&drafts.count===0&&blocked.count===0;
       const approved=state.store.status==='approved';
       empty.hidden=!noProducts||!approved;
@@ -103,7 +103,6 @@ export function setupMerchantSummary({root,state,onProducts,onStore,onPublish,on
 
       tasks.replaceChildren();
       for(const [result,filter,label,glyph] of [
-        [out,'out','Esgotados','products'],
         [drafts,'draft','Rascunhos','edit'],
         [blocked,'blocked','Produtos com restrições','warning']
       ]){

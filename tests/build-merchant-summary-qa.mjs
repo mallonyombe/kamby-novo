@@ -1,2 +1,84 @@
 import {writeFileSync} from 'node:fs';
-writeFileSync('dist/merchant-summary-qa.html',"<!doctype html><meta charset=\"utf-8\"><title>Kamby · Estados do Resumo</title><style>body{margin:18px;background:#ddd;font:13px system-ui}button{padding:10px}main{display:flex;gap:18px;align-items:start}iframe{width:390px;height:844px;border:0;flex:none}pre{max-width:650px;white-space:pre-wrap}</style><button id=\"run\">Verificar Resumo</button><main><iframe title=\"Resumo móvel\" src=\"/merchant-qa.html#lojista/s1\"></iframe><pre>Pronto</pre></main><script type=\"module\">\nconst frame=document.querySelector('iframe'),out=document.querySelector('pre');const pause=ms=>new Promise(r=>setTimeout(r,ms)),doc=()=>frame.contentDocument;let report=[];\nasync function until(fn){const t=Date.now();while(!fn()){if(Date.now()-t>15000)throw Error('Tempo excedido');await pause(50);}await pause(70);}\nfunction check(ok,label){report.push((ok?'PASSOU ':'FALHOU ')+label);out.textContent=report.join('\\n');if(!ok)throw Error(label);}\nasync function load(mode=''){await new Promise(resolve=>{frame.addEventListener('load',resolve,{once:true});frame.src='/merchant-qa.html?rev='+Date.now()+(mode?'&qa='+mode:'')+'#lojista/s1';});await until(()=>doc()?.querySelector('.mw-summary')?.getAttribute('aria-busy')==='false'&&doc().querySelector('#merchantMetricsTime')?.textContent||doc()?.querySelector('.mw-summary-error'));}\nconst click=s=>doc().querySelector(s).click();\ndocument.querySelector('#run').onclick=async()=>{report=[];try{\nawait load();const root=()=>doc().querySelector('.mw-summary');\ncheck(root().querySelectorAll('.mw-primary').length===1,'uma única acção principal no Resumo');\ncheck(!root().querySelector('.mw-kpis')&&!root().querySelector('.mw-quick')&&!root().textContent.includes('Acções rápidas'),'sem cartões grandes ou atalhos repetidos');\ncheck(doc().querySelector('.mw-summary-healthy')&&!doc().querySelector('.mw-summary-task'),'sem pendências não mostra alertas nem botões de resolver');\ncheck(!root().querySelector('#btnToggleStoreStatus'),'controlo de contactos fica no separador Loja');\ncheck(doc().querySelector('#kpiProductsCount').textContent==='2'&&doc().querySelector('#kpiUnavailable').textContent==='0','catálogo mostra os valores verificados');\nfor(const theme of ['light','dark']){doc().documentElement.dataset.theme=theme;for(const width of [320,390,1040]){frame.style.width=width+'px';await pause(100);check(doc().documentElement.scrollWidth<=doc().documentElement.clientWidth,'sem transbordo, '+theme+', '+width+' px');}}frame.style.width='390px';\nclick('.mw-summary-counts [data-summary-filter=\"published\"]');await until(()=>doc().querySelectorAll('.mw-product-row').length===2);check(doc().querySelector('[data-filter=\"published\"]').getAttribute('aria-pressed')==='true'&&!doc().querySelector('[data-mw=\"produtos\"]').hidden,'contador abre o catálogo filtrado');\nclick('[data-destination=\"resumo\"]');click('#merchantQuickNew');await until(()=>doc().querySelector('#modalNewProduct').open);check(true,'acção principal abre o editor');click('#btnCloseNewProductModal');\nawait load('attention');\ncheck(doc().querySelector('#kpiProductsCount').textContent==='1'&&doc().querySelector('#kpiUnavailable').textContent==='1','publicados e esgotados respeitam a moderação');\ncheck(doc().querySelectorAll('.mw-summary-task').length===3&&!doc().querySelector('.mw-summary-healthy'),'esgotados, rascunhos e restrições surgem apenas quando existem');\nfor(const filter of ['out','draft','blocked']){click('.mw-summary-task[data-summary-filter=\"'+filter+'\"]');await until(()=>!doc().querySelector('[data-mw=\"produtos\"]').hidden&&doc().querySelectorAll('.mw-product-row').length===1);check(true,'pendência '+filter+' abre apenas o artigo correspondente');click('[data-destination=\"resumo\"]');}\nawait load('empty');check(doc().querySelector('#kpiProductsCount').textContent==='0'&&doc().querySelector('#kpiStoreViews').textContent==='0','loja vazia conserva zeros reais');check(!doc().querySelector('#merchantQuickNew').disabled&&!doc().querySelector('.mw-summary-task'),'loja vazia tem criação disponível sem avisos artificiais');\nawait load('summary-error');check(doc().querySelector('.mw-summary-error')&&!doc().querySelector('.mw-summary-healthy')&&doc().querySelector('#kpiProductsCount').textContent==='—','erro não é confundido com zero ou catálogo sem pendências');\nclick('.mw-summary-retry');await until(()=>doc().querySelector('.mw-summary-error'));check(doc().querySelector('.mw-summary').getAttribute('aria-busy')==='false','nova tentativa termina a espera mesmo em erro');\nframe.src='/merchant-qa.html?qa=summary-loading#lojista/s1';await until(()=>doc()?.querySelector('.mw-summary')?.getAttribute('aria-busy')==='true');check(doc().querySelectorAll('.mw-summary .app-skeleton').length===5&&!doc().querySelector('.mw-summary').textContent.includes('A carregar'),'espera usa skeletons sem frases visíveis');\nawait load();out.textContent+='\\nCONCLUÍDO: '+report.length+' verificações.';\n}catch(e){out.textContent+='\\nERRO: '+e.message;}};\n</script>\n");
+
+writeFileSync('dist/merchant-summary-qa.html', String.raw`<!doctype html>
+<meta charset="utf-8">
+<title>Kamby · Estados do Resumo</title>
+<style>body{margin:18px;background:#ddd;font:13px system-ui}button{padding:10px}main{display:flex;gap:18px;align-items:start}iframe{width:390px;height:844px;border:0;flex:none}pre{max-width:650px;white-space:pre-wrap}</style>
+<button id="run">Verificar Resumo</button>
+<main><iframe title="Resumo móvel" src="/merchant-qa.html#lojista/s1"></iframe><pre>Pronto</pre></main>
+<script type="module">
+const frame=document.querySelector('iframe'),out=document.querySelector('pre');
+const pause=ms=>new Promise(resolve=>setTimeout(resolve,ms));
+const doc=()=>frame.contentDocument, find=selector=>doc()?.querySelector(selector);
+const report=[];
+async function until(predicate,label='estado esperado'){
+  const start=Date.now();
+  while(!predicate()){
+    if(Date.now()-start>15000)throw Error('Tempo excedido: '+label+' · '+(find('#merchantHeaderTitle')?.textContent||'')+' · '+(find('#merchantAppliedFilters')?.textContent||'')+' · '+(find('#merchantCatalogCount')?.textContent||''));
+    await pause(50);
+  }
+}
+function check(ok,label){
+  report.push((ok?'PASSOU ':'FALHOU ')+label);
+  out.textContent=report.join('\n');
+  if(!ok)throw Error(label);
+}
+function open(mode=''){
+  return new Promise(resolve=>{
+    frame.addEventListener('load',resolve,{once:true});
+    frame.src='/merchant-qa.html?rev='+Date.now()+(mode?'&qa='+mode:'')+'#lojista/s1';
+  });
+}
+const finished=()=>find('.mw-summary')?.getAttribute('aria-busy')==='false';
+const click=selector=>find(selector).click();
+document.querySelector('#run').onclick=async()=>{
+  report.length=0;
+  try{
+    await open();
+    await until(()=>finished()&&find('#kpiProductsCount')?.textContent==='2');
+    check(!find('#kpiUnavailable')&&!find('[data-summary-filter="out"]'),'resumo sem indicadores de stock');
+    check(find('#merchantSummaryTaskList').textContent.trim()==='Sem pendências no catálogo.','estado sem pendências');
+    check(!find('.mw-summary #btnToggleStoreStatus'),'controlo de pedidos fica no separador Loja');
+    for(const theme of ['light','dark']){
+      doc().documentElement.dataset.theme=theme;
+      for(const width of [320,390,1040]){
+        frame.style.width=width+'px';
+        await pause(100);
+        check(doc().documentElement.scrollWidth<=doc().documentElement.clientWidth,'sem transbordo, '+theme+', '+width+' px');
+      }
+    }
+    frame.style.width='390px';
+    await until(()=>!find('#merchantSummaryPublished').disabled,'contador habilitado');
+    click('#merchantSummaryPublished');
+    await until(()=>!find('[data-mw="produtos"]').hidden,'abrir Produtos');
+    await until(()=>doc().querySelectorAll('.mw-product-row').length===2,'dois produtos publicados');
+    check(find('#merchantAppliedFilters').textContent==='Publicados','contador abre o catálogo filtrado');
+    await open('attention');
+    await until(()=>finished()&&find('#kpiProductsCount')?.textContent==='1','catálogo com pendências');
+    check(doc().querySelectorAll('#merchantSummaryTaskList button').length===2,'pendências incluem rascunhos e restrições');
+    for(const filter of ['draft','blocked']){
+      click('[data-summary-filter="'+filter+'"]');
+      await until(()=>!find('[data-mw="produtos"]').hidden&&doc().querySelectorAll('.mw-product-row').length===1,'carregar lista '+filter);
+      check(true,'pendência '+filter+' abre somente o artigo correspondente');
+      click('[data-destination="resumo"]');
+    }
+    await open('empty');
+    await until(()=>finished()&&find('#kpiProductsCount')?.textContent==='0');
+    check(!find('#merchantSummaryEmpty').hidden&&!find('#merchantFirstProduct').disabled,'catálogo vazio oferece criação');
+    click('#merchantFirstProduct');
+    await until(()=>find('#modalNewProduct')?.open);
+    check(true,'primeiro produto usa o editor do catálogo');
+    await open('summary-error');
+    await until(()=>finished()&&find('#merchantSummaryTaskList button')?.textContent==='Tentar novamente');
+    check(find('#kpiProductsCount').textContent==='—','erro preserva o estado sem contagens confirmadas');
+    click('#merchantSummaryTaskList button');
+    await until(()=>finished()&&find('#merchantSummaryTaskList button')?.textContent==='Tentar novamente');
+    check(true,'nova tentativa devolve controlo em caso de erro');
+    await open('summary-loading');
+    await until(()=>find('.mw-summary')?.getAttribute('aria-busy')==='true');
+    check(Boolean(find('#merchantSummaryTaskList .app-skeleton')),'carregamento usa esqueleto');
+    out.textContent+='\nCONCLUÍDO: '+report.length+' verificações.';
+  }catch(error){out.textContent+='\nERRO: '+error.message;}
+};
+</script>
+`);

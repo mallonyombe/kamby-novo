@@ -1,9 +1,10 @@
 import {variantAxes,categorySearchKey} from './category-variants.js';
 import {canPrepareStore} from './merchant-domain.js';
-import {setButtonBusy,showSpinner,showSkeleton} from "./loading.js";
+import {setButtonBusy,showSpinner} from "./loading.js";
 import { platform } from './platform.js';
 import { preparePhoto } from './prepare-photo.js';
 import { parsePriceMinor, validateProductPhoto } from './merchant-domain.js';
+import { promotionInstant,sellerPriceFields,visibleSellerPrice } from './seller-pricing.js';
 import { el,icon,money,notice,imageUrl,showProductThumbnail } from './merchant-ui.js';
 
 export function setupProductComposer(hooks){
@@ -15,12 +16,13 @@ export function setupProductComposer(hooks){
   <label>Condição<select id="editorCondition"><option value="new">Novo</option><option value="used">Usado</option><option value="refurbished">Recondicionado</option></select></label>
   <label>Informações essenciais<textarea id="editorAttributes" rows="2" maxlength="1000"></textarea></label>
   <footer><button type="button" id="editorApplyDetails" class="mw-primary">Concluir</button></footer>
- </dialog></section><section data-step="3" hidden><h3 id="editorPriceHeading">Preço e stock</h3><div id="editorPrices"></div></section><section data-step="2" hidden><details class="editor-extra" id="editorOptions"><summary>Adicionar variantes</summary><div id="editorVariantsBody"><div id="editorVariantPresets" class="editor-presets"></div><div id="editorVariants"></div><button type="button" id="editorAddVariant" class="mw-secondary">${icon('plus')}Adicionar opção</button></div></details></section><section data-step="4" hidden><h3 tabindex="-1" id="editorReviewHeading">Pré-visualização</h3><div id="editorReview" class="editor-review"></div></section></div><footer class="editor-footer"><button type="button" id="editorSaveDraft" class="mw-secondary">Guardar rascunho</button><button type="submit" id="btnSubmitNewProduct" class="mw-primary">Continuar</button></footer></form>`;
+ </dialog></section><section data-step="3" hidden><h3 id="editorPriceHeading">Preço</h3><div id="editorPrices"></div></section><section data-step="2" hidden><label class="settings-switch editor-switch"><span>Variantes</span><input type="checkbox" id="editorEnableVariants" role="switch" aria-controls="editorVariantsBody"></label><p id="editorVariantsRemoved" class="mw-muted" hidden>As variantes serão retiradas ao guardar.</p><div id="editorVariantsBody" hidden><div id="editorVariantPresets" class="editor-presets"></div><div id="editorVariants"></div><button type="button" id="editorAddVariant" class="mw-secondary">${icon('plus')}Adicionar opção</button></div></section><section data-step="4" hidden><h3 tabindex="-1" id="editorReviewHeading">Pré-visualização</h3><div id="editorReview" class="editor-review"></div></section></div><footer class="editor-footer"><button type="button" id="editorSaveDraft" class="mw-secondary">Guardar rascunho</button><button type="submit" id="btnSubmitNewProduct" class="mw-primary">Continuar</button></footer></form>`;
  const q=id=>dialog.querySelector('#'+id);let model=null,reviewing=false,quickEdit=false,dirty=false,busy=false,uncertain=null,urls=[],storeId='',photoRequest=0;
  const sections=[0,1,2,3,4].map(step=>dialog.querySelector('[data-step="'+step+'"]'));
  let categories=[];
  let guided=false,stage=1,historyEntry=null,cleaningHistory=false,exitDialog=null;
- const directTitle=()=>quickEdit?'Preço e stock':'Editar produto';
+ const directTitle=()=>quickEdit?'Preço e promoção':'Editar produto';
+ const activeVariants=()=>model.variantsEnabled?model.variants:[];
  const scroll=dialog.querySelector('.editor-scroll');
  const details=q('editorDetails');
  const detailsTrigger=q('editorOpenDetails');
@@ -51,7 +53,7 @@ export function setupProductComposer(hooks){
    const preparing=hooks.getStore()?.status!=='approved';
    const visible=quickEdit?[3]:!guided?[1,0,2,3]:stage===1?[1,0]:reviewing?[4]:[2,3];
    sections.forEach((section,index)=>{
-     section.hidden=!visible.includes(index)||(index===3&&!quickEdit&&model.variants.length>0);
+     section.hidden=!visible.includes(index);
    });
    if(reviewing)renderReview();
    const title=q('modalNewProdTitle');
@@ -69,7 +71,7 @@ export function setupProductComposer(hooks){
  function syncSubmitLabel(){
    const preparing=hooks.getStore()?.status!=='approved';
    q('btnSubmitNewProduct').textContent=quickEdit||!guided?'Guardar alterações'
-     :stage===1?'Continuar':preparing?'Guardar rascunho':!reviewing&&model.variants.length?'Rever publicação':'Publicar produto';
+     :stage===1?'Continuar':preparing?'Guardar rascunho':!reviewing&&activeVariants().length?'Rever publicação':'Publicar produto';
  }
 
  function fieldProblem(copy,input){
@@ -160,18 +162,38 @@ export function setupProductComposer(hooks){
    }
  }
  q('editorRetryCategories').onclick=loadCategories;
- function newVariant(name=''){return{id:crypto.randomUUID(),option_name:name,price_minor:0,price:'',previous:'',in_stock:true,track_quantity:false,stock_quantity:0,quantity:'',imageKey:''};}
+ function newVariant(name=''){
+   return {id:crypto.randomUUID(),option_name:name,...sellerPriceFields({}),in_stock:true,quantity:'',imageKey:''};
+ }
  async function open(product=null,duplicate=false,mode='edit'){
-  const store=hooks.getStore();if(!store||!canPrepareStore(store))return;if(dialog.open&&!await close())return;release();storeId=store.id;stage=1;uncertain=null;dirty=false;reviewing=false;quickEdit=mode==='stock';guided=!quickEdit&&(!product||duplicate||product.status==='draft');dialog.classList.toggle('guided-editor',guided);
+  const store=hooks.getStore();if(!store||!canPrepareStore(store))return;if(dialog.open&&!await close())return;release();storeId=store.id;stage=1;uncertain=null;dirty=false;reviewing=false;quickEdit=mode==='price'||mode==='stock';guided=!quickEdit&&(!product||duplicate||product.status==='draft');dialog.classList.toggle('guided-editor',guided);
   categories=[];q('editorCategoryFilter').hidden=true;q('editorCategorySearch').value='';q('editorCategoryMatches').textContent='';
   model=product?structuredClone(product):{id:crypto.randomUUID(),title:'',category_id:'',description:'',condition:'new',attributes:'',price_minor:0,stock_status:'available',status:'draft',variants:[],images:[]};
   model.id=duplicate?crypto.randomUUID():model.id;model.updated_at=duplicate?null:model.updated_at;model.title=duplicate?model.title+' · cópia':model.title;model.status=duplicate?'draft':model.status;
   model.images=(model.images||[]).sort((a,b)=>a.sort_order-b.sort_order).map(x=>({key:crypto.randomUUID(),path:x.storage_path,preview:'',file:null}));
-  model.variants=(model.variants||[]).filter(v=>v.active!==false).sort((a,b)=>(a.sort_order||0)-(b.sort_order||0)).map(v=>({...v,id:duplicate?crypto.randomUUID():v.id,price:(Number(v.price_minor)/100).toFixed(2),previous:v.previous_price_minor?(Number(v.previous_price_minor)/100).toFixed(2):'',quantity:v.track_quantity?String(v.stock_quantity):'',imageKey:model.images.find(x=>x.path===v.image_path)?.key||''}));
-  model.price=model.price_minor?(Number(model.price_minor)/100).toFixed(2):'';model.previous=model.previous_price_minor?(Number(model.previous_price_minor)/100).toFixed(2):'';model.quantity=model.stock_quantity==null?'':String(model.stock_quantity);model.in_stock=model.stock_status!=='out';
-  q('editorPriceHeading').textContent=quickEdit?model.title:'Preço e stock';
-  dialog.classList.toggle('stock-editor',quickEdit);
-  q('inputNewProdTitle').value=model.title;q('inputNewProdDesc').value=model.description||'';q('editorCondition').value=model.condition||'new';q('editorAttributes').value=model.attributes||'';q('editorOptions').open=false;q('editorOptions').querySelector('summary').textContent=model.variants.length?'Variantes · '+model.variants.length:'Adicionar variantes';refreshDetailsValue();
+  model.variants=(model.variants||[]).filter(v=>v.active!==false).sort((a,b)=>(a.sort_order||0)-(b.sort_order||0)).map(v=>({
+   ...v,id:duplicate?crypto.randomUUID():v.id,...sellerPriceFields(v),
+   quantity:v.track_quantity?String(v.stock_quantity):'',
+   imageKey:model.images.find(photo=>photo.path===v.image_path)?.key||''
+  }));
+  Object.assign(model,sellerPriceFields(model));
+  model.quantity=model.stock_quantity==null?'':String(model.stock_quantity);
+  model.in_stock=model.stock_status!=='out';
+  model.variantsEnabled=model.variants.length>0;
+  model.hadVariants=model.variantsEnabled&&!duplicate;
+  if(model.variants.length){
+   const commonPrice=Math.min(...model.variants.map(v=>Number(v.price)));
+   model.price=commonPrice?commonPrice.toFixed(2):'';
+   for(const variant of model.variants)if(variant.price===model.price)variant.price='';
+  }
+  q('editorPriceHeading').textContent=model.title;
+  q('editorPriceHeading').hidden=!quickEdit;
+  dialog.classList.toggle('price-editor',quickEdit);
+  q('inputNewProdTitle').value=model.title;
+  q('inputNewProdDesc').value=model.description||'';
+  q('editorCondition').value=model.condition||'new';
+  q('editorAttributes').value=model.attributes||'';
+  refreshDetailsValue();
   fail('');notice(q('newProductProgress'),'');lock(false);q('selectNewProdCat').value='';q('selectNewProdCat').disabled=true;renderGallery();renderVariants();showEditor(1);dialog.showModal();armEditorHistory();fitViewport();document.body.classList.add('merchant-editing');(quickEdit?q('editorPrices').querySelector('input:not([type=checkbox])'):q('btnCloseNewProductModal'))?.focus({preventScroll:true});if(quickEdit)return;await loadCategories();if(!model||!dialog.open||storeId!==store.id)return;
   const generation=++photoRequest;
   await Promise.all(model.images.map(async photo=>{photo.preview=await imageUrl(platform,photo.path);}));
@@ -374,30 +396,37 @@ export function setupProductComposer(hooks){
      if(selected.has(categorySearchKey(value)))continue;
      const add=el('button','mw-secondary',value);
      add.type='button';
-     add.onclick=()=>addVariant(value);
+     add.onclick=()=>{
+       const position=Array.from(presets.children).indexOf(add);
+       if(!addVariant(value))return;
+       const next=presets.children[Math.min(position,presets.children.length-1)]||q('editorAddVariant');
+       next.focus({preventScroll:true});
+     };
      presets.append(add);
    }
  }
  function renderVariants(){
-   q('editorOptions').querySelector('summary').textContent=model.variants.length?'Variantes · '+model.variants.length:'Adicionar variantes';
-   q('editorAddVariant').lastChild.textContent=model.variants.length?'Adicionar opção':'Adicionar uma opção';
+   q('editorEnableVariants').checked=model.variantsEnabled;
+   q('editorVariantsBody').hidden=!model.variantsEnabled;
+   q('editorVariantsRemoved').hidden=model.variantsEnabled||!model.hadVariants;
    const list=q('editorVariants');
    list.replaceChildren();
-   model.variants.forEach((variant,index)=>{
+   activeVariants().forEach((variant,index)=>{
      const row=el('details','editor-variant');
      row.name='merchant-variant';
      row.open=!variant.option_name;
      const heading=el('summary','',variant.option_name||'Nova variante');
+     heading.insertAdjacentHTML('beforeend',icon('next'));
      const name=el('label','','Nome da opção');
      const input=el('input');
      input.value=variant.option_name;input.maxLength=120;
      input.oninput=()=>{
        variant.option_name=input.value;
-       heading.textContent=input.value.trim()||'Nova variante';
+       heading.firstChild.textContent=input.value.trim()||'Nova variante';
        renderVariantPresets();
      };
      name.append(input);
-     const remove=el('button','mw-text','Retirar opção');
+     const remove=el('button','mw-secondary editor-remove-option','Retirar opção');
      remove.type='button';
      remove.onclick=()=>{
        model.variants.splice(index,1);
@@ -412,61 +441,103 @@ export function setupProductComposer(hooks){
    renderPrices();
  }
  function addVariant(name=''){
-   if(model.variants.length>=100){fail('O limite é de 100 opções por produto.');return;}
+   if(model.variants.length>=100){fail('O limite é de 100 opções por produto.');return false;}
    model.variants.push(newVariant(name));
    changed();
    renderVariants();
-   const row=q('editorVariants').lastElementChild;
-   row.open=true;
-   row.querySelector(name?'[data-product-value="price"]':'input').focus();
+   if(!name){
+     const row=q('editorVariants').lastElementChild;
+     row.open=true;
+     row.querySelector('input').focus();
+   }
+   return true;
  }
+ q('editorEnableVariants').onchange=event=>{
+   model.variantsEnabled=event.target.checked;
+   renderVariants();
+ };
  q('editorAddVariant').onclick=()=>addVariant();
- function renderPrices(){
-  const container=q('editorPrices');container.replaceChildren();
-  const items=model.variants.length?model.variants:[model];
-  sections[3].hidden=!quickEdit&&(model.variants.length>0||(guided&&stage!==2));
-  syncSubmitLabel();
-  items.forEach(item=>{
-   const card=el('section','editor-price-card');const name=item===model?(quickEdit?model.title:'Produto sem variantes'):item.option_name||'Opção sem nome';card.setAttribute('aria-label',name);
-   const main=el('div','editor-price-main');main.append(el('strong','editor-price-name',name));
-   function priceField(key,label,placeholder){const field=el('label','editor-money-field');field.append(el('span','commerce-sr-only',label+' de '+name));const input=el('input');input.type='text';input.inputMode='decimal';input.dataset.productValue=key;input.maxLength=13;input.placeholder=placeholder;input.value=item[key]||'';input.oninput=()=>item[key]=input.value;field.append(input,el('span','editor-currency','MT'));return field;}
-   const priceLabel=el('div','editor-current-price');priceLabel.append(el('span','','Preço'),priceField('price','Preço actual',''));
+ function priceCard(item,{common=false}={}){
+   const variant=item!==model;
+   const card=el('section','editor-price-card');
+   const name=variant?(item.option_name||'Nova variante'):model.title;
+   if(quickEdit&&variant)card.append(el('h4','editor-price-name',name));
+   function priceField(key,label,placeholder){
+     const control=el('label','editor-price-field');
+     control.append(el('span','',label));
+     const field=el('span','editor-money-field');
+     const input=el('input');
+     input.type='text';
+     input.inputMode='decimal';
+     input.dataset.productValue=key;
+     input.maxLength=13;
+     input.placeholder=placeholder;
+     input.value=item[key];
+     input.oninput=()=>item[key]=input.value;
+     field.append(input,el('span','editor-currency','MT'));
+     control.append(field);
+     return control;
+   }
+   const label=common?'Preço comum':variant?'Preço da variante (opcional)':'Preço';
+   card.append(priceField('price',label,variant?'Usa o preço comum':''));
+   if(common)return card;
 
-   const more=el('details','editor-price-details');more.open=Boolean(item.previous);more.append(el('summary','',item.previous?'Promoção activa':'Adicionar promoção'));
-   const fields=el('div','editor-stock-fields');const previous=el('div','editor-promotion-field');previous.append(el('span','','Preço antes da promoção'),priceField('previous','Preço anterior','Sem promoção'));more.append(previous);
-   if(item.previous){
-     const remove=el('button','mw-text','Retirar promoção');remove.type='button';
-     remove.onclick=()=>{
-       item.previous='';
-       previous.querySelector('input').value='';
-       const summary=more.querySelector('summary');
-       summary.textContent='Adicionar promoção';
-       more.open=false;
-       remove.remove();
-       changed();
-       summary.focus();
-     };
-     more.append(remove);
+   const toggle=el('label','settings-switch editor-switch');
+   toggle.append(el('span','','Promoção'));
+   const enabled=el('input');
+   enabled.type='checkbox';
+   enabled.setAttribute('role','switch');
+   enabled.checked=item.promotionEnabled;
+   const fields=el('div','editor-promo-fields');
+   fields.id='editorPromotion-'+item.id;
+   enabled.setAttribute('aria-controls',fields.id);
+   fields.hidden=!enabled.checked;
+   enabled.onchange=()=>{
+     item.promotionEnabled=enabled.checked;
+     fields.hidden=!enabled.checked;
+   };
+   toggle.append(enabled);
+   fields.append(priceField('promoPrice','Preço promocional',''));
+
+   const schedule=el('details','editor-price-details');
+   schedule.open=Boolean(item.promotionStartDate||item.promotionEndDate);
+   const summary=el('summary','','Programar promoção');
+   summary.insertAdjacentHTML('beforeend',icon('next'));
+   const dates=el('div','editor-promotion-dates');
+   for(const [key,copy] of [['promotionStart','Início'],['promotionEnd','Fim']]){
+     const range=el('fieldset','editor-promotion-boundary');
+     range.append(el('legend','',copy));
+     for(const [part,type,label] of [['Date','date','Data'],['Time','time','Hora (opcional)']]){
+       const field=el('label','',label);
+       const input=el('input');
+       input.type=type;
+       input.dataset.productValue=key+part;
+       input.value=item[key+part];
+       input.oninput=()=>item[key+part]=input.value;
+       field.append(input);
+       range.append(field);
+     }
+     dates.append(range);
    }
-   const quantityLabel=el('label','','Quantidade (opcional)'),quantity=el('input');quantity.type='number';quantity.dataset.productValue='quantity';quantity.min='0';quantity.max='1000000000';quantity.step='1';quantity.placeholder='Sem limite';quantity.value=item.quantity;quantity.oninput=()=>{item.quantity=quantity.value;if(Number(quantity.value)>0){item.in_stock=true;stock.checked=true;}};quantityLabel.append(quantity);fields.append(quantityLabel);
-   const stockLabel=el('label','mw-check'),stock=el('input');stock.type='checkbox';stock.checked=item.in_stock;stock.onchange=()=>item.in_stock=stock.checked;stockLabel.append(stock,document.createTextNode('Em stock'));
-   fields.append(stockLabel);
-   if(quickEdit){
-     if(item!==model)card.append(main);
-     card.append(priceLabel,fields);
-     card.append(more);
-     container.append(card);
-   }
-   else{
-     const stockDetails=el('details','editor-price-details');
-     stockDetails.open=item.quantity!==''||!item.in_stock;
-     stockDetails.append(el('summary','','Stock'),fields);
-     card.append(priceLabel,stockDetails,more);
-     if(item===model)container.append(card);
-     else q('editorVariants').children[model.variants.indexOf(item)].append(card);
-   }
-  });
+   schedule.append(summary,el('p','mw-muted','Hora de Moçambique. Sem hora, a promoção abrange o dia inteiro.'),dates);
+   fields.append(schedule);
+   card.append(toggle,fields);
+   return card;
  }
+ function renderPrices(){
+   const container=q('editorPrices');
+   container.replaceChildren(priceCard(model,{common:model.variantsEnabled}));
+   for(const [index,variant] of activeVariants().entries()){
+     const card=priceCard(variant);
+     if(quickEdit)container.append(card);
+     else{
+       const row=q('editorVariants').children[index];
+       row.lastElementChild.before(card);
+     }
+   }
+   syncSubmitLabel();
+ }
+
  function renderReview(){
  const box=q('editorReview');
  box.replaceChildren();
@@ -508,13 +579,18 @@ export function setupProductComposer(hooks){
    selectPhoto(0);
    box.append(frame);
  }
- box.append(el('h2','',model.title||'Nome do produto'));try{const prices=(model.variants.length?model.variants:[model]).map(v=>parsePriceMinor(v.price||'0'));box.append(el('strong','editor-review-price',money(Math.min(...prices))+(new Set(prices).size>1?' – '+money(Math.max(...prices)):'')));}catch{box.append(el('p','field-error','Confere os preços antes de publicar.'));}if(!model.variants.length&&model.previous){try{const before=parsePriceMinor(model.previous),now=parsePriceMinor(model.price);if(before>now)box.append(el('del','product-previous-price',money(before)),el('span','product-discount','−'+Math.round((1-now/before)*100)+'%'));}catch{}}
- for(const variant of model.variants){
+ box.append(el('h2','',model.title||'Nome do produto'));
+ const variants=activeVariants();
+ const now=Date.now();
+ const shown=(variants.length?variants:[model]).map(item=>visibleSellerPrice(item,model.price,now));
+ const amounts=shown.map(item=>item.price);
+ box.append(el('strong','editor-review-price',money(Math.min(...amounts))+(new Set(amounts).size>1?' – '+money(Math.max(...amounts)):'')));
+ for(const [index,variant] of variants.entries()){
    const row=el('p','editor-review-variant');
+   const price=shown[index];
    row.append(el('strong','',variant.option_name));
-   if(variant.previous)row.append(el('del','product-previous-price',money(parsePriceMinor(variant.previous))));
-   row.append(el('span','',money(parsePriceMinor(variant.price||'0'))));
-   if(!variant.in_stock||variant.quantity==='0')row.append(el('span','mw-muted','Esgotado'));
+   if(price.previous)row.append(el('del','product-previous-price',money(price.previous)));
+   row.append(el('span','',money(price.price)));
    box.append(row);
  }
  box.append(el('p','mw-muted',hooks.getStore()?.name));
@@ -539,36 +615,66 @@ export function setupProductComposer(hooks){
    validateIdentity();
    if(status==='published')requirePhoto();
    const names=new Set();
-   function itemData(item,card){
-     const field=key=>card?.querySelector('[data-product-value="'+key+'"]');
-     let price,previous;
-     try{price=parsePriceMinor(item.price||'0');}catch(error){throw fieldProblem(error.message,field('price'));}
-     if(status==='published'&&price<=0)throw fieldProblem('Indica um preço superior a zero.',field('price'));
-     try{previous=item.previous?parsePriceMinor(item.previous):null;}catch(error){throw fieldProblem(error.message,field('previous'));}
-     if(previous!=null&&previous<=price)throw fieldProblem('O preço anterior deve ser superior ao actual.',field('previous'));
-     const quantity=item.quantity===''?null:Number(item.quantity);
-     if(quantity!==null&&(!Number.isInteger(quantity)||quantity<0||quantity>1000000000)){
-       throw fieldProblem('Indica uma quantidade inteira igual ou superior a zero.',field('quantity'));
-     }
-     return {price_minor:price,previous_price_minor:previous,stock_quantity:quantity,in_stock:item.in_stock};
+   const active=activeVariants();
+   if(model.variantsEnabled&&!active.length){
+     throw fieldProblem('Adiciona pelo menos uma variante.',q('editorAddVariant'));
    }
-   const variants=model.variants.map((variant,index)=>{
+
+   const commonCard=q('editorPrices').firstElementChild;
+   function itemData(item,card){
+     const field=key=>card.querySelector('[data-product-value="'+key+'"]');
+     const ownPrice=item.price.trim();
+     const regularField=(ownPrice||item===model)?field('price'):commonCard.querySelector('[data-product-value="price"]');
+     let regular;
+     try{regular=parsePriceMinor(ownPrice||model.price.trim()||'0');}
+     catch(error){throw fieldProblem(error.message,regularField);}
+     if(status==='published'&&regular<=0)throw fieldProblem('Indica um preço superior a zero.',regularField);
+     let price=regular,previous=null,start=null,end=null;
+     if(item.promotionEnabled){
+       const value=field('promoPrice');
+       if(!item.promoPrice)throw fieldProblem('Indica o preço promocional.',value);
+       try{price=parsePriceMinor(item.promoPrice);}
+       catch(error){throw fieldProblem(error.message,value);}
+       if(status==='published'&&price<=0)throw fieldProblem('Indica um preço promocional superior a zero.',value);
+       if(price>=regular)throw fieldProblem('O preço promocional deve ser inferior ao preço normal.',value);
+       previous=regular;
+       function readTime(key,end=false){
+         const date=field(key+'Date');
+         const time=field(key+'Time');
+         if(time.validity.badInput)throw fieldProblem('Indica uma hora válida.',time);
+         try{
+           if(date.validity.badInput)throw new Error('Indica uma data válida.');
+           return promotionInstant(date.value,time.value,end);
+         }catch(error){throw fieldProblem(error.message,date);}
+       }
+       start=readTime('promotionStart');
+       end=readTime('promotionEnd',true);
+       if(start&&end&&Date.parse(end)<=Date.parse(start)){
+         throw fieldProblem('O fim deve ser depois do início da promoção.',field('promotionEndDate'));
+       }
+     }
+     return {
+       price_minor:price,previous_price_minor:previous,promotion_starts_at:start,promotion_ends_at:end,
+       stock_quantity:item.quantity===''?null:Number(item.quantity),in_stock:item.in_stock
+     };
+   }
+   const variants=active.map((variant,index)=>{
      const row=q('editorVariants').children[index];
      const name=variant.option_name.trim();
      const key=name.toLocaleLowerCase('pt');
      if(!name||names.has(key))throw fieldProblem('Cada opção precisa de um nome único.',row.querySelector('input'));
      names.add(key);
-     const card=quickEdit?q('editorPrices').children[index]:row;
+     const card=quickEdit?q('editorPrices').children[index+1]:row.querySelector('.editor-price-card');
      return {id:variant.id,option_name:name,...itemData(variant,card),
        track_quantity:variant.quantity!=='',image_path:model.images.find(photo=>photo.key===variant.imageKey)?.path||null};
    });
-   const price=variants.length?{price_minor:0,previous_price_minor:null,stock_quantity:null,in_stock:true}:itemData(model,q('editorPrices'));
+   const price=variants.length?{price_minor:0,previous_price_minor:null,promotion_starts_at:null,promotion_ends_at:null,stock_quantity:null,in_stock:true}:itemData(model,commonCard);
    return {title:model.title,category_id:model.category_id,description:model.description,
      condition:model.condition,attributes:model.attributes,status,...price,images:model.images.map(photo=>photo.path),variants};
  }
  async function save(status){if(busy||!model)return;if(!navigator.onLine){fail('Sem ligação. As alterações continuam neste formulário. Liga-te e tenta novamente.');return;}let document;try{document=uncertain?.document||documentData(status);}catch(e){reportProblem(e);return;}lock(true);fail('');setButtonBusy(q(status==='draft'&&!q('editorSaveDraft').hidden?'editorSaveDraft':'btnSubmitNewProduct'),true);let accepted=false;const wasPublished=model.status==='published';
   try{if(!uncertain){for(let i=0;i<model.images.length;i++){const photo=model.images[i];if(photo.path)continue;notice(q('newProductProgress'),'A enviar fotografia '+(i+1)+' de '+model.images.length+'…');const extension=validateProductPhoto(photo.file);const {data:auth,error:authError}=await platform.auth.getUser();if(authError||!auth.user)throw authError||Error('Sessão expirada.');const path=auth.user.id+'/'+storeId+'/'+model.id+'/'+crypto.randomUUID()+'.'+extension;const {error}=await platform.storage.from('kg-product-images').upload(path,photo.file,{upsert:false,contentType:photo.file.type});if(error)throw fieldProblem('Não foi possível enviar a fotografia '+(i+1)+'. Tenta novamente.',q('btnChooseNewProdImg'));photo.path=path;}document=documentData(status);uncertain={request:crypto.randomUUID(),document,productId:model.id,expected:model.updated_at||null};}
-   notice(q('newProductProgress'),status==='published'?'A publicar…':'A guardar…');const {data,error}=await platform.rpc('kg_save_catalogue_product',{p_request_id:uncertain.request,p_store_id:storeId,p_product_id:uncertain.productId,p_expected_updated_at:uncertain.expected,p_document:uncertain.document});if(error)throw error;accepted=true;model.updated_at=data.updated_at;model.status=data.status;dirty=false;uncertain=null;notice(q('newProductProgress'),'');const id=model.id,sid=storeId;const message=quickEdit?'Preço e stock guardados.':data.status==='published'?(wasPublished?'Alterações guardadas.':'Produto publicado.'):data.status==='archived'?'Produto arquivado.':'Rascunho guardado.';await close(true);
+   notice(q('newProductProgress'),status==='published'?'A publicar…':'A guardar…');const {data,error}=await platform.rpc('kg_save_catalogue_product',{p_request_id:uncertain.request,p_store_id:storeId,p_product_id:uncertain.productId,p_expected_updated_at:uncertain.expected,p_document:uncertain.document});if(error)throw error;accepted=true;model.updated_at=data.updated_at;model.status=data.status;dirty=false;uncertain=null;notice(q('newProductProgress'),'');const id=model.id,sid=storeId;const message=quickEdit?'Preço guardado.':data.status==='published'?(wasPublished?'Alterações guardadas.':'Produto publicado.'):data.status==='archived'?'Produto arquivado.':'Rascunho guardado.';await close(true);
    let leftFilter=false;
    try{leftFilter=await hooks.onPublished(id,sid,{newPublication:!quickEdit&&!wasPublished&&data.status==='published',quickEdit});}
    finally{hooks.onFeedback(leftFilter?'Alterações guardadas. O produto saiu do filtro actual.':message);}
@@ -594,7 +700,7 @@ export function setupProductComposer(hooks){
    if(uncertain){void save(uncertain.document.status);return;}
    if(quickEdit||!guided){void save(model.status);return;}
    const status=hooks.getStore()?.status==='approved'?'published':'draft';
-   if(stage>1&&(status==='draft'||reviewing||!model.variants.length)){void save(status);return;}
+   if(stage>1&&(status==='draft'||reviewing||!activeVariants().length)){void save(status);return;}
    try{
      if(stage===1){
        validateIdentity();

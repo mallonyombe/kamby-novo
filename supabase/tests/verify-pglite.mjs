@@ -44,6 +44,8 @@ try {
  console.log('PASS: anonymous discovery, pagination past 60, scoped search and available variant prices');
  await db.exec(read('./archived-product-delete.sql'));
  await db.exec(read('./category-variant-axes.sql'));
+ await db.exec(read('./preconfigured-category-catalogue.sql'));
+ console.log('PASS: category presets, accent-insensitive search, active/inactive roles and store assignment');
  console.log('PASS: category creation requires MFA, variants have a valid axis, deletion preserves products');
  console.log('PASS: unpublished product deletion, access, stale writes and retry');
  console.log('PASS: versioned consent, private drafts and seller self-publication');
@@ -53,6 +55,8 @@ try {
  console.log('PASS: administrator detail requires MFA, valid pagination and existing identity');
  await db.exec(read('./admin-profile-privacy.sql'));
  console.log('PASS: delegated user detail keeps operational data and withholds contacts, sign-in timestamp and profile photo');
+ await db.exec(read('./scheduled-promotions.sql'));
+ console.log('PASS: scheduled promotion boundaries, editor retries, public prices, cart and checkout');
  await db.exec(read('./registration-privacy.sql'));
  console.log('PASS: signup age and versions, immutable proof, export isolation, marketing choices and report validation');
  const tables=await db.query("select count(*)::int as rows from public.kg_stores");

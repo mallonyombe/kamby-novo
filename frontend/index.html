@@ -1928,6 +1928,7 @@
     import {setupProductActionSheet} from "./product-action-sheet.js";
     import {variantLimit,quantityLimit,addCartLine,storeCartGroup,storagePathFromSignedUrl,sortVariantsForDisplay,readCartFromStorage} from "./commerce-domain.js";
     import { cardOffer } from "./commerce-domain.js";
+    import {effectiveCataloguePath} from "./catalogue-promotions.js";
     import { normaliseSearch, matchCatalogue, fetchAllPages, normalisePriceFilter } from "./search-engine.js";
     import {editorContractReady,baselineCataloguePath} from "./catalogue-contract.js";
     import {enableModalDismiss} from './modal-dismiss.js';
@@ -2049,15 +2050,28 @@
         }, extraHeaders || {});
       }
 
+      let effectivePricesAvailable=true;
       async function catalogueRequest(path, options) {
-        if(!await editorContractReady())path=baselineCataloguePath(path);
+        const editorReady=await editorContractReady();
+        if(!editorReady)path=baselineCataloguePath(path);
+        const effective=editorReady&&effectivePricesAvailable?effectiveCataloguePath(path):path;
         const requestOptions = Object.assign({cache:'no-store'}, options || {});
         requestOptions.headers = apiHeaders(requestOptions.headers);
         const controller=requestOptions.signal?null:new AbortController();if(controller)requestOptions.signal=controller.signal;
         const timeout=controller?setTimeout(()=>controller.abort(),15000):null;
-        try{const response = await fetch(KAMBY_CATALOG.supabaseUrl + path, requestOptions);
-        if (!response.ok) throw new Error('Falha no catálogo: ' + response.status);
-        return await response.json();}finally{if(timeout)clearTimeout(timeout);}
+        const request=url=>fetch(KAMBY_CATALOG.supabaseUrl+url,requestOptions);
+        try{
+          let response=await request(effective);
+          if(effective!==path&&response.status===400){
+            const failure=await response.clone().json().catch(()=>null);
+            if(['42703','PGRST204'].includes(failure?.code)&&JSON.stringify(failure).includes('effective_')){
+              effectivePricesAvailable=false;
+              response=await request(path);
+            }
+          }
+          if(!response.ok)throw new Error('Falha no catálogo: '+response.status);
+          return await response.json();
+        }finally{if(timeout)clearTimeout(timeout);}
       }
 
       const availabilityChecks = new WeakMap();

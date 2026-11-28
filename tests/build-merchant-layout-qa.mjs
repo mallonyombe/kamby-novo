@@ -1,2 +1,94 @@
 import {writeFileSync} from 'node:fs';
-writeFileSync('dist/merchant-layout-qa.html',"<!doctype html><meta charset=\"utf-8\"><title>Kamby · Revisão da gestão</title><style>body{margin:18px;background:#ddd;font:13px system-ui}button{padding:10px}main{display:flex;gap:18px;align-items:start}iframe{width:390px;height:844px;border:0;flex:none}pre{max-width:600px;white-space:pre-wrap}</style><button id=\"run\">Verificar gestão</button><main><iframe title=\"Gestão móvel\" src=\"/merchant-qa.html#lojista/s1\"></iframe><pre>Pronto</pre></main><script type=\"module\">\nconst frame=document.querySelector('iframe'),out=document.querySelector('pre');const pause=ms=>new Promise(r=>setTimeout(r,ms));const doc=()=>frame.contentDocument;let report=[];\nasync function until(fn){const start=Date.now();while(!fn()){if(Date.now()-start>15000)throw Error('Tempo excedido');await pause(50);}await pause(80);}\nfunction check(ok,label){report.push((ok?'PASSOU ':'FALHOU ')+label);out.textContent=report.join('\\n');if(!ok)throw Error(label);}\nconst click=selector=>doc().querySelector(selector).click();\ndocument.querySelector('#run').onclick=async()=>{report=[];try{\nawait until(()=>doc()?.querySelectorAll('.mw-product-row').length===2);\ncheck(doc().querySelectorAll('.merchant-own-nav button').length===4,'quatro destinos separados do comprador');\nfor(const theme of ['light','dark']){doc().documentElement.dataset.theme=theme;for(const width of [320,390,1040]){frame.style.width=width+'px';await pause(120);check(doc().documentElement.scrollWidth<=doc().documentElement.clientWidth,'resumo sem transbordo: '+theme+', '+width+' px');}}frame.style.width='390px';\ncheck(['kpiProductsCount','kpiUnavailable','kpiStoreViews','kpiWhatsAppClicks'].every(id=>doc().querySelector('#'+id))&&!doc().querySelector('.mw-summary .mw-kpis'),'indicadores compactos, sem cartões grandes');\nclick('[data-destination=\"produtos\"]');check(doc().querySelector('.mw-store-identity').offsetHeight===0,'catálogo não repete o bloco de identidade');\ncheck(doc().querySelector('#floatingNavbar').classList.contains('is-hidden'),'não mostra navegação do comprador no painel');\nconst search=doc().querySelector('#merchantSearch');search.value='Arroz';search.dispatchEvent(new Event('input',{bubbles:true}));await until(()=>doc().querySelectorAll('.mw-product-row').length===1);\ncheck(doc().querySelector('.mw-product-row').textContent.includes('Arroz'),'pesquisa actua apenas no catálogo atribuído');\nclick('.mw-product-name');await until(()=>doc().querySelector('#modalNewProduct').open&&!doc().querySelector('#selectNewProdCat').disabled);\ncheck(doc().querySelectorAll('.editor-steps button').length===5,'editor organizado em cinco etapas');\nconst steps=()=>[...doc().querySelectorAll('.editor-steps button')];steps()[3].click();\ncheck(doc().querySelectorAll('.editor-price-card').length===3,'três pesos com preço independente');\ncheck([...doc().querySelectorAll('.editor-price-details')].every(n=>!n.open),'promoção e quantidade ficam num detalhe contextual');\nfor(const width of [320,390,1040]){frame.style.width=width+'px';await pause(120);check(doc().querySelector('#modalNewProduct').scrollWidth<=doc().querySelector('#modalNewProduct').clientWidth,'editor sem transbordo em '+width+' px');}frame.style.width='390px';\nconst price=doc().querySelector('.editor-money-field input');price.value='85,25';price.dispatchEvent(new Event('input',{bubbles:true}));click('#editorSaveDraft');await until(()=>!doc().querySelector('#modalNewProduct').open);\ncheck(doc().querySelector('#merchantFeedback').textContent.includes('Rascunho')&&doc().querySelector('.mw-product-price').textContent.includes('85,25'),'gravação pelo formulário preserva preço com cêntimos');\nclick('[data-destination=\"actividade\"]');await until(()=>doc().querySelector('.mw-activity-svg'));\ncheck(doc().querySelectorAll('.mw-series').length===2,'duas séries no gráfico de actividade');\nconst days=doc().querySelectorAll('.mw-chart-days button');check(days.length===7,'sete dias consultáveis por toque ou teclado');days[0].click();\ncheck(days[0].getAttribute('aria-pressed')==='true'&&doc().querySelector('.mw-chart-selection').textContent.includes('0 visitas'),'selecção de dia actualiza valores e marcador');\nclick('[data-destination=\"loja\"]');check(doc().querySelector('#merchantStoreForm').elements.name.value==='Moheim Studio','dados da loja agrupados em formulário próprio');\ncheck(doc().querySelectorAll('.mw-hours').length===7,'horários para os sete dias');\nclick('[data-destination=\"produtos\"]');click('#btnOpenNewProductModal');await until(()=>doc().querySelector('#modalNewProduct').open&&!doc().querySelector('#selectNewProdCat').disabled);\nclick('#editorSaveDraft');check(!doc().querySelector('#newProductError').hidden,'rascunho exige nome e categoria válidos');\nclick('#btnCloseNewProductModal');out.textContent+='\\nCONCLUÍDO: '+report.length+' verificações.';\n}catch(e){out.textContent+='\\nERRO: '+e.message;}};\n</script>\n");
+
+writeFileSync('dist/merchant-layout-qa.html', String.raw`<!doctype html>
+<meta charset="utf-8">
+<title>Kamby · Revisão do catálogo</title>
+<style>body{margin:18px;background:#ddd;font:13px system-ui}button{padding:10px}main{display:flex;gap:18px;align-items:start}iframe{width:390px;height:844px;border:0;flex:none}pre{max-width:650px;white-space:pre-wrap}</style>
+<button id="run">Verificar catálogo</button>
+<main><iframe title="Catálogo móvel" src="/merchant-qa.html#lojista/s1"></iframe><pre>Pronto</pre></main>
+<script type="module">
+const frame=document.querySelector('iframe'),out=document.querySelector('pre');
+const pause=ms=>new Promise(resolve=>setTimeout(resolve,ms));
+const doc=()=>frame.contentDocument, find=selector=>doc()?.querySelector(selector);
+const report=[];
+async function until(predicate){
+  const start=Date.now();
+  while(!predicate()){
+    if(Date.now()-start>15000)throw Error('Tempo excedido');
+    await pause(50);
+  }
+}
+function check(ok,label){
+  report.push((ok?'PASSOU ':'FALHOU ')+label);
+  out.textContent=report.join('\n');
+  if(!ok)throw Error(label);
+}
+const click=selector=>find(selector).click();
+const fill=(selector,value)=>{
+  const field=find(selector);
+  field.value=value;
+  field.dispatchEvent(new Event('input',{bubbles:true}));
+};
+document.querySelector('#run').onclick=async()=>{
+  report.length=0;
+  try{
+    await until(()=>find('#kpiProductsCount')?.textContent==='2');
+    check(doc().querySelectorAll('.merchant-own-nav button').length===4,'quatro destinos próprios do lojista');
+    click('[data-destination="produtos"]');
+    await until(()=>doc()?.querySelectorAll('.mw-product-row').length===2);
+    check(find('#floatingNavbar').classList.contains('is-hidden'),'painel recolhe a navegação do comprador');
+    click('#merchantFilterButton');
+    check(!find('.mw-filter-dialog select[name="available"]'),'catálogo sem filtro de stock');
+    click('.mw-filter-dialog header button');
+
+    click('[data-product-id="p1"] .mw-row-stock');
+    const editor=find('#modalNewProduct');
+    check(editor.open&&find('#modalNewProdTitle').textContent.includes('Preço'),'Editar preço abre o editor rápido');
+    check(!find('.editor-stock-fields'),'editor rápido sem campos de stock');
+    const promotion='#editorPrices input[role="switch"]';
+    check(!find(promotion).checked&&find('.editor-promo-fields').hidden,'preço abre com configuração da promoção recolhida');
+    click(promotion);
+    check(!find('.editor-promo-fields').hidden,'interruptor revela preço promocional');
+    click('.editor-price-details summary');
+    const start=new Date(Date.now()+2*86400000).toISOString().slice(0,10);
+    const end=new Date(Date.now()+3*86400000).toISOString().slice(0,10);
+    fill('[data-product-value="promoPrice"]','100,25');
+    fill('[data-product-value="promotionStartDate"]',start);
+    fill('[data-product-value="promotionEndDate"]',end);
+
+    for(const theme of ['light','dark']){
+      doc().documentElement.dataset.theme=theme;
+      for(const width of [320,390,1040]){
+        frame.style.width=width+'px';
+        await pause(120);
+        check(editor.scrollWidth<=editor.clientWidth,'editor sem transbordo, '+theme+', '+width+' px');
+      }
+    }
+    frame.style.width='390px';
+    click('#btnSubmitNewProduct');
+    await until(()=>!editor.open&&doc().documentElement.dataset.qaProduct);
+    const saved=JSON.parse(doc().documentElement.dataset.qaProduct);
+    check(saved.price_minor===10025&&saved.previous_price_minor===12500,'promoção enviada com os dois preços em cêntimos');
+    check(saved.promotion_starts_at?.endsWith('22:00:00.000Z')&&saved.promotion_ends_at?.endsWith('22:00:00.000Z'),'intervalo por dias convertido da hora de Moçambique');
+    await until(()=>find('[data-product-id="p1"] .mw-product-price')?.textContent.includes('125'));
+    check(true,'catálogo conserva o preço normal antes do início');
+
+    fill('#merchantSearch','Arroz');
+    await until(()=>doc().querySelectorAll('.mw-product-row').length===1);
+    check(find('.mw-product-name').textContent==='Arroz','pesquisa actua apenas no catálogo atribuído');
+    click('.mw-product-entry');
+    await until(()=>editor.open&&!find('#selectNewProdCat').disabled);
+    check(find('#editorEnableVariants').checked&&doc().querySelectorAll('#editorVariants .editor-variant').length===3,'variantes existentes continuam activas com os respectivos preços');
+    check(!find('.editor-stock-fields'),'edição completa também omite stock');
+    click('#btnCloseNewProductModal');
+    click('[data-destination="actividade"]');
+    await until(()=>find('.mw-activity-svg'));
+    check(doc().querySelectorAll('.mw-series').length===2,'gráfico inclui visitas e cliques');
+    click('[data-destination="loja"]');
+    check(find('#merchantStoreForm').elements.name.value==='Moheim Studio','perfil da loja conserva o formulário próprio');
+    check(doc().querySelectorAll('.mw-hours').length===7,'formulário mantém horário semanal');
+    out.textContent+='\nCONCLUÍDO: '+report.length+' verificações.';
+  }catch(error){out.textContent+='\nERRO: '+error.message;}
+};
+</script>
+`);

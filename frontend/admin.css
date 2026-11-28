@@ -287,3 +287,79 @@ html:has(.admin-shell[data-subpage="true"]) {overscroll-behavior-x:contain}
 .dialog-actions { flex-wrap: wrap; }
 .store-section-link:active,
 .admin-product-row:active { background: var(--input); }
+
+.category-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+  padding-inline: 4px;
+  border-bottom: 1px solid var(--line);
+}
+.category-link {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 60px;
+  min-width: 0;
+  padding-block: 8px;
+  border-radius: 8px;
+  text-decoration: none;
+}
+.category-link .row-title, .category-link .row-sub { display: block; }
+.category-link svg { width: 16px; height: 16px; color: var(--muted); }
+.category-switch {
+  display: grid;
+  place-items: center;
+  width: 52px;
+  min-height: 44px;
+  padding: 0;
+  border-radius: 8px;
+}
+.category-switch-track {
+  display: block;
+  width: 42px;
+  height: 24px;
+  padding: 2px;
+  border: 1px solid var(--muted);
+  border-radius: 999px;
+  color: var(--text);
+  background: var(--input);
+}
+.category-switch-track::before {
+  display: block;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: currentColor;
+  content: "";
+}
+.category-switch[aria-checked="true"] .category-switch-track {
+  border-color: var(--brand);
+  background: var(--brand);
+  color: var(--surface);
+}
+.category-switch[aria-checked="true"] .category-switch-track::before { transform: translateX(18px); }
+.category-switch[aria-disabled="true"] { cursor: progress; }
+.category-filters { margin-block: 0 12px; }
+@media (hover: hover) {
+  .category-link:hover { background: var(--input); }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .category-switch-track::before { transition: transform 150ms ease; }
+}
+@media (forced-colors: active) {
+  .category-switch[aria-checked="true"] .category-switch-track {
+    forced-color-adjust: none;
+    border-color: Highlight;
+    color: HighlightText;
+    background: Highlight;
+  }
+}
+.category-group-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--muted);
+  padding: 14px 4px 5px;
+}
+.category-group + .category-group { margin-block-start: 10px; }

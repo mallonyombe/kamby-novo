@@ -32,11 +32,11 @@ const fixture = function () {
   let wrote=0;
   const uploads=new Map(),created=new Map();
   let uncertainReturned=false;
-  const categories=[{id:'aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee',name:'Casa & Decoração'},{id:'bbbbbbbb-cccc-4ddd-8eee-ffffffffffff',name:'Mercearia'}];
+  const categories=[{id:'aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee',name:'Casa & Decoração'},{id:'bbbbbbbb-cccc-4ddd-8eee-ffffffffffff',name:'Mercearia',variant_axis:'weight'}];
   const json=(value,status=200,extra={})=>new Response(JSON.stringify(value),{status,headers:{'Content-Type':'application/json',...extra}});
   const baseFetch=window.fetch.bind(window);
   window.fetch=async(input,options={})=>{
-    const url=new URL(typeof input==='string'?input:input.url,location.href);
+    const url=new URL(typeof input==='string'||input instanceof URL?input:input.url,location.href);
     if(!url.hostname.endsWith('.supabase.co')) return baseFetch(input,options);
     let body={};try{body=JSON.parse(options.body||'{}');}catch{}
     const path=url.pathname;
@@ -53,7 +53,7 @@ if(path.endsWith('/rpc/kg_account_context'))return json({user_id:user.id,roles:[
       signedIn=true;return json(session);
     }
     if(path==='/auth/v1/logout') {if(url.searchParams.get('scope')!=='others')signedIn=false;return new Response(null,{status:204});}
-    if(path.endsWith('/kg_store_categories'))return json(categories.map(category=>({category:{...category,is_active:true}})));
+    if(path.endsWith('/kg_store_categories'))return json(mode==='no-categories'?[]:categories.map(category=>({category:{...category,is_active:true}})));
     if(path.endsWith('/kg_categories')) return json(mode==='no-categories'?[]:categories);
     if(path.endsWith('/rpc/kg_product_upload_context')) {
       if(!signedIn || body.p_store_id!=='s1' || mode==='unassigned') return json({code:'42501',message:'Denied'},403);
@@ -88,7 +88,9 @@ if(path.endsWith('/rpc/kg_account_context'))return json({user_id:user.id,roles:[
       if(mode==='create-error')return json({code:'22023',message:'Rejeitado'},400);
       if(mode==='save-error')return json({code:'40001',message:'Concurrent update'},409);
       if(created.has(body.p_request_id))return json(created.get(body.p_request_id));
-      const doc=body.p_document;let article=products.find(p=>p.id===body.p_product_id);
+      const doc=body.p_document;
+      document.documentElement.dataset.qaProduct=JSON.stringify(doc);
+      let article=products.find(p=>p.id===body.p_product_id);
       if(!article){article=product(body.p_product_id,doc.title,own,doc.price_minor,doc.status);products.unshift(article);}
       Object.assign(article,doc,{updated_at:now(),images:doc.images.map((storage_path,sort_order)=>({storage_path,sort_order})),category:categories.find(c=>c.id===doc.category_id),stock_status:doc.in_stock?'available':'out'});
       const result={id:article.id,status:article.status,updated_at:article.updated_at};created.set(body.p_request_id,result);
@@ -145,6 +147,8 @@ if(path.endsWith('/rpc/kg_account_context'))return json({user_id:user.id,roles:[
       return json(rows);
     }
     if(path.endsWith('/kg_products')) {
+      if(options.method==='HEAD'&&mode==='summary-loading')return new Promise(()=>{});
+      if(options.method==='HEAD'&&mode==='summary-error')return new Response(null,{status:503});
       if(mode==='baseline'&&url.searchParams.get('select')==='moderation_status')return json({code:'42703',message:'column moderation_status does not exist'},400);
       let rows=products;
       if(url.searchParams.has('store_id')) rows=rows.filter(p=>'eq.'+p.store_id===url.searchParams.get('store_id'));
@@ -155,13 +159,15 @@ if(path.endsWith('/rpc/kg_account_context'))return json({user_id:user.id,roles:[
       if(url.searchParams.get('moderation_status')==='eq.blocked')rows=rows.filter(p=>p.moderation_status==='blocked');
       if(url.searchParams.get('stock_status')==='eq.out')rows=rows.filter(p=>p.stock_status==='out');
       const offset=Number(url.searchParams.get('offset')||0),limit=Number(url.searchParams.get('limit')||1000);
-      return json(rows.slice(offset,offset+limit),200,{'Content-Range':offset+'-'+(offset+rows.length-1)+'/'+rows.length});
+      const page=rows.slice(offset,offset+limit);
+      const headers={'Content-Range':page.length?offset+'-'+(offset+page.length-1)+'/'+rows.length:'*/'+rows.length};
+      return options.method==='HEAD'?new Response(null,{headers}):json(page,200,headers);
     }
     return json([]);
   };
 };
 const script='<script>('+fixture.toString()+')();<\/script>';
-fs.writeFileSync('dist/merchant-qa.html',fs.readFileSync('frontend/index.html','utf8').replace('<head>','<head>'+script));
+fs.writeFileSync('dist/merchant-qa.html',fs.readFileSync('frontend/index.html','utf8').replace('<head>',()=>'<head>'+script));
 console.log('Isolated merchant browser fixture: /merchant-qa.html');
 
 fs.writeFileSync('dist/merchant-mobile-qa.html',`<!doctype html><html><head><meta name="viewport" content="width=device-width,initial-scale=1"><title>Kamby · Verificação mobile</title><style>body{margin:0;background:#ddd;display:flex;justify-content:center;padding:20px;}iframe{width:390px;height:844px;border:0;background:white;box-shadow:0 4px 35px #0002;border-radius:24px;}</style></head><body><iframe title="Kamby mobile" src="/merchant-qa.html#lojista/s1"></iframe></body></html>`);
