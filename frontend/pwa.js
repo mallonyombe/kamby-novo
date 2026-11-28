@@ -3,6 +3,11 @@ import { trackAnalytics } from './analytics.js';
 const invite = document.querySelector('#kambyInstallInvite');
 const accept = document.querySelector('#kambyInstallAccept');
 const dismiss = document.querySelector('#kambyInstallDismiss');
+const guide = document.querySelector('#installGuide');
+const guideClose = document.querySelector('#closeInstallGuide');
+const ios = /iPhone|iPad|iPod/.test(navigator.userAgent || '') ||
+  (/Macintosh/.test(navigator.userAgent || '') && navigator.maxTouchPoints > 1);
+guideClose?.addEventListener('click', () => guide.close());
 const standalone = matchMedia('(display-mode: standalone)');
 const dismissedKey = 'kamby:install-invite-dismissed';
 let installPrompt;
@@ -15,7 +20,7 @@ try {
 
 function reflectInstallation() {
   const hasApp = installed || standalone.matches || navigator.standalone === true;
-  invite.hidden = hasApp || !installPrompt || dismissed;
+  invite.hidden = hasApp || (!installPrompt && !ios) || dismissed;
 }
 
 function dismissInvite() {
@@ -27,6 +32,7 @@ function dismissInvite() {
 
 async function requestInstallation() {
   if (invite.hidden) return;
+  if (!installPrompt && ios) { guide.showModal(); return; }
   const prompt = installPrompt;
   installPrompt = undefined;
   reflectInstallation();
@@ -39,7 +45,10 @@ async function requestInstallation() {
       dismissInvite();
     }
   } catch {
-    document.querySelector('#floatingNavbar a')?.focus({ preventScroll: true });
+    installPrompt = prompt;
+    window.dispatchEvent(new CustomEvent('kamby:feedback', {detail:{
+      copy:'Não foi possível abrir a instalação. Tenta novamente.', tone:'error'
+    }}));
   }
   reflectInstallation();
 }

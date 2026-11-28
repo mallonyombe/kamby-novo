@@ -1819,6 +1819,15 @@
       <div class="profile-notice" id="profileNotice" role="status" hidden></div>
       <button type="button" class="settings-text-action" id="btnRetryAccount" hidden>Tentar novamente</button>
       <div id="profileMerchantAccess" class="merchant-access-list" hidden><h2 class="profile-section-heading">A minha loja</h2><div id="profileMerchantStores"></div></div>
+    <div class="pwa-install-invite" id="kambyInstallInvite" hidden>
+      <button type="button" class="pwa-install-action" id="kambyInstallAccept">
+        <img src="pwa-192.png" alt="" width="28" height="28" />
+        <span>Instalar Kamby</span>
+      </button>
+      <button type="button" class="pwa-install-dismiss" id="kambyInstallDismiss" aria-label="Agora não">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg>
+      </button>
+    </div>
       <div id="settingsAccountMenu" hidden></div>
       <div id="profileWorkMenu" class="profile-menu-list" hidden></div><div class="profile-menu-list" id="settingsPublicMenu"></div>
       <div class="profile-menu-list settings-local-actions"><button type="button" class="profile-menu-item profile-sign-out" id="btnAccountSignOut" hidden><span class="profile-menu-label">Terminar sessão</span></button></div>
@@ -1834,15 +1843,11 @@
         </svg>Continuar com Google
       </button><span class="account-separator">ou</span></div><label for="accountIdentity">Telefone ou email</label><input id="accountIdentity" type="text" autocomplete="username" autocapitalize="none" spellcheck="false" enterkeyhint="next" required maxlength="254" /><label for="accountPassword">Palavra-passe</label><div class="account-password-wrap"><input id="accountPassword" type="password" autocomplete="current-password" enterkeyhint="go" aria-describedby="accountLoginError" required /><button type="button" id="btnShowAccountPassword" aria-label="Mostrar palavra-passe" aria-pressed="false"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/><path class="account-password-slash" d="m3 3 18 18" stroke-linecap="round"/></svg></button></div><p id="accountLoginError" class="field-error" role="alert" hidden></p><button type="button" class="settings-text-action" id="btnForgotPassword">Esqueci a palavra-passe</button><button class="merchant-primary-button" id="btnAccountSignIn" type="submit">Entrar</button><button type="button" class="settings-text-action" id="btnOpenRegistration">Criar conta</button></form>
     </div><p id="settingsScreenNotice" class="profile-notice" role="status" aria-live="polite" hidden></p></div></section>
-    <div class="pwa-install-invite" id="kambyInstallInvite" hidden>
-      <button type="button" class="pwa-install-action" id="kambyInstallAccept">
-        <img src="pwa-192.png" alt="" width="28" height="28" />
-        <span>Instalar Kamby</span>
-      </button>
-      <button type="button" class="pwa-install-dismiss" id="kambyInstallDismiss" aria-label="Agora não">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg>
-      </button>
-    </div>
+    <dialog id="installGuide" class="local-data-dialog" aria-labelledby="installGuideTitle">
+      <h2 id="installGuideTitle">Adicionar Kamby</h2>
+      <ol><li>Abre o Kamby no Safari.</li><li>Toca em Partilhar.</li><li>Escolhe Adicionar ao ecrã principal.</li><li>Activa Abrir como app, se aparecer, e toca em Adicionar.</li></ol>
+      <div class="local-dialog-actions"><button type="button" id="closeInstallGuide" autofocus>Fechar</button></div>
+    </dialog>
     <dialog id="accountSignOutDialog" class="local-data-dialog" aria-labelledby="accountSignOutTitle" aria-describedby="accountSignOutCopy">
       <form>
         <h2 id="accountSignOutTitle">Terminar sessão?</h2>
@@ -1874,12 +1879,7 @@
       </div>
     </section>
     <dialog id="clearLocalDataDialog" class="local-data-dialog" aria-labelledby="clearLocalDataTitle"><h2 id="clearLocalDataTitle">Limpar dados locais?</h2><p>O carrinho, os guardados de visitante e as pesquisas recentes serão removidos deste dispositivo. A tua conta mantém a sessão iniciada.</p><div class="local-dialog-actions"><button type="button" id="btnCancelLocalClear" autofocus>Cancelar</button><button type="button" id="btnConfirmLocalClear">Limpar dados</button></div></dialog>
-    <footer class="legal-footer kamby-legal-footer" aria-label="Informações legais">
-      <a href="./legal.html#termos">Termos de utilização</a>
-      <a href="./legal.html#privacidade">Política de privacidade</a>
-      <a href="#definicoes/privacidade">Definições de privacidade</a>
-      <a href="./legal.html#denuncias">Denúncias</a>
-    </footer>
+
   </main>
 
   <!-- ==========================================================================
