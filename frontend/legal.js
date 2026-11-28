@@ -1,6 +1,22 @@
 import { loadAccountTerms, showAccountTerms } from './account-terms.js';
 import { platform } from './platform.js';
 
+const back=document.getElementById('legalBack');
+back.onclick=()=>{
+ const ref=document.referrer;
+ if(ref && new URL(ref).origin===location.origin && new URL(ref).pathname!==location.pathname && history.length>1) history.back();
+ else location.replace('./#perfil');
+};
+function selectDocument(){
+ const id=location.hash.slice(1)==='privacidade'?'privacidade':'termos';
+ for(const section of document.querySelectorAll('main > section'))section.hidden=section.id!==id;
+ const title=id==='termos'?'Termos de utilização':'Política de privacidade';
+ document.getElementById('legalTitle').textContent=title;
+ document.title=title+' · Kamby';
+ window.scrollTo(0,0);
+}
+window.addEventListener('hashchange',selectDocument);
+selectDocument();
 const status = document.getElementById('legalTermsStatus');
 const version = new URLSearchParams(location.search).get('versao');
 try {
