@@ -1,0 +1,54 @@
+.legal-page {
+  font: 1rem/1.6 system-ui, sans-serif;
+  margin: 0 auto;
+  padding: 1.25rem;
+  max-width: 50rem;
+  color: var(--ui-text);
+  background: var(--ui-page);
+}
+.legal-page section { scroll-margin-top: 1rem; margin-block: 1.75rem; }
+.legal-footer { display: flex; flex-wrap: wrap; gap: .4rem 1rem; padding: 1rem; }
+.legal-footer a, .legal-page a, .registration-choice a, .measurement-banner a {
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: .2em;
+}
+.registration-fields { border: 0; margin: 0; padding: 0; min-inline-size: 0; }
+.registration-fields:not([hidden]) { display: grid; gap: .75rem; }
+.registration-choice { display: flex; gap: .65rem; align-items: baseline; line-height: 1.45; }
+.registration-choice input { flex: 0 0 auto; inline-size: 1.15rem; block-size: 1.15rem; accent-color: var(--ui-selection); }
+.registration-choice small { display: block; }
+.measurement-banner {
+  margin-inline: auto;
+  padding: .75rem 1rem;
+  width: min(100%, 50rem);
+  box-sizing: border-box;
+  color: var(--ui-text);
+  background: var(--ui-surface);
+  border-block-end: 1px solid var(--ui-line);
+}
+.measurement-banner h2 { margin: 0; font-size: 1rem; }
+.measurement-banner p { margin: .25rem 0; }
+.measurement-actions { display: flex; flex-wrap: wrap; gap: .5rem; }
+.measurement-actions button { flex: 1 1 max-content; min-block-size: 44px; }
+.kamby-legal-footer { margin-bottom: 5rem; }
+
+.settings-field select, .settings-field textarea {
+  display: block;
+  width: 100%;
+  min-block-size: var(--ui-target);
+  margin-block-start: .35rem;
+  padding: .5rem .75rem;
+  color: var(--ui-text);
+  background: var(--ui-surface);
+  border: 1px solid var(--ui-line);
+  font: inherit;
+  font-size: 1rem;
+}
+.legal-footer :focus-visible, .measurement-banner :focus-visible,
+.registration-fields :focus-visible, #productReport :focus-visible {
+  outline: 2px solid var(--ui-focus);
+  outline-offset: 3px;
+}
+
+.privacy-actions > .settings-text-action { display: block; padding-inline: 1rem; }

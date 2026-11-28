@@ -1,6 +1,8 @@
 const measurementId = 'G-XWTGWKM4XH';
 const productionHost = 'kambymz.vercel.app';
 const preferenceKey = 'kamby:analytics';
+const scopeKey = 'kamby:analytics-scope';
+const currentScope = 'catalogue-and-google-v1';
 const disableKey = 'ga-disable-' + measurementId;
 const analyticsCookies = ['_ga', '_ga_' + measurementId.slice(2)];
 const deniedConsent = {
@@ -12,18 +14,26 @@ const deniedConsent = {
 const eventNames = new Set(['page_view', 'view_item', 'view_store', 'add_to_cart', 'whatsapp_contact', 'pwa_install']);
 let preferenceWriteFailed = false;
 
-export function analyticsAllowed() {
-  if (preferenceWriteFailed) return false;
+export function analyticsChoice() {
+  if (preferenceWriteFailed) return null;
   try {
-    return localStorage.getItem(preferenceKey) === 'allow';
+    const choice = localStorage.getItem(preferenceKey);
+    if (choice === 'deny') return false;
+    if (choice === 'allow' && localStorage.getItem(scopeKey) === currentScope) return true;
   } catch {
-    return false;
+    return null;
   }
+  return null;
+}
+
+export function analyticsAllowed() {
+  return analyticsChoice() === true;
 }
 
 export function setAnalyticsAllowed(allowed) {
   try {
     localStorage.setItem(preferenceKey, allowed ? 'allow' : 'deny');
+    if (allowed) localStorage.setItem(scopeKey, currentScope);
   } catch (error) {
     preferenceWriteFailed = true;
     syncAnalytics();
@@ -31,6 +41,33 @@ export function setAnalyticsAllowed(allowed) {
   }
   preferenceWriteFailed = false;
   syncAnalytics();
+  window.dispatchEvent?.(new Event('kamby:measurement-choice'));
+}
+
+export function bindMeasurementChoice(banner) {
+  const notice = banner.querySelector('[role="status"]');
+  function refresh() {
+    banner.hidden = analyticsChoice() !== null;
+  }
+  function choose(allowed) {
+    try {
+      setAnalyticsAllowed(allowed);
+      if (!allowed) {
+        localStorage.setItem('kamby:search-history', 'off');
+        for (const key of ['kamby:recent-searches', 'kamby:audience-device', 'kamby:audience-session']) {
+          localStorage.removeItem(key);
+        }
+        window.dispatchEvent(new Event('kamby:search-history'));
+      }
+    } catch {
+      notice.textContent = 'Não foi possível guardar a escolha. A medição continua desligada.';
+    }
+  }
+  banner.querySelector('#rejectMeasurement').onclick = () => choose(false);
+  banner.querySelector('#allowMeasurement').onclick = () => choose(true);
+  window.addEventListener('kamby:measurement-choice', refresh);
+  window.addEventListener('storage', refresh);
+  refresh();
 }
 
 function clearAnalyticsCookies() {
@@ -95,6 +132,6 @@ export function trackAnalytics(event) {
 export function startAnalytics() {
   syncAnalytics();
   window.addEventListener('storage', event => {
-    if (event.key === preferenceKey || event.key === null) syncAnalytics();
+    if (event.key === preferenceKey || event.key === scopeKey || event.key === null) syncAnalytics();
   });
 }

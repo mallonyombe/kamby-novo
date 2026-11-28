@@ -51,6 +51,8 @@ try {
  console.log('PASS: administrator detail requires MFA, valid pagination and existing identity');
  await db.exec(read('./admin-profile-privacy.sql'));
  console.log('PASS: delegated user detail keeps operational data and withholds contacts, sign-in timestamp and profile photo');
+ await db.exec(read('./registration-privacy.sql'));
+ console.log('PASS: signup age and versions, immutable proof, export isolation, marketing choices and report validation');
  const tables=await db.query("select count(*)::int as rows from public.kg_stores");
  if(tables.rows[0].rows!==0) throw new Error('Test fixture rollback failed');
  const bucket=await db.query("select public,file_size_limit,allowed_mime_types from storage.buckets where id='kg-product-images'");

@@ -17,10 +17,22 @@ for (const entry of await readdir(sourceDirectory, { withFileTypes: true })) {
 }
 
 await build({
-  entryPoints: [new URL('../frontend/admin.js', import.meta.url).pathname, new URL('../frontend/catalogue-contract.js', import.meta.url).pathname, new URL('../frontend/merchant.js', import.meta.url).pathname, new URL('../frontend/platform.js', import.meta.url).pathname, new URL('../frontend/theme.js', import.meta.url).pathname],
+  entryPoints: [new URL('../frontend/analytics.js', import.meta.url).pathname, new URL('../frontend/admin.js', import.meta.url).pathname, new URL('../frontend/catalogue-contract.js', import.meta.url).pathname, new URL('../frontend/merchant.js', import.meta.url).pathname, new URL('../frontend/platform.js', import.meta.url).pathname, new URL('../frontend/theme.js', import.meta.url).pathname],
   bundle: true, splitting: true, format: 'esm', target: ['es2022'], platform: 'browser',
   outdir: outputDirectory.pathname, chunkNames: 'shared/[name]-[hash]', minify: true, legalComments: 'eof'
 });
+const lock = JSON.parse(await readFile(new URL('../package-lock.json', import.meta.url), 'utf8'));
+const notices = await Promise.all(Object.entries(lock.packages)
+  .filter(([path, info]) => path && !info.dev && !info.optional)
+  .map(async ([path, info]) => {
+    const directory = new URL('../' + path + '/', import.meta.url);
+    const files = (await readdir(directory)).filter(name => /^(?:licen[cs]e|copying|notice|copyrightnotice)(?:\.[a-z]+)?$/i.test(name)).sort();
+    if (files.length === 0) throw new Error('Falta o aviso de licença de ' + path);
+    const texts = await Promise.all(files.map(file => readFile(new URL(file, directory), 'utf8')));
+    return path.slice('node_modules/'.length) + ' ' + info.version + ' · ' + info.license + '\n\n' + texts.join('\n\n');
+  }));
+await writeFile(new URL('licencas.txt', outputDirectory), notices.join('\n\n' + '='.repeat(72) + '\n\n'));
+
 const shellFiles = (await readdir(outputDirectory, {recursive: true})).filter(path =>
   !path.startsWith('admin') && path !== 'sw.js' &&
   /\.(?:js|css|png|jpg|svg|webmanifest)$/.test(path) || path === 'index.html'
