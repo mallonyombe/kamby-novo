@@ -1785,12 +1785,7 @@
           </div>
           <div class="recent-chips-wrap" id="recentChips"></div>
         </section>
-        <section aria-labelledby="searchCategoriesTitle" hidden>
-          <div class="search-section-header">
-            <h2 class="search-section-title" id="searchCategoriesTitle">Categorias</h2>
-          </div>
-          <div class="category-pills-grid" id="searchCategoryGrid"></div>
-        </section>
+        <a href="#inicio" class="settings-text-action">Explorar categorias</a>
       </div>
       <div class="search-result-controls" id="searchResultControls" hidden><div class="search-tabs-row" role="tablist" aria-label="Tipo de resultado">
         <button type="button" class="search-tab-btn active" id="tabBtnProducts" role="tab" aria-controls="searchResultsProductsWrap" aria-selected="true">Produtos <span id="countProductsTab">0</span></button>
@@ -2032,7 +2027,6 @@
 
       const categoryTrack = document.getElementById('categoryTrack');
       const productsGrid = document.getElementById('productsGrid');
-      const searchCategoryGrid = document.getElementById('searchCategoryGrid');
       const signedImageCache = new Map();
       const feedState = {
         activeCategory: 'all',
@@ -2323,25 +2317,6 @@
         categoryTrack.appendChild(fragment);
       }
 
-      function renderSearchCategories() {
-        if (!searchCategoryGrid) return;
-        searchCategoryGrid.replaceChildren();
-        const section = searchCategoryGrid.closest('section');
-        section.hidden = feedState.categories.length === 0;
-        if (section.hidden) return;
-
-        const fragment = document.createDocumentFragment();
-        feedState.categories.slice(0, 6).forEach(category => {
-          const button = document.createElement('button');
-          button.type = 'button';
-          button.className = 'category-card';
-          button.textContent = category.label;
-          button.addEventListener('click', () => executeSearch(category.label));
-          fragment.appendChild(button);
-        });
-        searchCategoryGrid.appendChild(fragment);
-      }
-
       function createFeedState(title, copy, actionLabel, action) {
         const state = document.createElement('div');
         state.className = 'feed-state';
@@ -2593,7 +2568,6 @@
           .then(rows => {
             feedState.categories = rows;
             renderCategories();
-            renderSearchCategories();
           }).finally(() => {categoryRequest = null;});
         return categoryRequest;
       }
@@ -2620,8 +2594,7 @@
             if (!feedState.categories.length && products.length) {
               feedState.categories = categoriesFromProducts(products);
               renderCategories();
-              renderSearchCategories();
-            }
+              }
             renderFeedProducts();
             observeNextFeedPage(products.length === KAMBY_CATALOG.pageSize);
           } catch {
@@ -4344,7 +4317,8 @@
           method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(parameters)
         });
         const ids = page.ids;
-        if (!ids.length) return {items:[],consumed:0,total:page.total};
+        const categories = page.categories || [];
+        if (!ids.length) return {items:[],consumed:0,total:page.total,categories};
         let items;
         if (parameters.p_kind==='products') items = await fetchPublishedProducts(false, ids);
         else {
@@ -4354,7 +4328,7 @@
           items = await Promise.all(stores.map(normaliseStore));
         }
         const byId = new Map(items.map(item => [item.id,item]));
-        return {items:ids.map(id => byId.get(id)).filter(Boolean),consumed:ids.length,total:page.total};
+        return {items:ids.map(id => byId.get(id)).filter(Boolean),consumed:ids.length,total:page.total,categories};
       }
 
       function showSearchStatus(title, copy, retry) {
@@ -4637,7 +4611,7 @@
       function activeSearchFilterCount(){return searchState.tab==='products'?[searchState.category!=='all',searchState.minPrice!=='',searchState.maxPrice!=='',searchState.availableOnly,searchState.productSort!=='relevance'].filter(Boolean).length:[searchState.withProductsOnly,searchState.openOnly,searchState.storeSort!=='relevance'].filter(Boolean).length;}
       function updateSearchFilterSummary(){const count=activeSearchFilterCount();document.getElementById('searchZeroClearFilters').hidden=!count;document.getElementById('searchFilterCount').hidden=!count;document.getElementById('searchFilterCount').textContent=count;document.getElementById('searchAppliedFilters').hidden=!count;document.getElementById('searchFilterSummary').textContent=count+(count===1?' filtro activo':' filtros activos');document.getElementById('searchSortLabel').textContent=searchState.tab==='products'?(searchState.productSort==='price-up'?'Preço: menor primeiro':searchState.productSort==='price-down'?'Preço: maior primeiro':'Por relevância'):(searchState.storeSort==='name'?'Nome da loja':'Por relevância');}
       const filterDialog=document.getElementById('searchFiltersDialog');
-      function fillSearchFilterDraft(reset=false){const product=searchState.tab==='products';document.getElementById('searchProductFilterFields').hidden=!product;document.getElementById('searchStoreFilterFields').hidden=product;const category=document.getElementById('searchFilterCategory');category.replaceChildren(new Option('Todas','all'));const seen=new Map(feedState.categories.map(c=>[c.id,c.label]));for(const [id,label]of seen)category.append(new Option(label,id));category.value=!reset&&seen.has(searchState.category)?searchState.category:'all';document.getElementById('searchFilterMin').value=reset?'':searchState.minPrice;document.getElementById('searchFilterMax').value=reset?'':searchState.maxPrice;document.getElementById('searchFilterAvailable').checked=!reset&&searchState.availableOnly;document.getElementById('searchFilterWithProducts').checked=!reset&&searchState.withProductsOnly;document.getElementById('searchFilterOpen').checked=!reset&&searchState.openOnly;const sort=document.getElementById('searchFilterSort');sort.replaceChildren();for(const [value,label]of product?[['relevance','Relevância'],['price-up','Preço: menor primeiro'],['price-down','Preço: maior primeiro']]:[['relevance','Relevância'],['name','Nome da loja']])sort.append(new Option(label,value));sort.value=reset?'relevance':product?searchState.productSort:searchState.storeSort;document.getElementById('searchFiltersError').hidden=true;}
+      function fillSearchFilterDraft(reset=false){const product=searchState.tab==='products';document.getElementById('searchProductFilterFields').hidden=!product;document.getElementById('searchStoreFilterFields').hidden=product;const category=document.getElementById('searchFilterCategory');category.replaceChildren(new Option('Todas','all'));const seen=new Map((searchState.catalogue?.categories || []).map(c=>[c.id,c.label]));if(!reset&&searchState.category!=='all'&&!seen.has(searchState.category)){const selected=feedState.categories.find(c=>c.id===searchState.category);if(selected)seen.set(selected.id,selected.label);} category.disabled=!product||seen.size===0;for(const [id,label]of seen)category.append(new Option(label,id));category.value=!reset&&seen.has(searchState.category)?searchState.category:'all';document.getElementById('searchFilterMin').value=reset?'':searchState.minPrice;document.getElementById('searchFilterMax').value=reset?'':searchState.maxPrice;document.getElementById('searchFilterAvailable').checked=!reset&&searchState.availableOnly;document.getElementById('searchFilterWithProducts').checked=!reset&&searchState.withProductsOnly;document.getElementById('searchFilterOpen').checked=!reset&&searchState.openOnly;const sort=document.getElementById('searchFilterSort');sort.replaceChildren();for(const [value,label]of product?[['relevance','Relevância'],['price-up','Preço: menor primeiro'],['price-down','Preço: maior primeiro']]:[['relevance','Relevância'],['name','Nome da loja']])sort.append(new Option(label,value));sort.value=reset?'relevance':product?searchState.productSort:searchState.storeSort;document.getElementById('searchFiltersError').hidden=true;}
       document.getElementById('btnOpenSearchFilters').addEventListener('click',()=>{fillSearchFilterDraft();filterDialog.showModal();});
       document.getElementById('btnCloseSearchFilters').addEventListener('click',()=>filterDialog.close());
       document.getElementById('btnResetSearchDraft').addEventListener('click',()=>fillSearchFilterDraft(true));
