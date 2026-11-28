@@ -218,7 +218,9 @@ export function setupWorkspace({state,composer,onChanged,onStoreChanged,onTerms}
    if(product.status!=='archived')entries.push(['Arquivar produto',()=>setPublication(product,'archived')]);
    if(product.status==='archived'){
      entries.unshift(['Repor como rascunho',()=>setPublication(product,'draft')]);
-     entries.push(['Apagar definitivamente',()=>deleteArchivedProduct(product)]);
+   }
+   if(product.status==='draft'||product.status==='archived'){
+     entries.push(['Apagar definitivamente',()=>deleteUnpublishedProduct(product)]);
    }
    for(const [name,action] of entries){
      const button=el('button','',name);
@@ -244,7 +246,7 @@ export function setupWorkspace({state,composer,onChanged,onStoreChanged,onTerms}
  }
  document.addEventListener('click',e=>{if(menuNode&&!e.target.closest('.mw-product-actions'))closeMenu();});
  function documentFrom(p,status){return{title:p.title,category_id:p.category_id,description:p.description||'',condition:p.condition||'new',attributes:p.attributes||'',status,price_minor:p.price_minor,previous_price_minor:p.previous_price_minor,stock_quantity:p.stock_quantity,in_stock:p.stock_status!=='out',images:(p.images||[]).sort((a,b)=>a.sort_order-b.sort_order).map(i=>i.storage_path),variants:(p.variants||[]).filter(v=>v.active!==false).map(v=>({id:v.id,option_name:v.option_name,price_minor:v.price_minor,previous_price_minor:v.previous_price_minor,in_stock:v.in_stock,track_quantity:v.track_quantity,stock_quantity:v.stock_quantity,image_path:v.image_path}))};}
- async function deleteArchivedProduct(product){
+ async function deleteUnpublishedProduct(product){
    if(!await confirmAction('Apagar «'+product.title+'»?', 'O produto será removido definitivamente do catálogo.', 'Apagar'))return;
    const {error}=await platform.rpc('kg_delete_archived_product',{
      p_store_id:product.store_id,p_product_id:product.id,p_expected_updated_at:product.updated_at

@@ -20,7 +20,10 @@ begin
  select jsonb_build_object('category_id',category_id,'title','Artigo de ensaio','status','draft','price_minor',500,'images',jsonb_build_array(),'variants',jsonb_build_array()) into strict doc
  from public.kg_store_categories where store_id=sid limit 1;
  stamp=(public.kg_save_catalogue_product(gen_random_uuid(),sid,pid,null,doc)->>'updated_at')::timestamptz;
- begin perform public.kg_delete_archived_product(sid,pid,stamp);raise exception 'deleted draft';exception when insufficient_privilege then null;end;
+ perform public.kg_delete_archived_product(sid,pid,stamp);
+ if exists(select 1 from public.kg_products where id=pid) then raise exception 'draft still in catalogue';end if;
+ pid:=gen_random_uuid();
+ stamp=(public.kg_save_catalogue_product(gen_random_uuid(),sid,pid,null,doc)->>'updated_at')::timestamptz;
  stamp=(public.kg_save_catalogue_product(gen_random_uuid(),sid,pid,stamp,doc||'{"status":"archived"}')->>'updated_at')::timestamptz;
  begin perform public.kg_delete_archived_product(sid,pid,stamp-interval '1 second');raise exception 'ignored newer edit';exception when serialization_failure then null;end;
  perform set_config('request.jwt.claim.sub','96000000-0000-0000-0000-000000000002',true);
