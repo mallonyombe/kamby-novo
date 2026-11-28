@@ -63,8 +63,8 @@
 .commerce-action-sheet {position:fixed;inset:auto 0 0;margin:0 auto;width:100%;max-width:480px;max-height:calc(var(--action-height,100dvh) - 24px);border:0;border-radius:22px 22px 0 0;padding:0;background:var(--bg-surface);color:var(--text-main);font:inherit;box-shadow:0 -8px 30px #0002;overflow:auto;overscroll-behavior:contain;}
 .commerce-action-sheet[open] {animation:commerce-sheet-enter 160ms ease-out;}
 .commerce-action-sheet::backdrop {background:#0006;}
-.commerce-action-sheet>header {display:flex;align-items:center;justify-content:space-between;padding:6px 12px 6px 18px;border-bottom:1px solid var(--border-subtle);}
-.commerce-action-sheet>header h2 {font-size:16px;line-height:22px;font-weight:600;}
+.commerce-action-sheet>header:not(.subscreen-bar) {display:flex;align-items:center;justify-content:space-between;padding:6px 12px 6px 18px;border-bottom:1px solid var(--border-subtle);}
+.commerce-action-sheet>header:not(.subscreen-bar) h2 {font-size:16px;line-height:22px;font-weight:600;}
 .commerce-action-sheet>header button {width:44px;height:44px;display:grid;place-items:center;}
 .commerce-action-sheet>header svg {width:19px;height:19px;}
 .commerce-action-body {padding:18px;}
