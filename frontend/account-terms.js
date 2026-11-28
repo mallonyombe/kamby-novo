@@ -41,12 +41,20 @@ export async function ensureAccountTerms(client, onGuest, {isCurrent = () => tru
   return new Promise(resolve => {
     const dialog = element('dialog');
     dialog.className = 'account-terms-dialog';
-    const title = element('h2', terms.title);
+    const header = element('header');
+    const title = element('h2', 'Termos actualizados');
     title.id = 'accountTermsDialogTitle';
     title.tabIndex = -1;
     dialog.setAttribute('aria-labelledby', title.id);
+    const intro = element('p', 'Revê os termos para continuares a usar a tua conta.');
+    intro.id = 'accountTermsDialogIntro';
+    dialog.setAttribute('aria-describedby', intro.id);
+    header.append(title, intro);
     const content = element('div');
     content.className = 'account-terms-content';
+    content.tabIndex = 0;
+    content.setAttribute('role', 'region');
+    content.setAttribute('aria-label', 'Texto dos termos de utilização');
     const error = element('p');
     error.hidden = true;
     error.setAttribute('role', 'status');
@@ -56,8 +64,8 @@ export async function ensureAccountTerms(client, onGuest, {isCurrent = () => tru
     guest.type = accept.type = 'button';
     guest.className = 'account-terms-back';
     accept.className = 'account-terms-accept';
-    footer.append(guest, accept);
-    dialog.append(title, content, error, footer);
+    footer.append(accept, guest);
+    dialog.append(header, content, error, footer);
     showAccountTerms(content, terms);
 
     let closed = false;
@@ -99,7 +107,6 @@ export async function ensureAccountTerms(client, onGuest, {isCurrent = () => tru
         terms = await loadAccountTerms(client);
         if (!isCurrent() || terms.user_id !== userId) { close(false); return; }
         if (terms.accepted) { close(true); return; }
-        title.textContent = terms.title;
         content.replaceChildren();
         showAccountTerms(content, terms);
         content.scrollTop = 0;

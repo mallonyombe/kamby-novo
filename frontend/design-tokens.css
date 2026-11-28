@@ -63,26 +63,51 @@
 body.is-subscreen .buyer-skip-link { display: none; }
 
 
+:root:has(.account-terms-dialog[open]) {overflow:hidden;}
 .account-terms-dialog {
-  width:min(100% - 32px,560px);
-  max-height:calc(100dvh - 32px);
-  padding:20px;
+  box-sizing:border-box;
+  position:fixed;
+  inset:0;
+  margin:auto;
+  width:min(calc(100% - 32px),560px);
+  height:min(740px,calc(100dvh - 32px));
+  max-width:none;
+  max-height:none;
+  padding:0;
+  overflow:hidden;
   border:1px solid var(--ui-line);
   border-radius:16px;
   background:var(--ui-surface);
   color:var(--ui-text);
   font:inherit;
 }
-.account-terms-dialog[open] {display:grid;grid-template-rows:auto minmax(0,1fr) auto auto;gap:12px;}
+.account-terms-dialog[open] {
+  display:grid;
+  grid-template-rows:auto minmax(0,1fr) auto auto;
+}
 .account-terms-dialog::backdrop {background:rgb(0 0 0 / .5);}
-.account-terms-dialog h2 {margin:0;font-size:1.25rem;}
-.account-terms-content {overflow:auto;overscroll-behavior:contain;}
-.account-terms-content section {margin-block:16px;}
+.account-terms-dialog > header {
+  padding:16px 20px 12px;
+  border-bottom:1px solid var(--ui-line);
+}
+.account-terms-dialog h2 {margin:0;font-size:1.25rem;line-height:1.25;}
+.account-terms-dialog > header p {margin:4px 0 0;color:var(--ui-secondary);font-size:.875rem;line-height:1.4;}
+.account-terms-content {overflow:auto;overscroll-behavior:contain;padding:16px 20px 20px;overflow-wrap:anywhere;}
+.account-terms-content:focus-visible {outline:2px solid var(--ui-focus);outline-offset:-3px;}
+.account-terms-content section {margin-block:16px 0;}
 .account-terms-content h3 {margin:0 0 4px;font-size:1rem;}
 .account-terms-content p {margin:0;line-height:1.5;}
 .account-terms-version {color:var(--ui-secondary);font-size:.875rem;}
-.account-terms-dialog footer {display:flex;flex-wrap:wrap;justify-content:flex-end;gap:8px;}
+.account-terms-dialog > [role="status"] {margin:0;padding:8px 20px;font-size:.875rem;}
+.account-terms-dialog footer {
+  display:grid;
+  gap:8px;
+  padding:12px 20px;
+  border-top:1px solid var(--ui-line);
+  background:var(--ui-surface);
+}
 .account-terms-dialog button {
+  width:100%;
   min-height:var(--ui-target,44px);
   padding:8px 12px;
   border:1px solid var(--ui-line);
@@ -91,5 +116,10 @@ body.is-subscreen .buyer-skip-link { display: none; }
   color:var(--ui-text);
   font:inherit;
 }
-.account-terms-dialog .account-terms-accept {background:var(--ui-text);color:var(--ui-surface);}
+.account-terms-dialog .account-terms-accept {background:var(--ui-text);color:var(--ui-surface);font-weight:600;}
 .account-terms-dialog button:disabled {opacity:.55;}
+@media (max-width:600px) {
+  .account-terms-dialog {width:100%;height:100dvh;margin:0;border:0;border-radius:0;}
+  .account-terms-dialog > header {padding-top:calc(16px + env(safe-area-inset-top,0px));}
+  .account-terms-dialog footer {padding-bottom:calc(12px + env(safe-area-inset-bottom,0px));}
+}
