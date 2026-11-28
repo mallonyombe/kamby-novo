@@ -103,3 +103,5 @@
 .account-screen .registration-choice > input { margin-block-start:.15em; }
 .registration-optional { border-block-start:1px solid var(--ui-line);color:var(--ui-secondary);font-size:.875rem; }
 .registration-step .settings-copy { margin-block-end:0; }
+.registration-step .settings-copy strong { color:var(--ui-text);overflow-wrap:anywhere; }
+.registration-step > .settings-text-action { align-self:center; }

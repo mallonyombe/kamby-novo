@@ -441,6 +441,7 @@ export function setupSettings({openSellerSetup,savedProducts,renderProductCard,g
    registrationBack = () => {
     if (busy) return true;
     if (stage === 'consent') { showStep('details'); return true; }
+    if (stage === 'done') $('accountIdentity').value = confirmationAddress;
     if (stage === 'details' || stage === 'blocked') {
      adult = '';
      acceptance.checked = marketing.checked = false;
@@ -497,30 +498,43 @@ export function setupSettings({openSellerSetup,savedProducts,renderProductCard,g
     submit.disabled=!canCreate();
     if(!documents)void loadDocuments();
    });
-   const instructions = node('div');
-   instructions.tabIndex = -1;
+   let confirmationAddress = '';
+   const instructions = node('div', undefined, 'settings-form registration-step');
    instructions.hidden = true;
-   instructions.append(
-    node('h2', 'Confirma o teu e-mail', 'settings-lead'),
-    node('p', 'Abre o teu e-mail e toca no link de confirmação. Usa o mesmo dispositivo e navegador em que criaste a conta.', 'settings-copy'),
-    node('p', 'Se a mensagem não aparecer, verifica o spam.', 'settings-copy')
-   );
-   const resend = node('form', undefined, 'settings-form');
-   const resendEmail = field(resend, 'email', 'E-mail', '', 'email', true);
-   resendEmail.readOnly = true;
-   saveForm(resend, 'Reenviar link', async () => {
-    if (!navigator.onLine) throw { safeMessage: 'Sem ligação à internet. Liga-te e tenta novamente.' };
-    const { error } = await platform.auth.resend({
-     type: 'signup',
-     email: resendEmail.value,
-     options: { emailRedirectTo: new URL('/', window.location.origin).href }
-    });
-    if (error) throw { safeMessage: registrationError(error) };
-    if (request === generation) notice('Pedido de reenvio concluído. Verifica o teu e-mail.');
+   const address = node('strong');
+   const instruction = node('p', undefined, 'settings-copy');
+   instruction.append('Se receberes a mensagem em ', address, ', abre o link no mesmo navegador. Verifica também o spam.');
+   const resend = button('Reenviar link', 'merchant-primary-button', async () => {
+    if (resend.disabled || stage !== 'done') return;
+    resend.disabled = true;
+    setButtonBusy(resend, true);
+    try {
+     if (!navigator.onLine) {
+      if (request === generation) showFeedback('Sem ligação. Liga-te à internet e tenta novamente.', {tone:'error'});
+      return;
+     }
+     const { error } = await platform.auth.resend({
+      type: 'signup',
+      email: confirmationAddress,
+      options: { emailRedirectTo: new URL('/', window.location.origin).href }
+     });
+     if (request !== generation || stage !== 'done') return;
+     if (error) showFeedback(registrationError(error), {tone:'error'});
+     else showFeedback('Pedido de reenvio registado.');
+    } catch {
+     if (request === generation && stage === 'done') showFeedback('Não foi possível pedir o reenvio. Tenta novamente.', {tone:'error'});
+    } finally {
+     setButtonBusy(resend, false);
+     resend.disabled = false;
+    }
    });
-   instructions.append(resend, button('Voltar para entrar', 'settings-text-action', async () => {
-    $('accountIdentity').value = resendEmail.value;
-    if (await open('entrar', false)) history.replaceState(null, '', '#definicoes/entrar');
+   instructions.append(instruction, resend, button('Corrigir endereço', 'settings-text-action', () => {
+    if(resend.disabled)return;
+    instructions.hidden = true;
+    acceptance.checked = false;
+    marketing.checked = false;
+    showStep('details', false);
+    email.focus();
    }));
    body.append(ageStep, blocked, details, form, instructions);
    const submit = saveForm(form, 'Criar conta', async () => {
@@ -540,11 +554,15 @@ export function setupSettings({openSellerSetup,savedProducts,renderProductCard,g
     if (error) throw { safeMessage: registrationError(error) };
     password.value = confirmation.value = '';
     if (request !== generation || data.session) return;
-    resendEmail.value = credentials.email;
+    confirmationAddress = address.textContent = credentials.email;
     stage = 'done';
     form.hidden = true;
     instructions.hidden = false;
-    instructions.focus();
+    const title=$('settingsSubscreenTitle');
+    title.textContent='Confirma o teu e-mail';
+    $('btnBackSettings').setAttribute('aria-label','Voltar a iniciar sessão');
+    view.scrollTop=0;
+    title.focus({preventScroll:true});
    }, canCreate);
    acceptance.addEventListener('change',()=>{ submit.disabled=busy||!canCreate(); });
    agreement.hidden=marketingChoice.hidden=true;
