@@ -202,7 +202,14 @@ export function setupSettings({openSellerSetup,savedProducts,renderProductCard,g
   publicMenu.replaceChildren(appearance);
   if (a.user) publicMenu.append(row('Segurança e acesso', null, 'shield', 'seguranca', unavailable));
   publicMenu.append(row('Privacidade', null, 'shield', 'privacidade'));
-  publicMenu.append(row('Ajuda e informações', null, 'help', 'ajuda'));
+  publicMenu.append(row('Ajuda', null, 'help', 'ajuda'));
+  const information=node('div',undefined,'profile-menu-list profile-information');
+  information.append(row('Sobre o Kamby',null,'info','sobre'));
+  for (const [label,href] of [['Termos de utilização','./legal.html#termos'],['Política de privacidade','./legal.html#privacidade'],['Contacto e denúncias','mailto:kambyoficial@gmail.com']]) {
+   const link=node('a',undefined,'profile-menu-item');link.href=href;
+   link.append(node('span',label,'profile-menu-label'),icon('chevron'));information.append(link);
+  }
+  publicMenu.append(information);
   if (a.user && !view.hidden && ['entrar', 'registo'].includes(screen)) {
    const destination = afterSignIn;
    afterSignIn = '';
@@ -598,7 +605,13 @@ for (const [label, href] of [['Termos de utilização','./legal.html#termos'],['
  const link=node('a',undefined,'profile-menu-item');link.href=href;
  link.append(node('span',label,'profile-menu-label'),icon('chevron'));links.append(link);
 }body.append(links);return;}
-  if(screen==='sobre'){lead('Kamby · Orbion');body.append(node('p','Descobre produtos e lojas e contacta cada vendedor pelo WhatsApp.','settings-copy'));}
+  if(screen==='sobre'){
+   lead('Kamby','Produtos e lojas de Chongoene.');
+   lead('Como funciona','Consulta o catálogo, escolhe as opções e guarda os artigos no carrinho de cada loja. O pedido segue para o WhatsApp da loja, onde confirmas a disponibilidade, o total, o pagamento e a entrega.');
+   lead('A tua conta','Guarda produtos e gere as tuas preferências no Perfil. Podes consultar o catálogo e preparar o carrinho como visitante.');
+   lead('Apoio','Para ajuda, privacidade ou denúncias, contacta a equipa.');
+   const contact=node('a','kambyoficial@gmail.com','settings-text-action');contact.href='mailto:kambyoficial@gmail.com';body.append(contact);
+  }
  }
  async function open(target,updateHistory=true){if(!titles[target])return false;if(!view.hidden&&screen===target&&!dirty)return true;if(busy)return false;if(dirty){confirm('Descartar alterações?','Há dados que ainda não foram guardados.','Descartar',()=>{dirty=false;open(target,updateHistory);});return false;}
   afterSignIn = '';
