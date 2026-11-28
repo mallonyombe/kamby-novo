@@ -1,22 +1,24 @@
+import {variantAxes,categorySearchKey} from './category-variants.js';
 import {canPrepareStore} from './merchant-domain.js';
 import {setButtonBusy,showSpinner,showSkeleton} from "./loading.js";
 import { platform } from './platform.js';
 import { preparePhoto } from './prepare-photo.js';
 import { parsePriceMinor, validateProductPhoto } from './merchant-domain.js';
-import { el,icon,money,notice,confirmAction,imageUrl,showProductThumbnail } from './merchant-ui.js';
+import { el,icon,money,notice,imageUrl,showProductThumbnail } from './merchant-ui.js';
 
 export function setupProductComposer(hooks){
  const dialog=document.getElementById('modalNewProduct');dialog.className='merchant-editor';
- dialog.innerHTML=`<header class="editor-header"><button type="button" id="btnCloseNewProductModal" class="mw-icon" aria-label="Voltar ao catálogo">${icon('back')}</button><h2 id="modalNewProdTitle">Novo produto</h2></header><form id="formNewProduct" novalidate><div class="editor-scroll"><p id="newProductError" class="field-error" role="alert" hidden></p><p id="newProductProgress" class="merchant-feedback" role="status" aria-live="polite" hidden></p><section data-step="1" hidden><h3>Fotografias</h3><p class="mw-muted">Até 10 fotografias · 5 MB por ficheiro</p><div id="editorGallery" class="editor-gallery"></div><input type="file" id="inputNewProdImage" accept="image/jpeg,image/png,image/webp" multiple hidden><button type="button" id="btnChooseNewProdImg" class="mw-secondary">${icon('plus')}Adicionar fotografias</button></section><section data-step="0"><h3>Dados do produto</h3><label>Nome do produto<input id="inputNewProdTitle" maxlength="160" required autocomplete="off"></label><label>Categoria<select id="selectNewProdCat" required><option value=""></option></select><span id="editorCategoriesPending"></span></label><button type="button" id="editorRetryCategories" class="mw-text" hidden>Tentar carregar categorias</button><button type="button" id="editorOpenDetails" class="editor-details-row" aria-haspopup="dialog" aria-controls="editorDetails"><span>Descrição e características</span><span id="editorDetailsValue" class="mw-muted"></span>${icon('next')}</button>
+ dialog.innerHTML=`<header class="editor-header"><button type="button" id="btnCloseNewProductModal" class="mw-icon" aria-label="Voltar ao catálogo">${icon('back')}</button><h2 id="modalNewProdTitle">Novo produto</h2></header><form id="formNewProduct" novalidate><div class="editor-scroll"><p id="newProductError" class="field-error" role="alert" hidden></p><p id="newProductProgress" class="merchant-feedback" role="status" aria-live="polite" hidden></p><section data-step="1" hidden><h3>Fotografias</h3><p class="mw-muted">Até 10 fotografias · 5 MB por ficheiro</p><div class="editor-gallery-row"><div id="editorGallery" class="editor-gallery"></div><button type="button" id="btnChooseNewProdImg" class="mw-secondary" aria-label="Adicionar fotografias">${icon('plus')}<span>Adicionar</span></button></div><input type="file" id="inputNewProdImage" accept="image/jpeg,image/png,image/webp" multiple hidden></section><section data-step="0"><h3>Dados do produto</h3><label>Nome do produto<input id="inputNewProdTitle" maxlength="160" required autocomplete="off"></label><label id="editorCategoryFilter" hidden>Pesquisar categorias<input id="editorCategorySearch" type="search" autocomplete="off" aria-controls="selectNewProdCat"><span id="editorCategoryMatches" class="mw-muted" role="status"></span></label><label>Categoria<select id="selectNewProdCat" required><option value=""></option></select><span id="editorCategoriesPending"></span></label><button type="button" id="editorRetryCategories" class="mw-text" hidden>Tentar carregar categorias</button><button type="button" id="editorOpenDetails" class="editor-details-row" aria-haspopup="dialog" aria-controls="editorDetails"><span>Descrição e características</span><span id="editorDetailsValue" class="mw-muted"></span>${icon('next')}</button>
  <dialog id="editorDetails" class="mw-filter-dialog" aria-labelledby="editorDetailsTitle">
   <header><h2 id="editorDetailsTitle">Descrição e características</h2><button type="button" id="editorCloseDetails" class="mw-icon" aria-label="Fechar">${icon('close')}</button></header>
   <label>Descrição<textarea id="inputNewProdDesc" rows="2" maxlength="5000"></textarea></label>
   <label>Condição<select id="editorCondition"><option value="new">Novo</option><option value="used">Usado</option><option value="refurbished">Recondicionado</option></select></label>
   <label>Informações essenciais<textarea id="editorAttributes" rows="2" maxlength="1000"></textarea></label>
   <footer><button type="button" id="editorApplyDetails" class="mw-primary">Concluir</button></footer>
- </dialog></section><section data-step="3" hidden><h3 id="editorPriceHeading">Preço e stock</h3><div id="editorPrices"></div></section><section data-step="2" hidden><details class="editor-extra" id="editorOptions"><summary>Adicionar variantes</summary><label class="mw-check"><input type="checkbox" id="editorHasVariants">Usar variantes</label><div id="editorVariantsBody" hidden><div id="editorVariants"></div><button type="button" id="editorAddVariant" class="mw-secondary">${icon('plus')}Adicionar opção</button></div></details></section><section data-step="4" hidden><h3 tabindex="-1" id="editorReviewHeading">Pré-visualização</h3><div id="editorReview" class="editor-review"></div></section></div><footer class="editor-footer"><button type="button" id="editorSaveDraft" class="mw-secondary">Guardar rascunho</button><button type="submit" id="btnSubmitNewProduct" class="mw-primary">Continuar</button></footer></form>`;
+ </dialog></section><section data-step="3" hidden><h3 id="editorPriceHeading">Preço e stock</h3><div id="editorPrices"></div></section><section data-step="2" hidden><details class="editor-extra" id="editorOptions"><summary>Adicionar variantes</summary><div id="editorVariantsBody"><div id="editorVariantPresets" class="editor-presets"></div><div id="editorVariants"></div><button type="button" id="editorAddVariant" class="mw-secondary">${icon('plus')}Adicionar opção</button></div></details></section><section data-step="4" hidden><h3 tabindex="-1" id="editorReviewHeading">Pré-visualização</h3><div id="editorReview" class="editor-review"></div></section></div><footer class="editor-footer"><button type="button" id="editorSaveDraft" class="mw-secondary">Guardar rascunho</button><button type="submit" id="btnSubmitNewProduct" class="mw-primary">Continuar</button></footer></form>`;
  const q=id=>dialog.querySelector('#'+id);let model=null,reviewing=false,quickEdit=false,dirty=false,busy=false,uncertain=null,urls=[],storeId='',photoRequest=0;
  const sections=[0,1,2,3,4].map(step=>dialog.querySelector('[data-step="'+step+'"]'));
+ let categories=[];
  let guided=false,stage=1,historyEntry=null,cleaningHistory=false,exitDialog=null;
  const directTitle=()=>quickEdit?'Preço e stock':'Editar produto';
  const scroll=dialog.querySelector('.editor-scroll');
@@ -40,21 +42,21 @@ export function setupProductComposer(hooks){
  function changed(){dirty=true;fail('');clearFieldProblem();}
  dialog.querySelector('form').addEventListener('input',changed);dialog.querySelector('form').addEventListener('change',changed);
  function lock(value){busy=value;dialog.setAttribute('aria-busy',String(value));dialog.querySelectorAll('input,select,textarea,button').forEach(node=>node.disabled=value||Boolean(uncertain));if(uncertain)q('btnSubmitNewProduct').disabled=value;}
- function collectBasics(){if(!model)return;model.title=q('inputNewProdTitle').value.trim();if(!q('selectNewProdCat').disabled)model.category_id=q('selectNewProdCat').value;model.description=q('inputNewProdDesc').value.trim();model.condition=q('editorCondition').value;model.attributes=q('editorAttributes').value.trim();}
+ function collectBasics(){if(!model)return;model.title=q('inputNewProdTitle').value.trim();model.description=q('inputNewProdDesc').value.trim();model.condition=q('editorCondition').value;model.attributes=q('editorAttributes').value.trim();}
  function showEditor(next=stage,{focus=false}={}){
    if(busy||uncertain)return;
    collectBasics();
    stage=next;
-   reviewing=guided&&stage===2;
+   reviewing=guided&&stage===3;
    const preparing=hooks.getStore()?.status!=='approved';
-   const visible=quickEdit?[3]:reviewing?[4]:[1,0,2,3];
+   const visible=quickEdit?[3]:!guided?[1,0,2,3]:stage===1?[1,0]:reviewing?[4]:[2,3];
    sections.forEach((section,index)=>{
      section.hidden=!visible.includes(index)||(index===3&&!quickEdit&&model.variants.length>0);
    });
    if(reviewing)renderReview();
    const title=q('modalNewProdTitle');
-   title.textContent=guided?(reviewing?'Rever publicação':model.updated_at?'Editar rascunho':'Novo produto'):directTitle();
-   q('btnCloseNewProductModal').setAttribute('aria-label',reviewing?'Voltar à edição':'Voltar ao catálogo');
+   title.textContent=guided?(reviewing?'Rever publicação':stage===2?'Preço e variantes':model.updated_at?'Editar rascunho':'Novo produto'):directTitle();
+   q('btnCloseNewProductModal').setAttribute('aria-label',guided&&stage>1?'Voltar à etapa anterior':'Voltar ao catálogo');
    q('editorSaveDraft').hidden=quickEdit||reviewing||preparing||model.status==='published';
    syncSubmitLabel();
    if(focus&&dialog.open){
@@ -67,7 +69,7 @@ export function setupProductComposer(hooks){
  function syncSubmitLabel(){
    const preparing=hooks.getStore()?.status!=='approved';
    q('btnSubmitNewProduct').textContent=quickEdit||!guided?'Guardar alterações'
-     :preparing?'Guardar rascunho':!reviewing&&model.variants.length?'Rever publicação':'Publicar produto';
+     :stage===1?'Continuar':preparing?'Guardar rascunho':!reviewing&&model.variants.length?'Rever publicação':'Publicar produto';
  }
 
  function fieldProblem(copy,input){
@@ -81,7 +83,7 @@ export function setupProductComposer(hooks){
    clearFieldProblem();
    if(!input){fail(error.message);q('newProductError').scrollIntoView({block:'nearest'});return;}
    if(guided&&input.closest('section[data-step]')?.hidden){
-     showEditor(1,{focus:true});
+     showEditor(input.closest('[data-step]')?.matches('[data-step="2"],[data-step="3"]')?2:1,{focus:true});
    }
    for(let group=input.closest('details');group;group=group.parentElement.closest('details'))group.open=true;
    const message=el('span','editor-field-error',error.message);
@@ -100,6 +102,23 @@ export function setupProductComposer(hooks){
      input.removeAttribute('aria-describedby');
    }
  }
+ function paintCategories(){
+   const select=q('selectNewProdCat');
+   const query=categorySearchKey(q('editorCategorySearch').value);
+   const matches=categories.filter(category=>categorySearchKey(category.name).includes(query));
+   const choices=matches.slice(0,20);
+   const selected=categories.find(category=>category.id===model.category_id);
+   if(selected&&!choices.includes(selected))choices.unshift(selected);
+   select.replaceChildren(new Option('Seleccionar categoria',''),...choices.map(category=>new Option(category.name,category.id)));
+   select.value=selected?.id||'';
+   q('editorCategoryMatches').textContent=matches.length>20?'A pesquisar entre '+categories.length+' categorias. Escreve um nome para reduzir a lista.':query&&!matches.length?'Nenhuma categoria encontrada.':'';
+ }
+ q('editorCategorySearch').oninput=event=>{event.stopPropagation();paintCategories();};
+ q('editorCategorySearch').onchange=event=>event.stopPropagation();
+ q('selectNewProdCat').onchange=event=>{
+   model.category_id=event.target.value;
+   renderVariantPresets();
+ };
  async function loadCategories(){
    const expectedStore=storeId,expectedModel=model;
    const select=q('selectNewProdCat');
@@ -111,22 +130,23 @@ export function setupProductComposer(hooks){
    retry.hidden=true;
 
    try{
-     const {data,error}=await platform.from('kg_store_categories')
-       .select('category:kg_categories(id,name,is_active)').eq('store_id',expectedStore);
-     if(error)throw error;
-     if(expectedStore!==storeId||expectedModel!==model)return;
-
-     const categories=(data||[]).map(row=>Array.isArray(row.category)?row.category[0]:row.category)
-       .filter(category=>category?.is_active);
-     const onlyCategory=categories.length===1?categories[0]:null;
-     if(onlyCategory&&!model.category_id)model.category_id=onlyCategory.id;
-
-     const options=categories.map(category=>new Option(category.name,category.id));
-     if(!onlyCategory||model.category_id!==onlyCategory.id){
-       options.unshift(new Option('Seleccionar categoria',''));
+     const assigned=[];
+     const pageSize=200;
+     for(let offset=0;;offset+=pageSize){
+       const {data,error}=await platform.from('kg_store_categories')
+         .select('category:kg_categories(id,name,is_active,variant_axis)').eq('store_id',expectedStore)
+         .order('category_id').range(offset,offset+pageSize-1);
+       if(expectedStore!==storeId||expectedModel!==model)return;
+       if(error)throw error;
+       assigned.push(...data);
+       if(data.length<pageSize)break;
      }
-     select.replaceChildren(...options);
-     select.value=model.category_id||'';
+     categories=assigned.map(row=>Array.isArray(row.category)?row.category[0]:row.category)
+       .filter(category=>category?.is_active).sort((a,b)=>a.name.localeCompare(b.name,'pt'));
+     if(categories.length===1&&!model.category_id)model.category_id=categories[0].id;
+     q('editorCategoryFilter').hidden=categories.length<=12;
+     paintCategories();
+     renderVariantPresets();
      if(!categories.length)fail('Esta loja não tem categorias atribuídas. Contacta a administração.');
    }catch{
      if(expectedStore!==storeId||expectedModel!==model)return;
@@ -143,6 +163,7 @@ export function setupProductComposer(hooks){
  function newVariant(name=''){return{id:crypto.randomUUID(),option_name:name,price_minor:0,price:'',previous:'',in_stock:true,track_quantity:false,stock_quantity:0,quantity:'',imageKey:''};}
  async function open(product=null,duplicate=false,mode='edit'){
   const store=hooks.getStore();if(!store||!canPrepareStore(store))return;if(dialog.open&&!await close())return;release();storeId=store.id;stage=1;uncertain=null;dirty=false;reviewing=false;quickEdit=mode==='stock';guided=!quickEdit&&(!product||duplicate||product.status==='draft');dialog.classList.toggle('guided-editor',guided);
+  categories=[];q('editorCategoryFilter').hidden=true;q('editorCategorySearch').value='';q('editorCategoryMatches').textContent='';
   model=product?structuredClone(product):{id:crypto.randomUUID(),title:'',category_id:'',description:'',condition:'new',attributes:'',price_minor:0,stock_status:'available',status:'draft',variants:[],images:[]};
   model.id=duplicate?crypto.randomUUID():model.id;model.updated_at=duplicate?null:model.updated_at;model.title=duplicate?model.title+' · cópia':model.title;model.status=duplicate?'draft':model.status;
   model.images=(model.images||[]).sort((a,b)=>a.sort_order-b.sort_order).map(x=>({key:crypto.randomUUID(),path:x.storage_path,preview:'',file:null}));
@@ -150,9 +171,11 @@ export function setupProductComposer(hooks){
   model.price=model.price_minor?(Number(model.price_minor)/100).toFixed(2):'';model.previous=model.previous_price_minor?(Number(model.previous_price_minor)/100).toFixed(2):'';model.quantity=model.stock_quantity==null?'':String(model.stock_quantity);model.in_stock=model.stock_status!=='out';
   q('editorPriceHeading').textContent=quickEdit?model.title:'Preço e stock';
   dialog.classList.toggle('stock-editor',quickEdit);
-  q('inputNewProdTitle').value=model.title;q('inputNewProdDesc').value=model.description||'';q('editorCondition').value=model.condition||'new';q('editorAttributes').value=model.attributes||'';q('editorHasVariants').checked=!!model.variants.length;q('editorOptions').open=false;q('editorOptions').querySelector('summary').textContent=model.variants.length?'Variantes · '+model.variants.length:'Adicionar variantes';refreshDetailsValue();
+  q('inputNewProdTitle').value=model.title;q('inputNewProdDesc').value=model.description||'';q('editorCondition').value=model.condition||'new';q('editorAttributes').value=model.attributes||'';q('editorOptions').open=false;q('editorOptions').querySelector('summary').textContent=model.variants.length?'Variantes · '+model.variants.length:'Adicionar variantes';refreshDetailsValue();
   fail('');notice(q('newProductProgress'),'');lock(false);q('selectNewProdCat').value='';q('selectNewProdCat').disabled=true;renderGallery();renderVariants();showEditor(1);dialog.showModal();armEditorHistory();fitViewport();document.body.classList.add('merchant-editing');(quickEdit?q('editorPrices').querySelector('input:not([type=checkbox])'):q('btnCloseNewProductModal'))?.focus({preventScroll:true});if(quickEdit)return;await loadCategories();if(!model||!dialog.open||storeId!==store.id)return;
-  const generation=++photoRequest;await Promise.all(model.images.map(async photo=>{photo.preview=await imageUrl(platform,photo.path);if(generation===photoRequest&&dialog.open)renderGallery();}));
+  const generation=++photoRequest;
+  await Promise.all(model.images.map(async photo=>{photo.preview=await imageUrl(platform,photo.path);}));
+  if(generation===photoRequest&&dialog.open)renderGallery();
  }
  function release(){++photoRequest;urls.forEach(URL.revokeObjectURL);urls=[];}
  function armEditorHistory(){
@@ -218,7 +241,7 @@ export function setupProductComposer(hooks){
  function back(){
    if(busy||uncertain)return;
    fail('');clearFieldProblem();
-   if(reviewing)showEditor(1,{focus:true});
+   if(guided&&stage>1)showEditor(stage-1,{focus:true});
    else void close();
  }
 
@@ -279,9 +302,12 @@ export function setupProductComposer(hooks){
  }
  function renderGallery(){const grid=q('editorGallery');grid.replaceChildren();
  const thumbs=el('div','editor-photo-thumbs');
- model.images.forEach((photo,index)=>{const card=el('div','editor-photo');const img=el('img');img.alt='Fotografia '+(index+1);if(photo.preview)img.src=photo.preview;const up=el('button','','←'),down=el('button','','→'),remove=el('button','','Remover'),replace=el('button','','Trocar');for(const [button,glyph,label] of [[up,'back','Mover para antes'],[down,'next','Mover para depois'],[replace,'image','Trocar fotografia'],[remove,'trash','Remover fotografia']]){
+ model.images.forEach((photo,index)=>{const card=el('div','editor-photo');const img=el('img');img.alt='Fotografia '+(index+1);if(photo.preview)img.src=photo.preview;const up=el('button','','←'),down=el('button','','→'),remove=el('button','editor-photo-remove'),replace=el('button','','Trocar');for(const [button,glyph,label] of [[up,'back','Mover para antes'],[down,'next','Mover para depois'],[replace,'image','Trocar fotografia'],[remove,'trash','Remover fotografia']]){
  button.type='button';button.innerHTML=icon(glyph);button.setAttribute('aria-label',label+' '+(index+1));
- }up.setAttribute('aria-label','Mover fotografia '+(index+1)+' para antes');down.setAttribute('aria-label','Mover fotografia '+(index+1)+' para depois');up.disabled=index===0;down.disabled=index===model.images.length-1;function move(delta){[model.images[index],model.images[index+delta]]=[model.images[index+delta],model.images[index]];changed();renderGallery();}up.onclick=()=>move(-1);down.onclick=()=>move(1);remove.onclick=()=>{model.images.splice(index,1);model.variants.forEach(v=>{if(v.imageKey===photo.key)v.imageKey='';});changed();renderGallery();renderVariants();};replace.onclick=()=>{const input=el('input');input.type='file';input.accept='image/jpeg,image/png,image/webp';input.onchange=()=>addPhotos([...input.files],photo.key);input.click();};const trigger=el('button','editor-photo-trigger');
+ }up.setAttribute('aria-label','Mover fotografia '+(index+1)+' para antes');down.setAttribute('aria-label','Mover fotografia '+(index+1)+' para depois');up.disabled=index===0;down.disabled=index===model.images.length-1;function move(delta){[model.images[index],model.images[index+delta]]=[model.images[index+delta],model.images[index]];changed();renderGallery();}up.onclick=()=>move(-1);down.onclick=()=>move(1);remove.onclick=()=>{model.images.splice(index,1);model.variants.forEach(v=>{if(v.imageKey===photo.key)v.imageKey='';});changed();renderGallery();
+ const next=grid.querySelectorAll('.editor-photo')[Math.min(index,model.images.length-1)]?.querySelector('.editor-photo-remove');
+ (next||q('btnChooseNewProdImg')).focus({preventScroll:true});
+ };replace.onclick=()=>{const input=el('input');input.type='file';input.accept='image/jpeg,image/png,image/webp';input.onchange=()=>addPhotos([...input.files],photo.key);input.click();};const trigger=el('button','editor-photo-trigger');
  trigger.type='button';
  trigger.setAttribute('aria-label','Opções da fotografia '+(index+1));
  trigger.append(img);
@@ -301,7 +327,7 @@ export function setupProductComposer(hooks){
      preview.alt=img.alt;
      sheet.append(preview);
    }
-   const actions=[[up,'Mover para antes'],[down,'Mover para depois'],[replace,'Trocar fotografia'],[remove,'Remover fotografia']];
+   const actions=[[up,'Mover para antes'],[down,'Mover para depois'],[replace,'Trocar fotografia']];
    if(index>0){
      const makeCover=el('button');
      makeCover.type='button';
@@ -330,7 +356,7 @@ export function setupProductComposer(hooks){
    };
    dialog.append(sheet);sheet.showModal();close.focus();
  };
- card.append(trigger);(index===0||!guided?grid:thumbs).append(card);});
+ card.append(trigger,remove);(index===0||!guided?grid:thumbs).append(card);});
  if(thumbs.childElementCount)grid.append(thumbs);
  if(!model.images.length){
  const current=el('img','editor-existing-photo');
@@ -338,18 +364,67 @@ export function setupProductComposer(hooks){
  if(model.image_url){grid.append(current);showProductThumbnail(platform,model,current);}
 
 }}
- q('editorHasVariants').onchange=async()=>{if(!q('editorHasVariants').checked&&model.variants.length){if(!await confirmAction('Retirar as opções?','O produto passa a ter um preço único. Variantes anteriores deixam de estar disponíveis para novos pedidos.','Retirar')){q('editorHasVariants').checked=true;return;}model.variants=[];}if(q('editorHasVariants').checked&&!model.variants.length)model.variants.push(newVariant());changed();renderVariants();};
- function renderVariants(){q('editorOptions').querySelector('summary').textContent=model.variants.length?'Variantes · '+model.variants.length:'Adicionar variantes';q('editorVariantsBody').hidden=!q('editorHasVariants').checked;const list=q('editorVariants');list.replaceChildren();model.variants.forEach((v,index)=>{const row=el('details','editor-variant');
- row.name='merchant-variant';
- row.open=!v.option_name;
- const heading=el('summary','',v.option_name||'Nova variante');
- row.append(heading);
- const name=el('label','','Opção '+(index+1));const input=el('input');input.value=v.option_name;input.maxLength=120;input.oninput=()=>{v.option_name=input.value;heading.textContent=input.value.trim()||'Nova variante';};name.append(input);const photoLabel=el('label','','Fotografia');const select=el('select');select.append(new Option('Galeria do produto',''));model.images.forEach((photo,i)=>select.append(new Option('Fotografia '+(i+1)+(i===0?' · Capa':''),photo.key)));select.value=v.imageKey;select.onchange=()=>v.imageKey=select.value;photoLabel.append(select);const remove=el('button','mw-text','Retirar opção');remove.type='button';remove.onclick=()=>{model.variants.splice(index,1);if(!model.variants.length)q('editorHasVariants').checked=false;changed();renderVariants();};row.append(name,photoLabel,remove);list.append(row);});renderPrices();}
- q('editorAddVariant').onclick=()=>{if(model.variants.length>=100){fail('O limite é de 100 opções por produto.');return;}model.variants.push(newVariant());changed();renderVariants();q('editorVariants').lastElementChild.querySelector('input').focus();};
+ function renderVariantPresets(){
+   const presets=q('editorVariantPresets');
+   presets.replaceChildren();
+   const axis=variantAxes[categories.find(category=>category.id===model.category_id)?.variant_axis];
+   if(!axis)return;
+   const selected=new Set(model.variants.map(variant=>categorySearchKey(variant.option_name)));
+   for(const value of axis.examples){
+     if(selected.has(categorySearchKey(value)))continue;
+     const add=el('button','mw-secondary',value);
+     add.type='button';
+     add.onclick=()=>addVariant(value);
+     presets.append(add);
+   }
+ }
+ function renderVariants(){
+   q('editorOptions').querySelector('summary').textContent=model.variants.length?'Variantes · '+model.variants.length:'Adicionar variantes';
+   q('editorAddVariant').lastChild.textContent=model.variants.length?'Adicionar opção':'Adicionar uma opção';
+   const list=q('editorVariants');
+   list.replaceChildren();
+   model.variants.forEach((variant,index)=>{
+     const row=el('details','editor-variant');
+     row.name='merchant-variant';
+     row.open=!variant.option_name;
+     const heading=el('summary','',variant.option_name||'Nova variante');
+     const name=el('label','','Nome da opção');
+     const input=el('input');
+     input.value=variant.option_name;input.maxLength=120;
+     input.oninput=()=>{
+       variant.option_name=input.value;
+       heading.textContent=input.value.trim()||'Nova variante';
+       renderVariantPresets();
+     };
+     name.append(input);
+     const remove=el('button','mw-text','Retirar opção');
+     remove.type='button';
+     remove.onclick=()=>{
+       model.variants.splice(index,1);
+       changed();
+       renderVariants();
+       (list.children[Math.min(index,list.children.length-1)]?.querySelector('summary')||q('editorAddVariant')).focus();
+     };
+     row.append(heading,name,remove);
+     list.append(row);
+   });
+   renderVariantPresets();
+   renderPrices();
+ }
+ function addVariant(name=''){
+   if(model.variants.length>=100){fail('O limite é de 100 opções por produto.');return;}
+   model.variants.push(newVariant(name));
+   changed();
+   renderVariants();
+   const row=q('editorVariants').lastElementChild;
+   row.open=true;
+   row.querySelector(name?'[data-product-value="price"]':'input').focus();
+ }
+ q('editorAddVariant').onclick=()=>addVariant();
  function renderPrices(){
   const container=q('editorPrices');container.replaceChildren();
   const items=model.variants.length?model.variants:[model];
-  sections[3].hidden=!quickEdit&&(model.variants.length>0||reviewing);
+  sections[3].hidden=!quickEdit&&(model.variants.length>0||(guided&&stage!==2));
   syncSubmitLabel();
   items.forEach(item=>{
    const card=el('section','editor-price-card');const name=item===model?(quickEdit?model.title:'Produto sem variantes'):item.option_name||'Opção sem nome';card.setAttribute('aria-label',name);
@@ -359,13 +434,27 @@ export function setupProductComposer(hooks){
 
    const more=el('details','editor-price-details');more.open=Boolean(item.previous);more.append(el('summary','',item.previous?'Promoção activa':'Adicionar promoção'));
    const fields=el('div','editor-stock-fields');const previous=el('div','editor-promotion-field');previous.append(el('span','','Preço antes da promoção'),priceField('previous','Preço anterior','Sem promoção'));more.append(previous);
+   if(item.previous){
+     const remove=el('button','mw-text','Retirar promoção');remove.type='button';
+     remove.onclick=()=>{
+       item.previous='';
+       previous.querySelector('input').value='';
+       const summary=more.querySelector('summary');
+       summary.textContent='Adicionar promoção';
+       more.open=false;
+       remove.remove();
+       changed();
+       summary.focus();
+     };
+     more.append(remove);
+   }
    const quantityLabel=el('label','','Quantidade (opcional)'),quantity=el('input');quantity.type='number';quantity.dataset.productValue='quantity';quantity.min='0';quantity.max='1000000000';quantity.step='1';quantity.placeholder='Sem limite';quantity.value=item.quantity;quantity.oninput=()=>{item.quantity=quantity.value;if(Number(quantity.value)>0){item.in_stock=true;stock.checked=true;}};quantityLabel.append(quantity);fields.append(quantityLabel);
    const stockLabel=el('label','mw-check'),stock=el('input');stock.type='checkbox';stock.checked=item.in_stock;stock.onchange=()=>item.in_stock=stock.checked;stockLabel.append(stock,document.createTextNode('Em stock'));
    fields.append(stockLabel);
    if(quickEdit){
      if(item!==model)card.append(main);
      card.append(priceLabel,fields);
-     if(item.previous)card.append(more);
+     card.append(more);
      container.append(card);
    }
    else{
@@ -437,7 +526,9 @@ export function setupProductComposer(hooks){
    const name=q('inputNewProdTitle');
    const category=q('selectNewProdCat');
    if(model.title.length<2)throw fieldProblem('Indica um nome com pelo menos 2 caracteres.',name);
-   if(!model.category_id)throw fieldProblem('Selecciona uma categoria atribuída à loja.',category);
+   if(!model.category_id||(!quickEdit&&!categories.some(item=>item.id===model.category_id))){
+     throw fieldProblem('Selecciona uma categoria atribuída à loja.',category.disabled?null:category);
+   }
  }
 
  function requirePhoto(){
@@ -488,7 +579,6 @@ export function setupProductComposer(hooks){
    if(!model||busy||uncertain)return;
    try{validateIdentity();}
    catch(error){
-     if(guided)showEditor(1,{focus:true});
      reportProblem(error);
      return;
    }
@@ -504,10 +594,16 @@ export function setupProductComposer(hooks){
    if(uncertain){void save(uncertain.document.status);return;}
    if(quickEdit||!guided){void save(model.status);return;}
    const status=hooks.getStore()?.status==='approved'?'published':'draft';
-   if(status==='draft'||reviewing||!model.variants.length){void save(status);return;}
+   if(stage>1&&(status==='draft'||reviewing||!model.variants.length)){void save(status);return;}
    try{
-     documentData(status);
-     showEditor(2,{focus:true});
+     if(stage===1){
+       validateIdentity();
+       if(status==='published')requirePhoto();
+       showEditor(2,{focus:true});
+     }else{
+       documentData(status);
+       showEditor(3,{focus:true});
+     }
    }catch(error){reportProblem(error);}
  };
  window.addEventListener('beforeunload',event=>{

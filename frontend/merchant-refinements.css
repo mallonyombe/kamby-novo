@@ -371,9 +371,9 @@
 .editor-photo-thumbs { display:flex;gap:8px;overflow:auto;margin-top:8px;padding:2px 0; }
 .editor-photo-thumbs .editor-photo { flex-basis:84px; }
 .editor-photo-thumbs .editor-photo img { height:84px; }
-.guided-editor #btnChooseNewProdImg { min-height:48px;width:100%; }
+.guided-editor #btnChooseNewProdImg { min-height:48px; }
 .guided-editor #editorGallery:empty ~ #btnChooseNewProdImg {
-  min-height:64px;
+  min-height:64px;width:100%;
   border:1px dashed var(--ui-secondary);
   display:flex;align-items:center;justify-content:center;gap:8px;
 }
@@ -500,3 +500,24 @@
 
 #viewMerchant .mw-profile-actions .mw-store-state {grid-column:1 / -1;justify-self:start;}
 #viewMerchant .mw-profile-actions {grid-template-columns:repeat(auto-fit,minmax(min(100%,136px),1fr));}
+
+.merchant-editor .editor-gallery-row {
+  display:flex;align-items:flex-start;gap:12px;margin-bottom:12px;
+}
+.merchant-editor .editor-gallery-row > .editor-gallery {flex:1;min-width:0;margin-bottom:0;}
+.merchant-editor .editor-gallery-row > button {
+  display:inline-flex;align-items:center;justify-content:center;gap:5px;
+  flex:none;min-width:44px;min-height:44px;white-space:nowrap;
+}
+.merchant-editor .editor-gallery-row > button svg,
+.merchant-editor .editor-photo-remove svg {width:18px;height:18px;}
+.merchant-editor .editor-photo-remove {
+  position:absolute;inset-block-start:4px;inset-inline-end:4px;z-index:1;
+  width:44px;height:44px;padding:0;display:grid;place-items:center;
+  border:1px solid var(--ui-line);border-radius:50%;background:var(--ui-surface);color:var(--ui-text);
+}
+.merchant-editor .editor-presets {flex-wrap:wrap;margin-block:8px;}
+.merchant-editor .editor-presets:empty {display:none;}
+@media(max-width:400px) {
+  .merchant-editor .editor-gallery-row:has(.editor-photo) > button span {display:none;}
+}

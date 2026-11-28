@@ -1,3 +1,4 @@
+import {variantAxes,categorySearchKey} from './category-variants.js';
 import {bindSidebar,sidebarToggleIcon} from './panel-sidebar.js';
 import {enableModalDismiss, requestModalDismiss, protectModalEdits} from './modal-dismiss.js';
 import {listIcon,bindListSearch,paintFilterIcon} from './list-controls.js';
@@ -363,6 +364,9 @@ async function listing(main,area,request){const cfg=configs[area];let q=listSett
  const actions=el('div','kamby-list-actions');
  const searchButton=listIcon('search','Pesquisar');
  actions.append(searchButton);
+ if(area==='categories'&&can('stores.write')){
+  actions.append(button('Criar categoria','primary',openCreateCategory,'plus'));
+ }
  toolbar.id='adminSearchPanel';
  toolbar.classList.add('kamby-search-panel');
  toolbar.hidden=!q;
@@ -812,6 +816,23 @@ function openProduct(product){
      finally{control.disabled=false;setButtonBusy(control,false);}
     });controls.append(control);
    }
+   if(product.status!=='published'||product.moderation_status==='blocked'){
+    const remove=button('Eliminar definitivamente','quiet',async()=>{
+     if(remove.disabled)return;
+     remove.disabled=true;
+     try{
+      if(!await confirmAction('Eliminar produto?', '«'+product.title+'» será removido do catálogo. Esta acção é definitiva.', 'Eliminar'))return;
+      setButtonBusy(remove,true);
+      await rpc('kg_admin_delete_product',{p_id:product.id,p_expected:product.updated_at});
+      sheet.close();
+      readCache.clear();
+      feedback('Produto eliminado.');
+      await route();
+     }catch(failure){error.textContent=adminError(failure);}
+     finally{remove.disabled=false;setButtonBusy(remove,false);}
+    },'trash');
+    controls.append(remove);
+   }
    sheet.append(controls);
   }
   sheet.append(button('Fechar','quiet',()=>requestModalDismiss(sheet)));
@@ -819,6 +840,56 @@ function openProduct(product){
 }
 
 function dialog(title,copy){const d=el('dialog','admin-dialog'),h=el('h2','',title);h.id='adminDialogTitle';d.setAttribute('aria-labelledby',h.id);d.append(h);if(copy)d.append(el('p','dialog-impact',copy));d.addEventListener('close',()=>d.remove());document.body.append(d);return d;}
+function categoryAxisField(value=''){
+ const label=el('label','','Medida das variantes');
+ const input=el('select');
+ input.append(new Option('Sem sugestões',''));
+ for(const [axis,config] of Object.entries(variantAxes))input.append(new Option(config.label,axis));
+ input.value=value||'';
+ label.append(input);
+ return {label,input};
+}
+function openCreateCategory(){
+ const sheet=dialog('Criar categoria');
+ const form=el('form');
+ const name=el('label','','Nome da categoria');
+ const input=el('input');input.required=true;input.maxLength=60;name.append(input);
+ const axis=categoryAxisField();
+ const error=el('p','field-error');error.setAttribute('role','alert');
+ const actions=el('div','dialog-actions');
+ const cancel=button('Cancelar','secondary',()=>requestModalDismiss(sheet));
+ const create=button('Criar categoria','primary');create.type='submit';
+ actions.append(cancel,create);
+ form.append(name,axis.label,error,actions);
+ sheet.append(form);
+ form.onsubmit=async event=>{
+  event.preventDefault();
+  if(create.disabled)return;
+  const title=input.value.trim();
+  const slug=categorySearchKey(title).replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
+  if(!slug){error.textContent='Indica um nome com letras ou números.';input.focus();return;}
+  error.textContent='';
+  create.disabled=cancel.disabled=true;
+  setButtonBusy(create,true);
+  try{
+   const {error:failure}=await platform.from('kg_categories').insert({name:title,slug,variant_axis:axis.input.value||null});
+   if(failure)throw failure;
+   sheet.close();
+   listSettings.delete('categories');
+   sessionStorage.removeItem('kamby:admin-filter:categories');
+   readCache.clear();
+   feedback('Categoria criada.');
+   await route();
+  }catch(failure){
+   error.textContent=failure.code==='23505'?'Já existe uma categoria com este nome.':adminError(failure);
+  }finally{
+   create.disabled=cancel.disabled=false;
+   setButtonBusy(create,false);
+  }
+ };
+ sheet.showModal();
+ input.focus();
+}
 function openSignOutDialog(){
  const version=sessionVersion;
  const sheet=dialog('Terminar sessão?','Vais sair da tua conta neste dispositivo.');
@@ -937,21 +1008,25 @@ async function entityDetail(main,area,id,request){
    main.append(button('Activar modo vendedor','secondary',()=>openUserCard(item,false)));
   }
  }else{
-  field('Endereço da categoria',item.slug);field('Estado',item.is_active?'Activa':'Inactiva');
+  field('Estado',item.is_active?'Activa':'Inactiva');
   main.append(fields);
   if(can('stores.write')){
    const form=el('form','admin-detail-fields');
    const name=el('label','','Nome da categoria'),input=el('input');input.value=item.name;input.required=true;input.maxLength=60;name.append(input);
    const label=el('label'),active=el('input');active.type='checkbox';active.checked=item.is_active;label.append(active,document.createTextNode('Categoria activa'));
+   const axis=categoryAxisField(item.variant_axis);
    const save=button('Guardar alterações','primary');save.type='submit';
    const error=el('p','field-error');error.setAttribute('role','status');
-   form.append(name,label,error,save);
-   input.oninput=active.onchange=()=>{formDirty=true;};
+   form.append(name,axis.label,label,error,save);
+   input.oninput=active.onchange=axis.input.onchange=()=>{formDirty=true;};
    form.onsubmit=async event=>{
     event.preventDefault();if(save.disabled)return;
     save.disabled=true;setButtonBusy(save,true);
     try{
-     const {data:changed,error:failure}=await platform.from('kg_categories').update({name:input.value.trim(),is_active:active.checked}).eq('id',id).eq('name',item.name).eq('is_active',item.is_active).select('id').maybeSingle();
+     const query=platform.from('kg_categories')
+      .update({name:input.value.trim(),is_active:active.checked,variant_axis:axis.input.value||null})
+      .eq('id',id).eq('name',item.name).eq('is_active',item.is_active);
+     const {data:changed,error:failure}=await (item.variant_axis?query.eq('variant_axis',item.variant_axis):query.is('variant_axis',null)).select('id').maybeSingle();
      if(failure)throw failure;
      if(!changed)throw {code:'40001'};
      formDirty=false;feedback('Categoria actualizada.');await route();
@@ -959,6 +1034,30 @@ async function entityDetail(main,area,id,request){
     finally{save.disabled=false;setButtonBusy(save,false);}
    };
    main.append(form);
+   if(!data.total){
+    const remove=button('Eliminar categoria','quiet',async()=>{
+     if(remove.disabled)return;
+     remove.disabled=true;
+     try{
+      if(!await confirmAction('Eliminar categoria?', '«'+item.name+'» será eliminada de todas as lojas. Esta acção é definitiva.', 'Eliminar'))return;
+      setButtonBusy(remove,true);
+      const query=platform.from('kg_categories').delete().eq('id',id).eq('name',item.name).eq('is_active',item.is_active);
+      const {data:deleted,error:failure}=await (item.variant_axis?query.eq('variant_axis',item.variant_axis):query.is('variant_axis',null)).select('id').maybeSingle();
+      if(failure)throw failure;
+      if(!deleted)throw {code:'40001'};
+      formDirty=false;
+      readCache.clear();
+      feedback('Categoria eliminada.');
+      location.hash='categories';
+     }catch(failure){
+      feedback(failure.code==='23503'?'Move os produtos para outra categoria antes de eliminar esta.':adminError(failure));
+     }finally{
+      remove.disabled=false;
+      setButtonBusy(remove,false);
+     }
+    },'trash');
+    main.append(remove);
+   }
   }
  }
  main.append(el('h2','entity-section-title',area==='users'?'Lojas associadas':'Produtos nesta categoria'));

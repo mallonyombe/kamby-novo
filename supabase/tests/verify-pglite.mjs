@@ -43,7 +43,9 @@ try {
  await db.exec(read('./catalogue-discovery.sql'));
  console.log('PASS: anonymous discovery, pagination past 60, scoped search and available variant prices');
  await db.exec(read('./archived-product-delete.sql'));
- console.log('PASS: archive-only deletion, access, stale writes and retry');
+ await db.exec(read('./category-variant-axes.sql'));
+ console.log('PASS: category creation requires MFA, variants have a valid axis, deletion preserves products');
+ console.log('PASS: unpublished product deletion, access, stale writes and retry');
  console.log('PASS: versioned consent, private drafts and seller self-publication');
  await db.exec(read('./account-terms.sql'));
  console.log('PASS: account terms are public to read, versioned and accepted per authenticated account');
